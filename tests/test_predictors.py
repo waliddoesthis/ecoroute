@@ -13,6 +13,7 @@ from ecoroute.eval.metrics import (
     savings_at_quality,
 )
 from ecoroute.predictors import (
+    CalibratedPredictor,
     IRTPredictor,
     KNNPredictor,
     MatrixFactorizationPredictor,
@@ -103,3 +104,28 @@ def test_matrices_from_outcomes():
     assert np.isnan(Y[2]).all()
     C = cost_matrix(outcomes, ["a", "b"], ["x", "y"])
     assert C[0].tolist() == [0.1, 0.2] and np.isnan(C[1, 1])
+
+
+def test_calibration_fixes_a_miscalibrated_predictor(data):
+    (X_tr, Y_tr, _, _), (X_te, Y_te, _, _) = data
+    X_va, Y_va, _, _ = make_data(800, seed=2, missing=0.0)
+
+    class Overconfident(ModelMeanPredictor):
+        name = "overconfident"
+
+        def predict_proba(self, X):
+            # Push every probability toward 0 or 1 while keeping the ranking.
+            P = KNNPredictor.predict_proba(self.knn, X)
+            return 1 / (1 + np.exp(-8 * (P - 0.5)))
+
+        def fit(self, X, Y, models):
+            super().fit(X, Y, models)
+            self.knn = KNNPredictor(k=32).fit(X, Y, models)
+            return self
+
+    raw = Overconfident().fit(X_tr, Y_tr, MODELS)
+    cal = CalibratedPredictor.wrap(raw).calibrate(X_va, Y_va)
+    before = quality_report(raw.predict_proba(X_te), Y_te)
+    after = quality_report(cal.predict_proba(X_te), Y_te)
+    assert after["ece"] < before["ece"] / 2
+    assert after["brier"] < before["brier"]

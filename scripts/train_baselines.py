@@ -19,6 +19,7 @@ from ecoroute.data.prices import fill_missing_costs
 from ecoroute.eval.metrics import quality_report, routing_curve, savings_at_quality
 from ecoroute.features.embed import DEFAULT_ENCODER, cached_embeddings
 from ecoroute.predictors import (
+    CalibratedPredictor,
     IRTPredictor,
     KNNPredictor,
     MatrixFactorizationPredictor,
@@ -49,13 +50,16 @@ def main() -> None:
     cache = args.data / f"embeddings_{args.encoder.replace('/', '_')}.npz"
 
     data = {}
-    for split in ("train", "test"):
+    for split in ("train", "val", "test"):
         ids, texts = split_frame(outcomes, split)
         X = cached_embeddings(ids, texts, cache, encoder=args.encoder)
         data[split] = (X, outcome_matrix(outcomes, ids, models), cost_matrix(outcomes, ids, models))
     X_tr, Y_tr, _ = data["train"]
+    X_va, Y_va, _ = data["val"]
     X_te, Y_te, C_te = data["test"]
-    print(f"{args.source}: {len(models)} models, {len(X_tr):,} train / {len(X_te):,} test prompts")
+    print(
+        f"{args.source}: {len(models)} models, {len(X_tr):,} train / {len(X_va):,} val / {len(X_te):,} test prompts"
+    )
 
     predictors = [
         ModelMeanPredictor(),
@@ -63,12 +67,11 @@ def main() -> None:
         MatrixFactorizationPredictor(epochs=args.epochs),
         IRTPredictor(epochs=args.epochs),
     ]
-    results, best_single = [], None
-    for pred in predictors:
-        t0 = time.time()
-        pred.fit(X_tr, Y_tr, models)
+    results = []
+
+    def evaluate(pred, seconds: float) -> None:
         P = pred.predict_proba(X_te)
-        row = {"predictor": pred.name, **quality_report(P, Y_te), "train_s": time.time() - t0}
+        row = {"predictor": pred.name, **quality_report(P, Y_te), "train_s": seconds}
         curve = routing_curve(P, Y_te, C_te, models)
         if curve.attrs["n_prompts"] > 0:
             singles = curve[curve.policy.str.startswith("always")]
@@ -76,6 +79,14 @@ def main() -> None:
             row["savings_vs_best_model"] = savings_at_quality(curve, best_single)
             row["curve"] = curve.to_dict("records")
         results.append(row)
+
+    for pred in predictors:
+        t0 = time.time()
+        pred.fit(X_tr, Y_tr, models)
+        evaluate(pred, time.time() - t0)
+        if not isinstance(pred, ModelMeanPredictor):
+            t0 = time.time()
+            evaluate(CalibratedPredictor.wrap(pred).calibrate(X_va, Y_va), time.time() - t0)
 
     table = pd.DataFrame(results)[["predictor", "brier", "ece", "auc", "train_s"]]
     print(table.to_string(index=False, float_format=lambda v: f"{v:.4f}"))
