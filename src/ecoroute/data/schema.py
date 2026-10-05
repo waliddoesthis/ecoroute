@@ -66,12 +66,33 @@ def assign_split(pid: str, val: float = 0.1, test: float = 0.1) -> str:
     return "train"
 
 
+def dedupe_outcomes(df: pd.DataFrame) -> pd.DataFrame:
+    """Collapse repeated (prompt, model) rows inside one source into one row.
+
+    Sources contain the same prompt text under several ids (SPROUT has ~3.6k such
+    pairs, sometimes graded differently). Left in, they double-count those prompts and
+    give a model two labels for one input. Grades and costs are averaged; the first
+    row's metadata is kept.
+    """
+    keys = ["source", "prompt_id", "model"]
+    if not df.duplicated(keys).any():
+        return df
+    numeric = {"correct": "mean", "in_tokens": "mean", "out_tokens": "mean", "cost_usd": "mean"}
+    agg = {c: numeric.get(c, "first") for c in df.columns if c not in keys}
+    out = df.groupby(keys, sort=False, as_index=False, dropna=False).agg(agg)
+    for c in ("in_tokens", "out_tokens"):
+        out[c] = out[c].round()
+    return out[list(df.columns)]
+
+
 def conform(df: pd.DataFrame, columns: dict[str, str]) -> pd.DataFrame:
     """Order, type and validate a frame against a schema."""
     missing = set(columns) - set(df.columns)
     if missing:
         raise ValueError(f"missing columns: {sorted(missing)}")
     out = df[list(columns)].astype(columns)
+    if columns is OUTCOME_COLUMNS:
+        out = dedupe_outcomes(out).astype(columns)
     if "correct" in out and not out["correct"].dropna().between(0, 1).all():
         raise ValueError("correct must be within [0, 1]")
     if "split" in out and not out["split"].isin(SPLITS).all():

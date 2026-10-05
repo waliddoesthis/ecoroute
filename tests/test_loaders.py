@@ -143,3 +143,13 @@ def test_split_is_deterministic_and_roughly_80_10_10():
     assert abs(splits["val"] - 0.1) < 0.02
     assert abs(splits["test"] - 0.1) < 0.02
     assert assign_split(ids[0]) == assign_split(ids[0])
+
+
+def test_duplicate_prompts_collapse_to_one_row(sprout_raw):
+    dup = sprout_raw.iloc[[0]].assign(key="k3")
+    dup.loc[:, "wxai-llama-3-2-1b-instruct"] = [_sprout_cell(1.0, tin=11, tout=21)]
+    out = sprout.to_outcomes(pd.concat([sprout_raw, dup], ignore_index=True))
+    assert not out.duplicated(["prompt_id", "model"]).any()
+    small = out[(out.prompt_id == prompt_id("What is 2+2?")) & (out.model == "llama-3.2-1b-instruct")]
+    assert small.correct.item() == pytest.approx(0.5)
+    assert str(out.in_tokens.dtype) == "Int64"
