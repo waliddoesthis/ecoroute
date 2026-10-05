@@ -16,10 +16,16 @@ from pathlib import Path
 import pandas as pd
 
 from ecoroute.data.prices import fill_missing_costs
-from ecoroute.eval.metrics import quality_report, routing_curve, savings_at_quality
+from ecoroute.eval.metrics import (
+    breakdown_by_difficulty,
+    quality_report,
+    routing_curve,
+    savings_at_quality,
+)
 from ecoroute.features.embed import DEFAULT_ENCODER, cached_embeddings
 from ecoroute.predictors import (
     CalibratedPredictor,
+    EnsemblePredictor,
     IRTPredictor,
     KNNPredictor,
     MatrixFactorizationPredictor,
@@ -76,8 +82,14 @@ def main() -> None:
         if curve.attrs["n_prompts"] > 0:
             singles = curve[curve.policy.str.startswith("always")]
             best_single = singles.loc[singles.accuracy.idxmax()].policy
-            row["savings_vs_best_model"] = savings_at_quality(curve, best_single)
+            saving = savings_at_quality(curve, best_single)
+            row["savings_vs_best_model"] = saving
             row["curve"] = curve.to_dict("records")
+            if saving["matched"]:
+                tau = float(saving["router_policy"].split("=")[1])
+                row["by_difficulty"] = breakdown_by_difficulty(P, Y_te, C_te, tau).to_dict(
+                    "records"
+                )
         results.append(row)
 
     for pred in predictors:
@@ -88,11 +100,22 @@ def main() -> None:
             t0 = time.time()
             evaluate(CalibratedPredictor.wrap(pred).calibrate(X_va, Y_va), time.time() - t0)
 
+    learned = [p for p in predictors if not isinstance(p, ModelMeanPredictor)]
+    ensemble = EnsemblePredictor.of_fitted(learned)
+    evaluate(ensemble, 0.0)
+    evaluate(CalibratedPredictor.wrap(ensemble).calibrate(X_va, Y_va), 0.0)
+
     table = pd.DataFrame(results)[["predictor", "brier", "ece", "auc", "train_s"]]
     print(table.to_string(index=False, float_format=lambda v: f"{v:.4f}"))
     for r in results:
         if "savings_vs_best_model" in r:
             print(r["predictor"], r["savings_vs_best_model"])
+        if "by_difficulty" in r:
+            print(
+                pd.DataFrame(r["by_difficulty"]).to_string(
+                    index=False, float_format="{:.4f}".format
+                )
+            )
     args.out.mkdir(parents=True, exist_ok=True)
     report = {"source": args.source, "encoder": args.encoder, "models": models, "results": results}
     (args.out / f"baselines_{args.source}.json").write_text(

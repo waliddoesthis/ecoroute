@@ -125,3 +125,50 @@ def savings_at_quality(
         "reference_accuracy": float(ref.accuracy),
         "cost_saving_pct": float(100 * (1 - best.cost / ref.cost)) if ref.cost > 0 else 0.0,
     }
+
+
+def difficulty_buckets(Y: np.ndarray) -> np.ndarray:
+    """Label each prompt easy / medium / hard by the share of models that answered it.
+
+    hard: at most 25% of models correct; easy: at least 75%; medium otherwise. This is
+    known only after the fact, so it is for evaluation, never for routing.
+    """
+    share = np.nanmean(Y >= 0.5, axis=1)
+    return np.where(share <= 0.25, "hard", np.where(share >= 0.75, "easy", "medium"))
+
+
+def breakdown_by_difficulty(
+    P: np.ndarray, Y: np.ndarray, C: np.ndarray, tau: float
+) -> pd.DataFrame:
+    """Router (at tau) vs. oracle accuracy and cost per difficulty bucket.
+
+    The gap column shows where the router loses accuracy; the 2026 Routing Plateau study
+    found most of the gap to the oracle sits in the hard bucket.
+    """
+    full = ~np.isnan(Y).any(axis=1) & ~np.isnan(C).any(axis=1)
+    P, Y, C = P[full], Y[full], C[full]
+    idx = np.arange(len(Y))
+    pick = route_cheapest_above(P, C, tau)
+    correct = Y >= 0.5
+    oracle = np.where(
+        correct.any(axis=1), np.where(correct, C, np.inf).argmin(axis=1), C.argmin(axis=1)
+    )
+    buckets = difficulty_buckets(Y)
+    rows = []
+    for b in ("easy", "medium", "hard"):
+        sel = buckets == b
+        if not sel.any():
+            continue
+        rows.append(
+            {
+                "bucket": b,
+                "share": float(sel.mean()),
+                "router_accuracy": float(Y[idx[sel], pick[sel]].mean()),
+                "oracle_accuracy": float(Y[idx[sel], oracle[sel]].mean()),
+                "router_cost": float(C[idx[sel], pick[sel]].mean()),
+                "oracle_cost": float(C[idx[sel], oracle[sel]].mean()),
+            }
+        )
+    out = pd.DataFrame(rows)
+    out["gap"] = out.oracle_accuracy - out.router_accuracy
+    return out

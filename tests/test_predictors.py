@@ -7,6 +7,7 @@ import pytest
 from scipy.stats import spearmanr
 
 from ecoroute.eval.metrics import (
+    breakdown_by_difficulty,
     quality_report,
     route_cheapest_above,
     routing_curve,
@@ -14,6 +15,7 @@ from ecoroute.eval.metrics import (
 )
 from ecoroute.predictors import (
     CalibratedPredictor,
+    EnsemblePredictor,
     IRTPredictor,
     KNNPredictor,
     MatrixFactorizationPredictor,
@@ -129,3 +131,21 @@ def test_calibration_fixes_a_miscalibrated_predictor(data):
     after = quality_report(cal.predict_proba(X_te), Y_te)
     assert after["ece"] < before["ece"] / 2
     assert after["brier"] < before["brier"]
+
+
+def test_ensemble_averages_members(data):
+    (X_tr, Y_tr, _, _), (X_te, Y_te, _, _) = data
+    a = KNNPredictor(k=32).fit(X_tr, Y_tr, MODELS)
+    b = ModelMeanPredictor().fit(X_tr, Y_tr, MODELS)
+    ens = EnsemblePredictor.of_fitted([a, b], weights=[3, 1])
+    expected = 0.75 * a.predict_proba(X_te) + 0.25 * b.predict_proba(X_te)
+    assert np.allclose(ens.predict_proba(X_te), expected)
+
+
+def test_breakdown_puts_most_of_the_gap_in_hard_prompts(data):
+    (X_tr, Y_tr, _, _), (X_te, Y_te, C_te, _) = data
+    P = KNNPredictor(k=32).fit(X_tr, Y_tr, MODELS).predict_proba(X_te)
+    table = breakdown_by_difficulty(P, Y_te, C_te, tau=0.7)
+    assert set(table.bucket) == {"easy", "medium", "hard"}
+    assert abs(table.share.sum() - 1) < 1e-9
+    assert (table.gap >= -1e-9).all()  # the oracle is never worse
