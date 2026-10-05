@@ -1,0 +1,91 @@
+"""Train and compare the baseline predictors on the unified outcomes table.
+
+    python scripts/train_baselines.py --data data/processed --source routerbench
+
+Each source is evaluated on its own, because the sources share few models. Writes
+reports/baselines_<source>.json and prints a comparison table.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import time
+from pathlib import Path
+
+import pandas as pd
+
+from ecoroute.eval.metrics import quality_report, routing_curve, savings_at_quality
+from ecoroute.features.embed import DEFAULT_ENCODER, cached_embeddings
+from ecoroute.predictors import (
+    IRTPredictor,
+    KNNPredictor,
+    MatrixFactorizationPredictor,
+    ModelMeanPredictor,
+    cost_matrix,
+    outcome_matrix,
+)
+
+
+def split_frame(outcomes: pd.DataFrame, split: str) -> tuple[list[str], list[str]]:
+    part = outcomes[outcomes.split == split].drop_duplicates("prompt_id")
+    return part.prompt_id.tolist(), part.prompt.tolist()
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--data", type=Path, default=Path("data/processed"))
+    parser.add_argument("--source", default="routerbench")
+    parser.add_argument("--encoder", default=DEFAULT_ENCODER)
+    parser.add_argument("--epochs", type=int, default=20)
+    parser.add_argument("--out", type=Path, default=Path("reports"))
+    args = parser.parse_args()
+
+    outcomes = pd.read_parquet(args.data / "outcomes.parquet")
+    outcomes = outcomes[outcomes.source == args.source]
+    models = sorted(outcomes.model.unique())
+    cache = args.data / f"embeddings_{args.encoder.replace('/', '_')}.npz"
+
+    data = {}
+    for split in ("train", "test"):
+        ids, texts = split_frame(outcomes, split)
+        X = cached_embeddings(ids, texts, cache, encoder=args.encoder)
+        data[split] = (X, outcome_matrix(outcomes, ids, models), cost_matrix(outcomes, ids, models))
+    X_tr, Y_tr, _ = data["train"]
+    X_te, Y_te, C_te = data["test"]
+    print(f"{args.source}: {len(models)} models, {len(X_tr):,} train / {len(X_te):,} test prompts")
+
+    predictors = [
+        ModelMeanPredictor(),
+        KNNPredictor(k=32),
+        MatrixFactorizationPredictor(epochs=args.epochs),
+        IRTPredictor(epochs=args.epochs),
+    ]
+    results, best_single = [], None
+    for pred in predictors:
+        t0 = time.time()
+        pred.fit(X_tr, Y_tr, models)
+        P = pred.predict_proba(X_te)
+        row = {"predictor": pred.name, **quality_report(P, Y_te), "train_s": time.time() - t0}
+        curve = routing_curve(P, Y_te, C_te, models)
+        if curve.attrs["n_prompts"] > 0:
+            singles = curve[curve.policy.str.startswith("always")]
+            best_single = singles.loc[singles.accuracy.idxmax()].policy
+            row["savings_vs_best_model"] = savings_at_quality(curve, best_single)
+            row["curve"] = curve.to_dict("records")
+        results.append(row)
+
+    table = pd.DataFrame(results)[["predictor", "brier", "ece", "auc", "train_s"]]
+    print(table.to_string(index=False, float_format=lambda v: f"{v:.4f}"))
+    for r in results:
+        if "savings_vs_best_model" in r:
+            print(r["predictor"], r["savings_vs_best_model"])
+    args.out.mkdir(parents=True, exist_ok=True)
+    report = {"source": args.source, "encoder": args.encoder, "models": models, "results": results}
+    (args.out / f"baselines_{args.source}.json").write_text(
+        json.dumps(report, indent=2, default=float)
+    )
+
+
+if __name__ == "__main__":
+    main()
