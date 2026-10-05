@@ -106,7 +106,7 @@ Clearance rule: external APIs default to **internal**. A provider moves up to **
 
 Optional later: GPT-6 Astra or Claude Fable 5.1 as a "tier 5" for the very hardest prompts, once the data shows Opus 5.5 failing on a slice worth paying for.
 
-### Important: public datasets don't contain these models
+### Important: public datasets don't contain these models (see docs/zero-cost-plan.md for the $0 route)
 SPROUT, RouterBench and RouterArena were built on older models. Two ways to bridge:
 1. **Our own eval run (recommended):** take ~3,000 prompts sampled across RouterArena / SPROUT difficulty levels, run them through every pool model, grade them. Rough API cost: **~$110 without reasoning tokens, likely $300-500 with them** (Opus 5.5 and Gemini 3.1 Pro are most of it). The local model is free on your GPU.
 2. **IRT transfer:** fit the router on the big public datasets, then place each new model on the same ability scale from a few hundred of its own graded answers. Cheaper, less accurate. We use this anyway whenever a new model is added.
