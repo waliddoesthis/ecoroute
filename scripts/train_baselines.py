@@ -15,6 +15,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from ecoroute.data.prices import fill_missing_costs
 from ecoroute.eval.metrics import quality_report, routing_curve, savings_at_quality
 from ecoroute.features.embed import DEFAULT_ENCODER, cached_embeddings
 from ecoroute.predictors import (
@@ -42,7 +43,8 @@ def main() -> None:
     args = parser.parse_args()
 
     outcomes = pd.read_parquet(args.data / "outcomes.parquet")
-    outcomes = outcomes[outcomes.source == args.source]
+    # Tables built before SPROUT costs existed get them filled from token counts here.
+    outcomes = fill_missing_costs(outcomes[outcomes.source == args.source])
     models = sorted(outcomes.model.unique())
     cache = args.data / f"embeddings_{args.encoder.replace('/', '_')}.npz"
 

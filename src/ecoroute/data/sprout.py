@@ -9,6 +9,7 @@ from __future__ import annotations
 import pandas as pd
 
 from ecoroute.data.model_names import canonical
+from ecoroute.data.prices import token_cost
 from ecoroute.data.schema import OUTCOME_COLUMNS, assign_split, conform, prompt_id
 
 HF_ID = "CARROT-LLM-Routing/SPROUT"
@@ -34,6 +35,7 @@ def to_outcomes(raw: pd.DataFrame) -> pd.DataFrame:
         pid = prompt_id(rec["prompt"])
         for col in model_columns(raw):
             cell = rec[col]
+            model = canonical(col)
             if not isinstance(cell, dict) or cell.get("score") is None:
                 continue
             rows.append(
@@ -43,11 +45,14 @@ def to_outcomes(raw: pd.DataFrame) -> pd.DataFrame:
                     "source_id": rec["key"],
                     "task": rec["dataset"],
                     "prompt": rec["prompt"],
-                    "model": canonical(col),
+                    "model": model,
                     "correct": float(cell["score"]),
                     "in_tokens": cell.get("num_input_tokens"),
                     "out_tokens": cell.get("num_output_tokens"),
-                    "cost_usd": float("nan"),  # SPROUT records tokens, not prices
+                    # SPROUT records tokens, not prices: cost uses its published price table.
+                    "cost_usd": token_cost(
+                        model, cell.get("num_input_tokens"), cell.get("num_output_tokens")
+                    ),
                     "split": assign_split(pid),
                 }
             )

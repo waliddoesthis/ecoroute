@@ -38,4 +38,5 @@ python scripts/train_baselines.py --source sprout
 It embeds every prompt once (cached next to the data), trains the model-mean, kNN,
 matrix-factorization and IRT predictors, and writes `reports/baselines_<source>.json` with
 calibration, AUC and the cost-vs-accuracy routing curve. SPROUT has token counts but no
-prices yet, so its report has quality metrics only.
+cost, so its cost is estimated from the price table its authors published
+(`src/ecoroute/data/prices.py`).

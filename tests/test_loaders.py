@@ -6,6 +6,7 @@ import pandas as pd
 import pytest
 
 from ecoroute.data import routerarena, routerbench, sprout
+from ecoroute.data.prices import fill_missing_costs
 from ecoroute.data.schema import OUTCOME_COLUMNS, PROMPT_COLUMNS, assign_split, prompt_id
 
 
@@ -54,7 +55,8 @@ def test_sprout_to_outcomes(sprout_raw):
     assert set(out.model) == {"gpt-4o", "llama-3.2-1b-instruct"}
     row = out[(out.source_id == "k1") & (out.model == "llama-3.2-1b-instruct")].iloc[0]
     assert row.correct == 0.0 and row.in_tokens == 10 and row.out_tokens == 20
-    assert math.isnan(row.cost_usd)
+    # llama-3.2-1b: $0.06 / 1M tokens in and out -> 30 tokens cost 1.8e-6
+    assert row.cost_usd == pytest.approx(30 * 0.06 / 1e6)
 
 
 @pytest.fixture
@@ -150,6 +152,23 @@ def test_duplicate_prompts_collapse_to_one_row(sprout_raw):
     dup.loc[:, "wxai-llama-3-2-1b-instruct"] = [_sprout_cell(1.0, tin=11, tout=21)]
     out = sprout.to_outcomes(pd.concat([sprout_raw, dup], ignore_index=True))
     assert not out.duplicated(["prompt_id", "model"]).any()
-    small = out[(out.prompt_id == prompt_id("What is 2+2?")) & (out.model == "llama-3.2-1b-instruct")]
+    small = out[
+        (out.prompt_id == prompt_id("What is 2+2?")) & (out.model == "llama-3.2-1b-instruct")
+    ]
     assert small.correct.item() == pytest.approx(0.5)
     assert str(out.in_tokens.dtype) == "Int64"
+
+
+def test_fill_missing_costs_keeps_observed_and_estimates_rest():
+    df = pd.DataFrame(
+        {
+            "model": ["gpt-4o", "gpt-4o", "unknown-model"],
+            "in_tokens": pd.array([1000, 1000, 5], dtype="Int64"),
+            "out_tokens": pd.array([500, 500, 5], dtype="Int64"),
+            "cost_usd": [0.5, float("nan"), float("nan")],
+        }
+    )
+    out = fill_missing_costs(df)
+    assert out.cost_usd.iloc[0] == 0.5
+    assert out.cost_usd.iloc[1] == pytest.approx((1000 * 2.5 + 500 * 10.0) / 1e6)
+    assert math.isnan(out.cost_usd.iloc[2])
