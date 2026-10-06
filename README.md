@@ -11,6 +11,22 @@ pip install -e ".[dev]"
 pytest
 ```
 
+## Run everything on Lightning AI from your machine
+
+`scripts/lightning_run.py` does the two steps below in one go. It ships the current commit to a
+Studio (no GitHub token needed), builds the data, trains the baselines on a GPU, downloads the
+reports to `reports/lightning/` and always stops the Studio at the end.
+
+```bash
+pip install lightning-sdk
+export LIGHTNING_USER_ID=... LIGHTNING_API_KEY=...   # Lightning account settings, Keys
+python scripts/lightning_run.py --teamspace <your-teamspace> --machine T4
+```
+
+It refuses to start below `--min-credits` (default 3) and stops the Studio after
+`--max-hours` (default 2). A full run on a T4 takes about 11 minutes and about 0.2 credits.
+Add `--skip-build` to reuse the data already in the Studio.
+
 ## Build the training data (Lightning AI Studio)
 
 1. Create a Studio (CPU is enough for this step; no GPU credits needed).
