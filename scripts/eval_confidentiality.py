@@ -88,7 +88,8 @@ def main() -> None:
     ds = load_dataset("ai4privacy/pii-masking-400k", split="validation")
     ds = ds.filter(lambda r: r["language"] == "en").shuffle(seed=0).select(range(args.n))
     texts = ds["source_text"]
-    expected = [expected_level([m["label"] for m in r]) for r in ds["privacy_mask"]]
+    labels = [[m["label"] for m in r] for r in ds["privacy_mask"]]
+    expected = [expected_level(lab) for lab in labels]
     benign = (
         pd.read_parquet(args.data / "outcomes.parquet", columns=["prompt_id", "prompt"])
         .drop_duplicates("prompt_id")
@@ -142,7 +143,16 @@ def main() -> None:
                 alarms += 1
                 kept = apply_min_score(f, min_score, kind_min) if use_ner else f
                 kinds.update({x.kind for x in kept if x.level > Level.INTERNAL})
+        # Which restricted label types the missed restricted texts carried.
+        missed = Counter()
+        for g, e, lab in zip(got, expected, labels):
+            if e == Level.RESTRICTED and g < Level.RESTRICTED:
+                missed.update(
+                    {x.rstrip("0123456789") for x in lab
+                     if LABEL_LEVELS.get(x.upper().rstrip("0123456789")) == Level.RESTRICTED}
+                )  # fmt: skip
         return {
+            "restricted_missed_by_label": dict(missed.most_common(8)),
             "restricted_recall": sum(g == Level.RESTRICTED for g in restricted)
             / max(1, len(restricted)),
             "pii_recall": sum(g >= Level.CONFIDENTIAL for g in pii) / max(1, len(pii)),
@@ -167,7 +177,7 @@ def main() -> None:
         )  # fmt: skip
     table = pd.DataFrame(rows)
     print(
-        table.drop(columns="false_alarms_by_kind").to_string(
+        table.drop(columns=["false_alarms_by_kind", "restricted_missed_by_label"]).to_string(
             index=False, float_format="{:.3f}".format
         )
     )
