@@ -202,6 +202,21 @@ def gap_upper_bound(
     return np.array(out)
 
 
+def bootstrap_gap(
+    P: np.ndarray, Y: np.ndarray, C: np.ndarray, ref: int, tau: float,
+    n_boot: int = 1000, seed: int = 0,
+) -> tuple[float, float]:  # fmt: skip
+    """5th and 95th percentile of the accuracy lost against model `ref`, over prompts
+    resampled with replacement."""
+    full = ~np.isnan(Y).any(axis=1) & ~np.isnan(C).any(axis=1)
+    P, Y, C = P[full], Y[full], C[full]
+    d = Y[:, ref] - Y[np.arange(len(Y)), route_cheapest_above(P, C, tau)]
+    rng = np.random.default_rng(seed)
+    means = d[rng.integers(0, len(d), size=(n_boot, len(d)))].mean(axis=1)
+    lo, hi = np.percentile(means, [5, 95])
+    return float(lo), float(hi)
+
+
 def held_out_saving(
     P_val: np.ndarray,
     Y_val: np.ndarray,
@@ -245,6 +260,9 @@ def held_out_saving(
     ref = test_curve.loc[test_curve.policy == reference].iloc[0]
     got = evaluate_at_tau(P_test, Y_test, C_test, tau)
     gap = float(ref.accuracy) - got["accuracy"]
+    gap_lo, gap_hi = bootstrap_gap(
+        P_test, Y_test, C_test, models.index(reference.removeprefix("always ")), tau
+    )
     return {
         "reference": reference,
         # matched: a tau within tolerance was found on validation. Whether it still holds
@@ -255,5 +273,7 @@ def held_out_saving(
         "reference_accuracy": float(ref.accuracy),
         "acc_gap": gap,
         "within_tolerance": gap <= tolerance,
+        # 90% bootstrap interval of the test gap: how much the verdict could move.
+        "acc_gap_ci90": (gap_lo, gap_hi),
         "cost_saving_pct": float(100 * (1 - got["cost"] / ref.cost)) if ref.cost > 0 else 0.0,
     }

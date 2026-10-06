@@ -131,7 +131,8 @@ def main() -> None:
         print(
             f"  {profile} (within {100 * tol:.0f} pts): tau {h['tau']:.2f}, test accuracy "
             f"{h['router_accuracy']:.4f} vs {h['reference_accuracy']:.4f}, "
-            f"saving {h['cost_saving_pct']:.1f}%"
+            f"gap {100 * h['acc_gap']:.2f} pts (90% CI {100 * h['acc_gap_ci90'][0]:.2f} to "
+            f"{100 * h['acc_gap_ci90'][1]:.2f}), saving {h['cost_saving_pct']:.1f}%"
         )
 
     catalog = yaml.safe_load(args.catalog.read_text())["models"]

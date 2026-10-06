@@ -207,3 +207,13 @@ def test_knn_search_matches_sklearn_and_reuses_last_answer():
     import pickle
 
     assert not hasattr(pickle.loads(pickle.dumps(knn)), "_last")
+
+
+def test_held_out_saving_reports_a_gap_interval(data):
+    (X_tr, Y_tr, _, _), (X_te, Y_te, C_te, _) = data
+    X_va, Y_va, C_va, _ = make_data(800, seed=2, missing=0.0)
+    knn = KNNPredictor(k=32).fit(X_tr, Y_tr, MODELS)
+    args = (knn.predict_proba(X_va), Y_va, C_va, knn.predict_proba(X_te), Y_te, C_te, MODELS)
+    got = held_out_saving(*args, tolerance=0.02, closest=True)
+    lo, hi = got["acc_gap_ci90"]
+    assert lo <= got["acc_gap"] + 1e-9 and got["acc_gap"] <= hi + 1e-9
