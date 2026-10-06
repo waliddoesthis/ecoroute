@@ -1,0 +1,242 @@
+"""Synthetic data with a known answer: prompts have a difficulty driven by their
+embedding, models have fixed abilities, correctness follows the IRT formula."""
+
+import numpy as np
+import pandas as pd
+import pytest
+from scipy.stats import spearmanr
+
+from ecoroute.eval.metrics import (
+    breakdown_by_difficulty,
+    held_out_saving,
+    quality_report,
+    route_cheapest_above,
+    routing_curve,
+    savings_at_quality,
+)
+from ecoroute.predictors import (
+    CalibratedPredictor,
+    EnsemblePredictor,
+    IRTPredictor,
+    KNNPredictor,
+    MatrixFactorizationPredictor,
+    MLPPredictor,
+    ModelMeanPredictor,
+    cost_matrix,
+    outcome_matrix,
+)
+
+MODELS = ["tiny", "small", "medium", "large"]
+ABILITY = np.array([-1.5, -0.5, 0.5, 1.5])
+COST = np.array([0.001, 0.003, 0.01, 0.03])
+
+
+def make_data(n, seed, dim=16, missing=0.1):
+    rng = np.random.default_rng(seed)
+    X = rng.normal(size=(n, dim)).astype(np.float32)
+    X /= np.linalg.norm(X, axis=1, keepdims=True)
+    direction = np.random.default_rng(99).normal(size=dim)
+    difficulty = 3.0 * (X @ direction) / np.linalg.norm(direction) * np.sqrt(dim) / 2
+    p = 1 / (1 + np.exp(-(ABILITY[None, :] - difficulty[:, None])))
+    Y = (rng.random(p.shape) < p).astype(float)
+    Y[rng.random(Y.shape) < missing] = np.nan
+    C = np.tile(COST, (n, 1))
+    return X, Y, C, difficulty
+
+
+@pytest.fixture(scope="module")
+def data():
+    return make_data(3000, seed=0), make_data(800, seed=1, missing=0.0)
+
+
+@pytest.mark.parametrize(
+    "pred, min_auc",
+    [
+        (KNNPredictor(k=32), 0.72),
+        (MatrixFactorizationPredictor(epochs=40, batch_size=512, lr=3e-3), 0.75),
+        (IRTPredictor(epochs=40, batch_size=512, lr=3e-3), 0.75),
+        (MLPPredictor(epochs=40, batch_size=512, lr=1e-3), 0.75),
+    ],
+)
+def test_predictors_beat_model_mean(data, pred, min_auc):
+    (X_tr, Y_tr, _, _), (X_te, Y_te, _, _) = data
+    base = quality_report(ModelMeanPredictor().fit(X_tr, Y_tr, MODELS).predict_proba(X_te), Y_te)
+    got = quality_report(pred.fit(X_tr, Y_tr, MODELS).predict_proba(X_te), Y_te)
+    assert got["auc"] > min_auc
+    assert got["brier"] < base["brier"]
+
+
+def test_irt_recovers_abilities_and_difficulty(data):
+    (X_tr, Y_tr, _, _), (X_te, _, _, diff_te) = data
+    irt = IRTPredictor(epochs=40, batch_size=512, lr=3e-3).fit(X_tr, Y_tr, MODELS)
+    theta = np.array([irt.abilities()[m][0] for m in MODELS])
+    # Ability scale has a free sign with dims=1; the order must match up to that sign.
+    assert abs(spearmanr(theta, ABILITY).statistic) == 1.0
+    rho = spearmanr(irt.difficulty(X_te), diff_te).statistic
+    assert abs(rho) > 0.8
+
+
+def test_route_cheapest_above():
+    P = np.array([[0.9, 0.95], [0.2, 0.8], [0.1, 0.3]])
+    C = np.array([[1.0, 5.0], [1.0, 5.0], [1.0, 5.0]])
+    assert route_cheapest_above(P, C, 0.7).tolist() == [0, 1, 1]  # last: none ok, most likely
+
+
+def test_fallback_margin_takes_the_cheapest_near_the_top():
+    P = np.array([[0.70, 0.72, 0.74], [0.40, 0.60, 0.74], [0.95, 0.5, 0.5]])
+    C = np.array([[1.0, 3.0, 9.0], [1.0, 3.0, 9.0], [1.0, 3.0, 9.0]])
+    assert route_cheapest_above(P, C, 0.9).tolist() == [2, 2, 0]
+    # Within 0.05 of the top: the first row's cheapest model qualifies, the second's doesn't.
+    assert route_cheapest_above(P, C, 0.9, margin=0.05).tolist() == [0, 2, 0]
+    assert route_cheapest_above(P, C, 0.9, margin=0.15).tolist() == [0, 1, 0]
+
+
+def test_held_out_saving_chooses_a_margin_within_tolerance(data):
+    (X_tr, Y_tr, _, _), (X_te, Y_te, C_te, _) = data
+    X_va, Y_va, C_va, _ = make_data(800, seed=2, missing=0.0)
+    knn = KNNPredictor(k=32).fit(X_tr, Y_tr, MODELS)
+    args = (knn.predict_proba(X_va), Y_va, C_va, knn.predict_proba(X_te), Y_te, C_te, MODELS)
+    grid = np.round(np.arange(0.50, 1.0, 0.01), 2)
+    margins = np.round(np.arange(0.0, 0.155, 0.01), 2)
+    plain = held_out_saving(*args, tolerance=0.02, taus=grid, closest=True)
+    got = held_out_saving(*args, tolerance=0.02, taus=grid, closest=True, margins=margins)
+    assert plain["margin"] == 0.0 and got["margin"] in margins
+    assert got["tau"] == plain["tau"]  # the margin is chosen after tau
+    assert got["cost_saving_pct"] >= plain["cost_saving_pct"] - 1e-9 or got["margin"] == 0
+
+
+def test_routing_saves_cost_at_large_model_quality(data):
+    (X_tr, Y_tr, _, _), (X_te, Y_te, C_te, _) = data
+    irt = IRTPredictor(epochs=40, batch_size=512, lr=3e-3).fit(X_tr, Y_tr, MODELS)
+    curve = routing_curve(irt.predict_proba(X_te), Y_te, C_te, MODELS)
+    oracle = curve.loc[curve.policy == "oracle"].iloc[0]
+    large = curve.loc[curve.policy == "always large"].iloc[0]
+    assert oracle.accuracy >= large.accuracy and oracle.cost < large.cost
+    # Matching the large model's quality exactly is noisy; allow a 2-point tolerance.
+    near = curve[curve.policy.str.startswith("router") & (curve.accuracy >= large.accuracy - 0.02)]
+    assert (near.cost < large.cost).any()
+    assert "matched" in savings_at_quality(curve, "always large")
+
+
+def test_matrices_from_outcomes():
+    outcomes = pd.DataFrame(
+        {
+            "prompt_id": ["a", "a", "b", "b", "b"],
+            "model": ["x", "y", "x", "y", "y"],
+            "correct": [1.0, 0.0, 0.0, 1.0, 0.0],
+            "cost_usd": [0.1, 0.2, 0.1, np.nan, np.nan],
+        }
+    )
+    Y = outcome_matrix(outcomes, ["a", "b", "c"], ["x", "y"])
+    assert Y[1, 1] == 0.5  # duplicate pair averaged
+    assert np.isnan(Y[2]).all()
+    C = cost_matrix(outcomes, ["a", "b"], ["x", "y"])
+    assert C[0].tolist() == [0.1, 0.2] and np.isnan(C[1, 1])
+
+
+def test_calibration_fixes_a_miscalibrated_predictor(data):
+    (X_tr, Y_tr, _, _), (X_te, Y_te, _, _) = data
+    X_va, Y_va, _, _ = make_data(800, seed=2, missing=0.0)
+
+    class Overconfident(ModelMeanPredictor):
+        name = "overconfident"
+
+        def predict_proba(self, X):
+            # Push every probability toward 0 or 1 while keeping the ranking.
+            P = KNNPredictor.predict_proba(self.knn, X)
+            return 1 / (1 + np.exp(-8 * (P - 0.5)))
+
+        def fit(self, X, Y, models):
+            super().fit(X, Y, models)
+            self.knn = KNNPredictor(k=32).fit(X, Y, models)
+            return self
+
+    raw = Overconfident().fit(X_tr, Y_tr, MODELS)
+    cal = CalibratedPredictor.wrap(raw).calibrate(X_va, Y_va)
+    before = quality_report(raw.predict_proba(X_te), Y_te)
+    after = quality_report(cal.predict_proba(X_te), Y_te)
+    assert after["ece"] < before["ece"] / 2
+    assert after["brier"] < before["brier"]
+
+
+def test_ensemble_averages_members(data):
+    (X_tr, Y_tr, _, _), (X_te, Y_te, _, _) = data
+    a = KNNPredictor(k=32).fit(X_tr, Y_tr, MODELS)
+    b = ModelMeanPredictor().fit(X_tr, Y_tr, MODELS)
+    ens = EnsemblePredictor.of_fitted([a, b], weights=[3, 1])
+    expected = 0.75 * a.predict_proba(X_te) + 0.25 * b.predict_proba(X_te)
+    assert np.allclose(ens.predict_proba(X_te), expected)
+
+
+def test_breakdown_puts_most_of_the_gap_in_hard_prompts(data):
+    (X_tr, Y_tr, _, _), (X_te, Y_te, C_te, _) = data
+    P = KNNPredictor(k=32).fit(X_tr, Y_tr, MODELS).predict_proba(X_te)
+    table = breakdown_by_difficulty(P, Y_te, C_te, tau=0.7)
+    assert set(table.bucket) == {"easy", "medium", "hard"}
+    assert abs(table.share.sum() - 1) < 1e-9
+    assert (table.gap >= -1e-9).all()  # the oracle is never worse
+    assert (table.oracle_accuracy >= table.best_single_accuracy - 1e-9).all()
+
+
+def test_held_out_saving_picks_tau_on_validation(data):
+    (X_tr, Y_tr, _, _), (X_te, Y_te, C_te, _) = data
+    X_va, Y_va, C_va, _ = make_data(800, seed=2, missing=0.0)
+    knn = KNNPredictor(k=32).fit(X_tr, Y_tr, MODELS)
+    got = held_out_saving(
+        knn.predict_proba(X_va), Y_va, C_va, knn.predict_proba(X_te), Y_te, C_te, MODELS
+    )
+    assert got["reference"] == "always large"
+    if got["matched"]:
+        assert 0.05 <= got["tau"] <= 0.95
+        assert got["within_tolerance"] == (got["acc_gap"] <= 0.01)
+        assert got["cost_saving_pct"] <= 100
+
+
+def test_held_out_saving_closest_falls_back_to_most_accurate_tau(data):
+    (X_tr, Y_tr, _, _), (X_te, Y_te, C_te, _) = data
+    X_va, Y_va, C_va, _ = make_data(800, seed=2, missing=0.0)
+    knn = KNNPredictor(k=32).fit(X_tr, Y_tr, MODELS)
+    args = (knn.predict_proba(X_va), Y_va, C_va, knn.predict_proba(X_te), Y_te, C_te, MODELS)
+    grid = np.round(np.arange(0.50, 1.0, 0.01), 2)
+    strict = held_out_saving(*args, tolerance=-1.0, taus=grid)  # impossible target
+    assert not strict["matched"]
+    got = held_out_saving(*args, tolerance=-1.0, taus=grid, closest=True)
+    assert got["matched"] and got["tau"] in grid
+    assert not got["within_tolerance"]
+
+
+def test_margin_makes_tau_choice_more_cautious(data):
+    (X_tr, Y_tr, _, _), (X_te, Y_te, C_te, _) = data
+    X_va, Y_va, C_va, _ = make_data(800, seed=2, missing=0.0)
+    knn = KNNPredictor(k=32).fit(X_tr, Y_tr, MODELS)
+    args = (knn.predict_proba(X_va), Y_va, C_va, knn.predict_proba(X_te), Y_te, C_te, MODELS)
+    grid = np.round(np.arange(0.50, 1.0, 0.01), 2)
+    loose = held_out_saving(*args, tolerance=0.02, taus=grid, closest=True)
+    safe = held_out_saving(*args, tolerance=0.02, taus=grid, closest=True, z=2.0)
+    assert safe["tau"] >= loose["tau"]
+
+
+def test_knn_search_matches_sklearn_and_reuses_last_answer():
+    from sklearn.neighbors import NearestNeighbors
+
+    rng = np.random.default_rng(0)
+    X, Q = rng.normal(size=(500, 16)), rng.normal(size=(7, 16))
+    knn = KNNPredictor(k=10).fit(X, rng.random((500, 3)), ["a", "b", "c"])
+    sim, idx = knn.neighbours(Q)
+    dist, ref = NearestNeighbors(n_neighbors=10, metric="cosine").fit(X).kneighbors(Q)
+    assert (idx == ref).all()
+    assert np.allclose(sim, 1 - dist, atol=1e-5)
+    assert knn.neighbours(Q)[1] is idx  # same query: cached
+    import pickle
+
+    assert not hasattr(pickle.loads(pickle.dumps(knn)), "_last")
+
+
+def test_held_out_saving_reports_a_gap_interval(data):
+    (X_tr, Y_tr, _, _), (X_te, Y_te, C_te, _) = data
+    X_va, Y_va, C_va, _ = make_data(800, seed=2, missing=0.0)
+    knn = KNNPredictor(k=32).fit(X_tr, Y_tr, MODELS)
+    args = (knn.predict_proba(X_va), Y_va, C_va, knn.predict_proba(X_te), Y_te, C_te, MODELS)
+    got = held_out_saving(*args, tolerance=0.02, closest=True)
+    lo, hi = got["acc_gap_ci90"]
+    assert lo <= got["acc_gap"] + 1e-9 and got["acc_gap"] <= hi + 1e-9

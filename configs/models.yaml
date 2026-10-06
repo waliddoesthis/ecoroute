@@ -1,0 +1,146 @@
+# EcoRoute model catalog (starting pool). See docs/model-research.md.
+#
+# price_*_per_mtok : USD per 1M tokens, standard tier, as of 2026-10-01.
+#                    Anthropic prices are official; others come from aggregators. Check before production.
+# energy           : Wh per 1K output tokens.
+#                    source "measured": we measure it on the GPU (NVML).
+#                    source "prior": order-of-magnitude estimate by tier; providers do not publish
+#                    per-model numbers. Replace with measurements whenever possible.
+# clearance        : highest confidentiality level this model may receive
+#                    (public < internal < confidential < restricted).
+#                    External APIs default to "internal"; raise to "confidential" only with a
+#                    zero-data-retention / DPA contract in place.
+# api_id           : null means the exact provider model ID still has to be confirmed.
+# label_source     : how the router learns this model's ability (see docs/zero-cost-plan.md):
+#                    free_eval (we grade it on free compute / free API tier),
+#                    benchmark_prior (placed from published benchmark scores, no API calls).
+# anchor           : how the trained predictor scores this model (see predictors/catalog.py):
+#                    logit P = logit P(anchor model) + shift. Anchors are SPROUT models of a
+#                    similar tier, ordered by their SPROUT accuracy. source "prior" shifts only
+#                    encode tier order (0, or +0.25 to separate the top tier from its anchor);
+#                    replace them with fitted shifts from a few hundred graded answers.
+# enabled          : false keeps an entry for reference without routing to it.
+
+levels: [public, internal, confidential, restricted]
+
+models:
+  - name: llama-3.1-8b-local
+    tier: 0
+    provider: local-ollama
+    api_id: llama3.1:8b-instruct-q4_K_M
+    context: 131072
+    price_in_per_mtok: 0.0
+    price_out_per_mtok: 0.0
+    energy: {wh_per_1k_out: null, source: measured}
+    clearance: restricted
+    label_source: free_eval
+    # The same model SPROUT grades, so its predictions need no shift. 4-bit may cost a little
+    # accuracy against the full-precision scores; a fitted shift will measure it.
+    anchor: {model: llama-3.1-8b-instruct, shift: 0.0, source: prior}
+    # Self-hosted, so it is costed from its hardware (see Router.true_cost): electricity
+    # while generating plus the GPU's hourly cost. 215 W is the RTX 2070 Super board power;
+    # tokens_per_second is an estimate for an 8B 4-bit model, replace with a measurement.
+    # gpu_usd_per_hour: what an hour of this GPU costs you (rental, or purchase spread over
+    # its life); 0 counts only the electricity.
+    hosting: {gpu_watts: 215, tokens_per_second: 50, gpu_usd_per_hour: 0.0}
+    notes: "Runs on an 8 GB GPU through Ollama (about 5 GB at 4-bit)."
+
+  - name: qwen3.6-35b-a3b-local
+    enabled: false
+    tier: 0
+    provider: local-vllm
+    api_id: Qwen/Qwen3.6-35B-A3B
+    context: 131072
+    price_in_per_mtok: 0.0
+    price_out_per_mtok: 0.0
+    energy: {wh_per_1k_out: null, source: measured}
+    clearance: restricted
+    label_source: free_eval
+    anchor: {model: llama-3.3-70b-instruct, shift: 0.0, source: prior}
+    hosting: {gpu_watts: 300, tokens_per_second: 60, gpu_usd_per_hour: 0.8}
+    notes: "Needs a 24 GB GPU (e.g. a rented L4/A10). Hosting numbers are estimates."
+
+  - name: gpt-6-luna
+    tier: 1
+    provider: openai
+    api_id: null
+    context: 1050000
+    price_in_per_mtok: 0.10
+    price_out_per_mtok: 0.50
+    energy: {wh_per_1k_out: 0.05, source: prior}
+    clearance: internal
+    label_source: benchmark_prior
+    anchor: {model: gpt-4o-mini, shift: 0.0, source: prior}
+
+  - name: gemini-3.1-flash-lite
+    tier: 1
+    provider: google
+    api_id: null
+    context: 1000000
+    price_in_per_mtok: 0.25
+    price_out_per_mtok: 1.50
+    energy: {wh_per_1k_out: 0.05, source: prior}
+    clearance: internal
+    label_source: benchmark_prior
+    anchor: {model: gpt-4o-mini, shift: 0.0, source: prior}
+
+  - name: claude-haiku-4-5
+    tier: 2
+    provider: anthropic
+    api_id: claude-haiku-4-5
+    context: 200000
+    price_in_per_mtok: 1.00
+    price_out_per_mtok: 5.00
+    energy: {wh_per_1k_out: 0.15, source: prior}
+    clearance: internal
+    label_source: benchmark_prior
+    anchor: {model: claude-3.5-sonnet, shift: 0.0, source: prior}
+
+  - name: gemini-3.8-flash
+    tier: 2
+    provider: google
+    api_id: null
+    context: 1000000
+    price_in_per_mtok: 0.75
+    price_out_per_mtok: 3.75
+    energy: {wh_per_1k_out: 0.15, source: prior}
+    clearance: internal
+    label_source: free_eval
+    anchor: {model: claude-3.5-sonnet, shift: 0.0, source: prior}
+
+  - name: claude-sonnet-5-5
+    tier: 3
+    provider: anthropic
+    api_id: claude-sonnet-5-5
+    context: 1000000
+    price_in_per_mtok: 2.00
+    price_out_per_mtok: 10.00
+    energy: {wh_per_1k_out: 0.4, source: prior}
+    clearance: internal
+    label_source: benchmark_prior
+    anchor: {model: gpt-4o, shift: 0.0, source: prior}
+
+  - name: gemini-3.1-pro
+    tier: 3
+    provider: google
+    api_id: null
+    context: 1000000
+    price_in_per_mtok: 2.00
+    price_out_per_mtok: 12.00
+    long_context_price: {above_tokens: 200000, price_in_per_mtok: 4.00, price_out_per_mtok: 18.00}
+    energy: {wh_per_1k_out: 0.4, source: prior}
+    clearance: internal
+    label_source: benchmark_prior
+    anchor: {model: gpt-4o, shift: 0.0, source: prior}
+
+  - name: claude-opus-5-5
+    tier: 4
+    provider: anthropic
+    api_id: claude-opus-5-5
+    context: 1000000
+    price_in_per_mtok: 4.00
+    price_out_per_mtok: 20.00
+    energy: {wh_per_1k_out: 1.0, source: prior}
+    clearance: internal
+    label_source: benchmark_prior
+    anchor: {model: gpt-4o, shift: 0.25, source: prior}

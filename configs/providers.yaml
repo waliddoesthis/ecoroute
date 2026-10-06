@@ -1,0 +1,20 @@
+# Where the gateway sends requests, per `provider` in models.yaml. Every entry speaks the
+# OpenAI Chat Completions API. API keys are read from the named environment variable and
+# never stored here. Check each base_url against the provider's docs before production.
+
+providers:
+  local-ollama:
+    base_url: http://localhost:11434/v1
+    api_key_env: null
+  local-vllm:
+    base_url: http://localhost:8000/v1
+    api_key_env: null
+  openai:
+    base_url: https://api.openai.com/v1
+    api_key_env: OPENAI_API_KEY
+  google:
+    base_url: https://generativelanguage.googleapis.com/v1beta/openai
+    api_key_env: GEMINI_API_KEY
+  anthropic:
+    base_url: https://api.anthropic.com/v1
+    api_key_env: ANTHROPIC_API_KEY
