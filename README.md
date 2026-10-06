@@ -85,7 +85,13 @@ python scripts/train_router.py --data data/processed --out artifacts/router.pt
 python scripts/route_demo.py --router artifacts/router.pt
 ```
 
-The router is trained on SPROUT and scores the catalog models in `configs/models.yaml`
+The router is a weighted graph: prompt -> skills (from the task labels) -> difficulty
+(easy / medium / hard) -> models, where each skill-and-difficulty edge to a model is the
+share of such training prompts it answered correctly. A model's score is the sum over its
+paths, and the heaviest paths are printed in the explanation. `--predictor ensemble`
+trains the kNN/MF/IRT/MLP ensemble instead, for comparison.
+
+It is trained on SPROUT and scores the catalog models in `configs/models.yaml`
 through their `anchor` (a SPROUT model of similar tier plus a logit shift). Shifts marked
 `source: prior` only encode tier order; fit real ones with `CatalogPredictor.fit_shift()`
 on a few hundred graded answers per model.

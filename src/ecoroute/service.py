@@ -59,6 +59,15 @@ class EcoRoute:
     def predict(self, prompt: str) -> dict[str, float]:
         return self.predictor.predict_one(self.embed([prompt])[0])
 
+    def graph(self):
+        """The SkillGraph behind the predictor, if there is one (possibly calibrated)."""
+        from ecoroute.graph import SkillGraph
+
+        p = self.predictor.base
+        while p is not None and not isinstance(p, SkillGraph):
+            p = getattr(p, "base", None)
+        return p
+
     def route(
         self,
         prompt: str,
@@ -67,11 +76,23 @@ class EcoRoute:
         policy: str | Policy | None = None,
         scan_text: str | None = None,
     ) -> Decision:
-        return self.router.decide(
+        x = self.embed([prompt])[0]
+        decision = self.router.decide(
             prompt,
-            self.predict(prompt),
+            self.predictor.predict_one(x),
             context=context,
             out_tokens=out_tokens,
             policy=policy,
             scan_text=scan_text,
         )
+        graph = self.graph()
+        if graph is not None:
+            # Show the graph paths behind the choice, through the chosen model's anchor.
+            anchor = self.predictor.anchors.get(decision.model)
+            lines = graph.explain(x).lines(anchor.model if anchor else None)
+            if anchor is not None and len(lines) > 1:
+                lines[1] = lines[1].replace(
+                    f"to {anchor.model}:", f"to {decision.model} (via {anchor.model}):"
+                )
+            decision.steps[1:1] = lines
+        return decision
