@@ -31,7 +31,13 @@ import torch
 
 from ecoroute.confidentiality import Level, NERLayer, RulesLayer
 from ecoroute.confidentiality.detector import combined_level
-from ecoroute.confidentiality.ner import DEFAULT_MODEL, LABEL_LEVELS, WEAK_KINDS, hf_tagger
+from ecoroute.confidentiality.ner import (
+    DEFAULT_KIND_MIN,
+    DEFAULT_MODEL,
+    LABEL_LEVELS,
+    WEAK_KINDS,
+    hf_tagger,
+)
 from ecoroute.confidentiality.rules import Finding
 
 WEAK_SETS = {
@@ -81,6 +87,12 @@ def main() -> None:
     parser.add_argument("--device", type=int, default=None, help="GPU index for the PII model")
     parser.add_argument("--fp16", action="store_true", help="half-precision PII model (GPU)")
     parser.add_argument("--out", type=Path, default=Path("reports/confidentiality.json"))
+    parser.add_argument(
+        "--dump-misses",
+        type=Path,
+        default=None,
+        help="write the restricted texts the default setting misses (JSON lines) here",
+    )
     args = parser.parse_args()
 
     from datasets import load_dataset
@@ -188,6 +200,21 @@ def main() -> None:
         & (with_ner.pii_recall >= args.min_pii_recall)
     ]
     best = ok.sort_values("false_alarm_rate").iloc[0].to_dict() if len(ok) else None
+    if args.dump_misses is not None:
+        # ai4privacy texts are synthetic, so they can be written out for inspection.
+        default = (0.5, frozenset(), DEFAULT_KIND_MIN)
+        with args.dump_misses.open("w") as fh:
+            for text, e, mask, f in zip(texts, expected, ds["privacy_mask"], scanned_pii):
+                kept = apply_min_score(f, default[0], default[2])
+                if e == Level.RESTRICTED and combined_level(kept, Level.INTERNAL) < e:
+                    row = {
+                        "text": text,
+                        "labels": [(m["label"], m.get("value")) for m in mask],
+                        "found": [(x.kind, text[x.start : x.end], round(x.score, 2))
+                                  for x in f if x.score >= 0.1],
+                    }  # fmt: skip
+                    fh.write(json.dumps(row) + "\n")
+        print(f"wrote missed restricted texts to {args.dump_misses}")
     print("\nrecommended:", json.dumps(best, indent=2, default=str))
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(
