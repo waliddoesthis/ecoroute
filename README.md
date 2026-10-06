@@ -1,9 +1,15 @@
 # EcoRoute
 
-An explainable, eco-aware LLM router behind an OpenAI-compatible gateway. For every prompt
-it picks the cheapest, lowest-energy model that is predicted to answer it correctly. It
-never sends confidential data to a model that isn't cleared for it, and it explains each
-decision.
+**Privacy-constrained, explainable cost routing for enterprise LLM traffic.**
+
+Companies send most LLM requests to their most capable model, even though many of those
+requests would be answered just as well by a model that costs a fraction as much. Many
+companies also cannot let confidential data reach external providers. EcoRoute is an
+OpenAI-compatible gateway that solves both, request by request:
+
+1. A privacy filter removes every model that isn't cleared for the data.
+2. A decision graph predicts which of the remaining models will answer correctly.
+3. The cheapest model predicted to succeed is chosen, and the reason is stated.
 
 Apps keep their OpenAI client and change only `base_url` and `model="ecoroute/auto"`.
 
@@ -11,23 +17,63 @@ Apps keep their OpenAI client and change only `base_url` and `model="ecoroute/au
 
 | | |
 |---|---|
-| **70% lower cost** | than always using GPT-4o, at the same accuracy (default profile; 0.3 points lower, within its 1-point target) |
-| **99% of restricted data kept local** | keys, account and ID numbers, cards never reach an external model |
-| **97% of personal data caught** | names, addresses, emails, phones, with 7.6% false alarms on ordinary prompts |
-| **72 ms per decision** | privacy check + prediction + explanation on a T4 GPU, small next to the LLM call |
-| **Every decision explained** | which models were cleared, who is likely to succeed, and why this one was chosen |
-| **$0 to build** | open benchmark data only, trained on Lightning AI's free tier |
+| **70% lower LLM cost** | than always using GPT-4o at the same accuracy (default profile: 0.3 points lower, inside its 1-point target, 90% CI) |
+| **About $540k a year** | saved at 10M requests a month, estimated from that measured rate ([impact.md](docs/impact.md)) |
+| **About half the energy per request** | against always using the top deployed model; about 13 t CO2 a year avoided at 10M requests a month (estimate) |
+| **99% of restricted data kept in-house** | keys, account and ID numbers and cards never reach an external model |
+| **97% of personal data caught** | names, addresses, emails and phones, with 7.6% false alarms on ordinary prompts |
+| **74 ms per decision** | privacy check, prediction and explanation on one T4 GPU, small next to the LLM call |
+| **Every decision explained** | which models were cleared, which are likely to succeed, and why this one was chosen |
+| **Drop-in** | OpenAI-compatible; sits behind existing API gateways, LLM proxies and DLP labels |
 
 ![Cost saved vs always using GPT-4o, per profile](docs/img/savings.svg)
 
-For every $100 an app spends sending all prompts to GPT-4o, EcoRoute's default profile
-spends about $30, and its answers are as accurate to within a third of a point.
+## Documentation
+
+| Document | For |
+|---|---|
+| [Technical report](docs/report.md) | Method, datasets, evaluation protocol, results with confidence intervals, ablations, limitations |
+| [Enterprise integration](docs/enterprise-integration.md) | Where it sits in a company's stack, compliance, deployment, observability, rollout |
+| [Impact estimates](docs/impact.md) | Cost, energy and CO2 at company volumes, with every assumption stated |
+| [How it decides](docs/how-it-decides.md) | The decision path step by step |
+
+## How it works
+
+```mermaid
+flowchart LR
+    R[Request] --> F{Privacy filter<br/>caller label, rules, PII model}
+    F -->|removes uncleared models| G[Decision graph<br/>P correct per model]
+    G --> D[Cheapest model above<br/>the profile's threshold]
+    D --> M[Model call]
+    D -.-> X[Explanation headers]
+```
+
+1. **Privacy filter (hard rule).** The prompt and the whole conversation are classified as
+   public, internal, confidential or restricted. The classification combines the caller's
+   DLP label, deterministic rules and a PII model
+   ([piiranha](https://huggingface.co/iiiorg/piiranha-v1-detect-personal-information)).
+   - The rules cover secrets, cards (Luhn), IBANs, SSNs, labelled and long ID numbers,
+     emails and phones.
+   - Models whose `clearance` is below the level are removed, and nothing can override
+     this.
+2. **Decision graph.** The prompt is linked to skills (code, math, chat, ...), to a
+   difficulty level and to the most similar past prompts. Each path ends at a model with
+   the share of such prompts that model answered correctly. The result is a calibrated
+   P(correct) for every model, plus the heaviest paths that explain it.
+3. **Cost and energy.** Among the cleared models at or above the profile's threshold,
+   EcoRoute takes the one with the lowest `cost + lambda * energy`. If none reaches the
+   threshold, it takes the most likely model, or the cheapest one within a small, tested
+   margin of it.
+
+Every response carries the decision in its headers: `X-EcoRoute-Model`, `-Level`,
+`-Difficulty`, `-Reason` and `-Time-Ms`.
 
 ## Results
 
-Router v14, measured on held-out SPROUT test prompts against always using GPT-4o (accuracy
-0.845). Thresholds are chosen on validation prompts the router never trained or calibrated
-on, and every 90% interval stays inside its profile's target.
+These results are for router v14 on held-out SPROUT test prompts, against always using
+GPT-4o (accuracy 0.845). Thresholds are chosen on validation prompts the router never
+trained or calibrated on, with a 95% one-sided margin. Every 90% interval stays inside
+its profile's target.
 
 | Profile  | Accuracy target       | Points lost vs GPT-4o (90% CI)   | Cost saved |
 |----------|-----------------------|----------------------------------|------------|
@@ -35,42 +81,18 @@ on, and every 90% interval stays inside its profile's target.
 | balanced | at most 1 point lost  | 0.3 (-0.4 to 1.0)                | 70%        |
 | eco      | at most 3 points lost | 1.6 (0.8 to 2.3)                 | 75%        |
 
-- **Privacy filter** (2,000 texts with personal data, 2,000 ordinary prompts): 99.0% of
-  texts with restricted data and 96.7% of texts with any personal data are kept off
-  external models; 7.6% false alarms. About 31 ms per request on a T4.
-- **Coding prompts (BigCodeBench):** 48% to 60% cheaper than GPT-4o for 1.8 points lower
-  accuracy. Telling hard coding tasks from easy ones is still the weakest part (AUC 0.65).
-- **Speed:** a full routing decision takes about 72 ms on a T4 GPU; each response reports
-  the time per stage in `X-EcoRoute-Time-Ms`.
-- **End to end (run 37):** `scripts/e2e_check.py` on router v14 with the PII model passes
-  all 16 checks through the real HTTP gateway: secrets, emails, bare account numbers,
-  caller labels and names with addresses all stay on the local model; matched secrets are
-  never echoed; uncleared or unknown models are refused; profiles and streaming behave.
-- **Graph vs black box:** a kNN/MF/IRT/MLP ensemble under the same protocol saves about the
-  same (66.5% vs 64.9% in run 31), but the graph is better calibrated and explains itself.
-
-The method, every number and how it was measured are in
-[`docs/how-it-decides.md`](docs/how-it-decides.md).
-
-## How it decides
-
-1. **Privacy filter (hard rule).** The prompt and the whole conversation are classified as
-   public, internal, confidential or restricted. The check combines the caller's label,
-   deterministic rules (secrets, cards with Luhn, IBANs, SSNs, labelled and long ID
-   numbers, emails, phones) and a PII model
-   ([piiranha](https://huggingface.co/iiiorg/piiranha-v1-detect-personal-information)).
-   Models whose `clearance` is below the level are removed. Nothing can override this.
-2. **Decision graph.** The prompt is linked to skills (code, math, chat, ...), to a
-   difficulty level, and to the most similar past prompts. Each path ends at a model with
-   the share of such prompts that model answered correctly. The result is a calibrated
-   P(correct) for every model, plus the heaviest paths that explain it.
-3. **Cost and energy.** Among the allowed models with P(correct) at or above the profile's
-   threshold, take the one with the lowest `cost + lambda * energy`. If none reaches the
-   threshold, take the most likely model, or the cheapest one within the profile's small
-   fallback margin of it.
-
-Every response carries the decision in headers: `X-EcoRoute-Model`, `-Level`,
-`-Difficulty`, `-Reason` and `-Time-Ms`.
+- **Privacy filter**, measured on 2,000 texts with personal data and 2,000 ordinary
+  prompts:
+  - 99.0% of texts with restricted data and 96.7% of texts with any personal data are
+    kept off external models;
+  - false alarms are 7.6%.
+- **Coding prompts (BigCodeBench):** 48% to 60% cheaper than GPT-4o, at 1.8 points lower
+  accuracy.
+- **End to end:** `scripts/e2e_check.py` passes all 16 checks through the real HTTP
+  gateway: privacy, refusals, profiles and streaming.
+- **Ablations:** the [report](docs/report.md#42-ablations) covers each design choice and
+  what it changed, including a leak in an earlier evaluation protocol that was found and
+  fixed.
 
 ## Quick start
 
@@ -188,6 +210,17 @@ can also run the commands above directly.
 | `scripts/train_baselines.py` | Baseline predictors on SPROUT and RouterBench |
 | `scripts/sweep_graph.py` | The graph's settings, chosen on validation only |
 
+## Limitations
+
+- Savings are measured on public benchmark prompts and list prices. A company's own
+  savings depend on its prompt mix, so fit the deployed models on a few hundred internally
+  graded answers ([rollout](docs/enterprise-integration.md#6-rollout)).
+- Predicting which model solves a coding task is the weakest part (AUC 0.65).
+- Energy for API models uses published-order-of-magnitude priors, because providers don't
+  publish per-model figures. Energy results are estimates.
+- The privacy filter is a technical control alongside existing DLP, not a compliance
+  certification.
+
 ## Repository layout
 
 ```
@@ -201,9 +234,20 @@ src/ecoroute/
   data/, eval/      dataset loaders and routing metrics
   service.py        EcoRoute: embed, predict, decide (save/load the router file)
 scripts/      build, train, evaluate, serve
-docs/         how-it-decides.md (method and results), design notes and research
+docs/         report, enterprise integration, impact, how-it-decides, design notes
 ```
 
 Design background: [`docs/brainstorm.md`](docs/brainstorm.md),
 [`docs/model-research.md`](docs/model-research.md),
 [`docs/zero-cost-plan.md`](docs/zero-cost-plan.md).
+
+## Citation
+
+```bibtex
+@software{ecoroute2026,
+  author = {Walid},
+  title  = {EcoRoute: Privacy-Constrained, Explainable Cost Routing for Enterprise LLM Traffic},
+  year   = {2026},
+  url    = {https://github.com/waliddoesthis/ecoroute}
+}
+```

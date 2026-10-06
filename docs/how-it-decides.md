@@ -12,12 +12,13 @@ nothing else can bring them back. Layers run cheapest first and the strictest wi
 | Layer | Catches | Cost |
 |---|---|---|
 | Caller policy | sensitivity labels the calling app passes (`X-EcoRoute-Sensitivity`) | 0 ms |
-| Rules | keys and tokens, cards (Luhn), IBANs (mod-97), SSNs, emails, phones, IPs, company terms | < 1 ms |
-| PII model | names, addresses, IDs, passwords in free text (DeBERTa-v3 on ai4privacy) | ~120-160 ms CPU |
+| Rules | keys and tokens, cards (Luhn), IBANs (mod-97), SSNs, labelled IDs, long bare numbers, emails, phones, IPs, company terms | < 1 ms |
+| PII model | names, addresses, IDs, passwords in free text (DeBERTa-v3 on ai4privacy) | ~26 ms on a T4 |
 
 Once a prompt is restricted the slower layers are skipped. Measured on 2,000 labelled
-texts and 2,000 benchmark prompts (run 6c): restricted recall 0.90, personal-data recall
-0.975, ordinary prompts flagged 12%. Recall comes first: a false alarm only keeps a
+texts and 2,000 benchmark prompts (run 27): 99.0% of texts with restricted data and 96.7%
+with any personal data are kept off external models, and 7.6% of ordinary prompts are
+flagged. Recall comes first: a false alarm only keeps a
 prompt on a cleared model, a miss leaks it.
 
 ## 2. The decision graph: who is likely to answer correctly
