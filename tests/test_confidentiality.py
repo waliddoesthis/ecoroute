@@ -252,3 +252,13 @@ def test_scan_many_matches_scan_and_batches_pipeline_calls():
     assert many[1] == []
     assert [f.start for f in many[2]] == [251]
     assert many == [layer.scan(t) for t in texts]
+
+
+def test_kind_min_drops_low_scored_weak_kinds_only():
+    from ecoroute.confidentiality import NERLayer
+
+    tagger = fake_tagger([("GIVENNAME", "Amira", 0.6), ("SOCIALNUM", "AB123456", 0.6)])
+    text = "Amira has AB123456"
+    kinds = {f.kind for f in NERLayer(tagger, kind_min={"GIVENNAME": 0.85}).scan(text)}
+    assert kinds == {"socialnum"}
+    assert {f.kind for f in NERLayer(tagger).scan(text)} == {"givenname", "socialnum"}

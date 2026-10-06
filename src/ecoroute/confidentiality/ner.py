@@ -91,6 +91,7 @@ class NERLayer:
         window: int = 1500,
         overlap: int = 200,
         batch_size: int = 16,
+        kind_min: Mapping[str, float] | None = None,
     ) -> None:
         self._tagger = tagger
         self.threshold = threshold
@@ -106,6 +107,10 @@ class NERLayer:
         # Windows (and, in scan_many, prompts) go to a Hugging Face pipeline in batches:
         # on a GPU the per-call overhead costs more than the model itself.
         self.batch_size = batch_size
+        # Per-kind floor (lowercase kind -> score): below it a finding of that kind is
+        # dropped outright, without the grey zone. For kinds the model over-reports on
+        # ordinary prompts, such as first names and cities (see eval_confidentiality.py).
+        self.kind_min = {k.lower(): v for k, v in (kind_min or {}).items()}
 
     @property
     def tagger(self) -> Tagger:
@@ -150,6 +155,8 @@ class NERLayer:
                 level = self.label_levels.get(label)
                 score = float(ent["score"])
                 if level is None or score < self.grey:
+                    continue
+                if score < self.kind_min.get(label.lower(), 0.0):
                     continue
                 if score < self.threshold:
                     level = Level.CONFIDENTIAL

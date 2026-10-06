@@ -11,7 +11,8 @@ raised above internal.
 Each text is scanned once; the settings are then swept offline:
 - min_score: the PII model's confidence needed for a finding to keep its level (findings
   up to 0.2 below it still count, at confidential, as "uncertain means higher");
-- weak kinds: kinds that only count next to a second kind of personal data.
+- weak kinds: kinds that only count next to a second kind of personal data;
+- kind_min: per-kind score floors (NERLayer(kind_min=...)) for the noisiest kinds.
 The recommended setting is the one with the fewest false alarms that keeps restricted
 recall within 1 point of the best and PII recall at or above --min-pii-recall.
 """
@@ -39,6 +40,15 @@ WEAK_SETS = {
     "all weak kinds": WEAK_KINDS,
 }
 MIN_SCORES = (0.5, 0.7, 0.85, 0.95)
+# Per-kind floors swept on top of min_score 0.5: the weak kinds and passwords cause most
+# false alarms on ordinary prompts (run 16: names, cities, building numbers, passwords).
+KIND_FLOORS = {
+    "weak 0.7": dict.fromkeys(WEAK_KINDS, 0.7),
+    "weak 0.85": dict.fromkeys(WEAK_KINDS, 0.85),
+    "weak 0.95": dict.fromkeys(WEAK_KINDS, 0.95),
+    "weak 0.85, password 0.9": {**dict.fromkeys(WEAK_KINDS, 0.85), "password": 0.9},
+    "weak 0.95, password 0.95": {**dict.fromkeys(WEAK_KINDS, 0.95), "password": 0.95},
+}
 
 
 def expected_level(labels: list[str]) -> Level:
@@ -47,9 +57,14 @@ def expected_level(labels: list[str]) -> Level:
     return max(known) if known else Level.INTERNAL
 
 
-def apply_min_score(findings: list[Finding], min_score: float) -> list[Finding]:
+def apply_min_score(
+    findings: list[Finding], min_score: float, kind_min: dict[str, float] | None = None
+) -> list[Finding]:
+    kind_min = kind_min or {}
     out = []
     for f in findings:
+        if f.layer == "pii_ner" and f.score < kind_min.get(f.kind, 0.0):
+            continue
         if f.layer != "pii_ner" or f.score >= min_score:
             out.append(f)
         elif f.score >= min_score - 0.2:
@@ -108,11 +123,13 @@ def main() -> None:
     ms = float(p50)
 
     def score(settings, use_ner=True):
-        min_score, weak = settings
+        min_score, weak, kind_min = settings
 
         def level(f):
             kept = (
-                apply_min_score(f, min_score) if use_ner else [x for x in f if x.layer != "pii_ner"]
+                apply_min_score(f, min_score, kind_min)
+                if use_ner
+                else [x for x in f if x.layer != "pii_ner"]
             )
             return combined_level(kept, Level.INTERNAL, weak)
 
@@ -123,7 +140,7 @@ def main() -> None:
         for f in scanned_benign:
             if level(f) > Level.INTERNAL:
                 alarms += 1
-                kept = apply_min_score(f, min_score) if use_ner else f
+                kept = apply_min_score(f, min_score, kind_min) if use_ner else f
                 kinds.update({x.kind for x in kept if x.level > Level.INTERNAL})
         return {
             "restricted_recall": sum(g == Level.RESTRICTED for g in restricted)
@@ -133,10 +150,21 @@ def main() -> None:
             "false_alarms_by_kind": dict(kinds.most_common(6)),
         }
 
-    rows = [{"min_score": None, "weak": "rules only", **score((1.0, frozenset()), use_ner=False)}]
+    rows = [
+        {"min_score": None, "weak": "rules only", "kind_min": "-",
+         **score((1.0, frozenset(), None), use_ner=False)}
+    ]  # fmt: skip
     for min_score in MIN_SCORES:
         for name, weak in WEAK_SETS.items():
-            rows.append({"min_score": min_score, "weak": name, **score((min_score, weak))})
+            rows.append(
+                {"min_score": min_score, "weak": name, "kind_min": "-",
+                 **score((min_score, weak, None))}
+            )  # fmt: skip
+    for name, floors in KIND_FLOORS.items():
+        rows.append(
+            {"min_score": 0.5, "weak": "none", "kind_min": name,
+             **score((0.5, frozenset(), floors))}
+        )  # fmt: skip
     table = pd.DataFrame(rows)
     print(
         table.drop(columns="false_alarms_by_kind").to_string(
