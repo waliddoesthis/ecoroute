@@ -63,11 +63,20 @@ class NERLayer:
         threshold: float = 0.5,
         grey: float = 0.3,
         label_levels: Mapping[str, Level] = LABEL_LEVELS,
+        window: int = 1500,
+        overlap: int = 200,
     ) -> None:
         self._tagger = tagger
         self.threshold = threshold
         self.grey = grey
         self.label_levels = dict(label_levels)
+        # Long prompts are scanned in overlapping character windows: the model's memory
+        # grows with the square of the input length, and a value cut by one window's edge
+        # is whole in the next.
+        if overlap >= window:
+            raise ValueError("overlap must be smaller than window")
+        self.window = window
+        self.overlap = overlap
 
     @property
     def tagger(self) -> Tagger:
@@ -75,18 +84,27 @@ class NERLayer:
             self._tagger = hf_tagger()
         return self._tagger
 
+    def windows(self, text: str) -> list[int]:
+        """Start offsets of the windows covering the whole text."""
+        step = self.window - self.overlap
+        return list(range(0, max(1, len(text) - self.overlap), step))
+
     def scan(self, text: str, context: Mapping | None = None) -> list[Finding]:
         if not text.strip():
             return []
-        out = []
-        for ent in self.tagger(text):
-            label = str(ent.get("entity_group") or ent.get("entity", "")).upper()
-            label = label.removeprefix("B-").removeprefix("I-")
-            level = self.label_levels.get(label)
-            score = float(ent["score"])
-            if level is None or score < self.grey:
-                continue
-            if score < self.threshold:
-                level = Level.CONFIDENTIAL
-            out.append(Finding(label.lower(), level, int(ent["start"]), int(ent["end"]), self.name))
-        return out
+        found: dict[tuple[str, int, int], Finding] = {}
+        for offset in self.windows(text):
+            for ent in self.tagger(text[offset : offset + self.window]):
+                label = str(ent.get("entity_group") or ent.get("entity", "")).upper()
+                label = label.removeprefix("B-").removeprefix("I-")
+                level = self.label_levels.get(label)
+                score = float(ent["score"])
+                if level is None or score < self.grey:
+                    continue
+                if score < self.threshold:
+                    level = Level.CONFIDENTIAL
+                start, end = offset + int(ent["start"]), offset + int(ent["end"])
+                key = (label, start, end)
+                if key not in found or level > found[key].level:  # overlap seen twice
+                    found[key] = Finding(label.lower(), level, start, end, self.name)
+        return sorted(found.values(), key=lambda f: f.start)

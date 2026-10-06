@@ -17,6 +17,7 @@ import time
 from pathlib import Path
 
 import pandas as pd
+import torch
 
 from ecoroute.confidentiality import CallerPolicyLayer, Detector, Level, NERLayer, RulesLayer
 from ecoroute.confidentiality.ner import DEFAULT_MODEL, LABEL_LEVELS, hf_tagger
@@ -65,6 +66,7 @@ def main() -> None:
         .prompt.tolist()
     )
 
+    torch.set_grad_enabled(False)
     rules = Detector([CallerPolicyLayer(), RulesLayer()])
     full = Detector([CallerPolicyLayer(), RulesLayer(), NERLayer(hf_tagger(args.model))])
     report = {}

@@ -162,3 +162,27 @@ def test_ner_findings_can_be_redacted():
     assert masked == "Write a birthday note for <GIVENNAME_1>" and restore(
         masked, mapping
     ).endswith("Amira")
+
+
+def test_ner_scans_long_text_in_bounded_windows():
+    from ecoroute.confidentiality import NERLayer
+
+    seen = []
+
+    def tagger(chunk):
+        seen.append(len(chunk))
+        i = chunk.find("Amira")
+        return (
+            []
+            if i < 0
+            else [{"entity_group": "GIVENNAME", "score": 0.99, "start": i, "end": i + 5}]
+        )
+
+    text = "x" * 5000 + " Amira " + "y" * 5000
+    layer = NERLayer(tagger, window=1000, overlap=100)
+    got = layer.scan(text)
+    assert max(seen) <= 1000 and len(got) == 1  # found once despite overlapping windows
+    assert text[got[0].start : got[0].end] == "Amira"
+    # A name straddling a window edge is whole in the next window.
+    edge = "z" * 997 + "Amira" + "z" * 50
+    assert [text_f.kind for text_f in layer.scan(edge)] == ["givenname"]
