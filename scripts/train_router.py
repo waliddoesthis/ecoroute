@@ -18,7 +18,7 @@ import pandas as pd
 import yaml
 
 from ecoroute.data.prices import fill_missing_costs
-from ecoroute.eval.metrics import held_out_saving, quality_report
+from ecoroute.eval.metrics import evaluate_at_tau, held_out_saving, quality_report
 from ecoroute.features.embed import DEFAULT_ENCODER, cached_embeddings
 from ecoroute.graph import SkillGraph, skill_name
 from ecoroute.routing import PROFILE_TOLERANCE
@@ -38,7 +38,12 @@ from ecoroute.service import EcoRoute
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--data", type=Path, default=Path("data/processed"))
-    parser.add_argument("--source", default="sprout")
+    parser.add_argument(
+        "--source",
+        nargs="+",
+        default=["sprout", "bigcodebench"],
+        help="outcome sources to train on (bigcodebench adds coding prompts)",
+    )
     parser.add_argument("--encoder", default=DEFAULT_ENCODER)
     parser.add_argument("--epochs", type=int, default=20)
     parser.add_argument("--catalog", type=Path, default=Path("configs/models.yaml"))
@@ -52,16 +57,18 @@ def main() -> None:
     args = parser.parse_args()
 
     outcomes = fill_missing_costs(pd.read_parquet(args.data / "outcomes.parquet"))
-    outcomes = outcomes[outcomes.source == args.source]
+    outcomes = outcomes[outcomes.source.isin(args.source)]
+    print("training sources: " + outcomes.source.value_counts().to_string().replace("\n", ", "))
     models = sorted(outcomes.model.unique())
     cache = args.data / f"embeddings_{args.encoder.replace('/', '_')}.npz"
-    data, skills = {}, {}
+    data, skills, sources = {}, {}, {}
     for split in ("train", "val", "test"):
         part = outcomes[outcomes.split == split].drop_duplicates("prompt_id")
         ids = part.prompt_id.tolist()
         X = cached_embeddings(ids, part.prompt.tolist(), cache, encoder=args.encoder)
         data[split] = (X, outcome_matrix(outcomes, ids, models), cost_matrix(outcomes, ids, models))
         skills[split] = part.task.map(skill_name).to_numpy()
+        sources[split] = part.source.to_numpy()
     (X_tr, Y_tr, _), (X_va, Y_va, C_va), (X_te, Y_te, C_te) = (
         data["train"],
         data["val"],
@@ -150,6 +157,26 @@ def main() -> None:
             f"validation ({h['n_val']} prompts) gap {100 * h['val_gap']:.2f}, "
             f"bound {100 * h['val_gap_bound']:.2f}"
         )
+
+    # Coding prompts lack outcomes for a few models, so the all-models comparisons above
+    # skip them. Measure them on their own, among the models BigCodeBench covers.
+    code = sources["test"] == "bigcodebench"
+    if code.any():
+        Yc, Cc, Pc = Y_te[code], C_te[code], P_te[code]
+        seen = ~np.isnan(Yc).any(axis=0)
+        cols = [m for m, s_ in zip(models, seen) if s_]
+        Yc, Cc, Pc = Yc[:, seen], Cc[:, seen], Pc[:, seen]
+        q = {k: round(v, 4) for k, v in quality_report(Pc, Yc).items()}
+        best = int(np.argmax(Yc.mean(axis=0)))
+        print(f"\ncoding test prompts: {int(code.sum())}, models with results: {len(cols)}")
+        print(f"  quality on coding prompts: {q}")
+        print(f"  best single model: {cols[best]} accuracy {Yc[:, best].mean():.4f}")
+        for profile, tau in taus.items():
+            got = evaluate_at_tau(Pc, Yc, Cc, tau)
+            print(
+                f"  {profile} (tau {tau:.2f}): accuracy {got['accuracy']:.4f}, saving "
+                f"{100 * (1 - got['cost'] / Cc[:, best].mean()):.1f}% vs {cols[best]}"
+            )
 
     catalog = yaml.safe_load(args.catalog.read_text())["models"]
     eco = EcoRoute(predictor, args.encoder, catalog, taus=taus)  # fails if an anchor is missing

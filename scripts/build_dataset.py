@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from ecoroute.data import routerarena, routerbench, sprout
+from ecoroute.data import bigcodebench, routerarena, routerbench, sprout
 
 
 def summarise(outcomes: pd.DataFrame, prompts: pd.DataFrame) -> str:
@@ -42,7 +42,15 @@ def summarise(outcomes: pd.DataFrame, prompts: pd.DataFrame) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--out", type=Path, default=Path("data/processed"))
-    parser.add_argument("--skip", nargs="*", default=[], choices=["sprout", "routerbench"])
+    parser.add_argument(
+        "--skip", nargs="*", default=[], choices=["sprout", "routerbench", "bigcodebench"]
+    )
+    parser.add_argument(
+        "--append",
+        action="store_true",
+        help="keep the existing outcomes.parquet and prompts.parquet, replacing only the "
+        "sources loaded now (e.g. --append --skip sprout routerbench adds BigCodeBench)",
+    )
     args = parser.parse_args()
     args.out.mkdir(parents=True, exist_ok=True)
 
@@ -53,10 +61,20 @@ def main() -> None:
     if "routerbench" not in args.skip:
         print("loading RouterBench...")
         parts.append(routerbench.to_outcomes(routerbench.fetch_raw("0shot")))
+    if "bigcodebench" not in args.skip:
+        print("loading BigCodeBench...")
+        parts.append(bigcodebench.to_outcomes(*bigcodebench.fetch_raw("instruct")))
     outcomes = pd.concat(parts, ignore_index=True)
 
-    print("loading RouterArena...")
-    prompts = routerarena.to_prompts(routerarena.fetch_raw("full"))
+    if args.append:
+        old = pd.read_parquet(args.out / "outcomes.parquet")
+        outcomes = pd.concat(
+            [old[~old.source.isin(outcomes.source.unique())], outcomes], ignore_index=True
+        )
+        prompts = pd.read_parquet(args.out / "prompts.parquet")
+    else:
+        print("loading RouterArena...")
+        prompts = routerarena.to_prompts(routerarena.fetch_raw("full"))
 
     outcomes.to_parquet(args.out / "outcomes.parquet", index=False)
     prompts.to_parquet(args.out / "prompts.parquet", index=False)
