@@ -54,14 +54,21 @@ to succeed.
 
 ## What it achieves (SPROUT test set, held-out threshold)
 
-Graph router v7 (run 19), against always using GPT-4o (test accuracy 0.845), with each
-profile's tau chosen on validation with one standard error of margin:
+Graph router v10 (run 30), against always using GPT-4o (test accuracy 0.845). Each
+profile's tau is chosen on validation prompts the calibrator never saw, and qualifies
+only if the gap plus 1.645 standard errors stays within the profile's target:
 
-| Profile  | tau  | Accuracy vs GPT-4o | Cost saved |
-|----------|------|--------------------|------------|
-| quality  | 0.91 | +0.3 points        | 64.9%      |
-| balanced | 0.89 | -1.0 point         | 71.7%      |
-| eco      | 0.85 | -2.7 points        | 77.4%      |
+Points lost against GPT-4o on test (negative means more accurate), with a 90% interval:
+
+| Profile  | Target           | tau  | Points lost (90% CI)  | Cost saved |
+|----------|------------------|------|-----------------------|------------|
+| quality  | no loss          | 0.97 | -1.6 (-2.3 to -0.9)   | 38.6%      |
+| balanced | at most 1 point  | 0.91 | -0.3 (-1.0 to 0.4)    | 64.9%      |
+| eco      | at most 3 points | 0.86 | 1.8 (1.0 to 2.5)      | 75.6%      |
+
+Earlier runs reported larger savings (71.7% for balanced) with taus picked partly on the
+calibrator's own data, which made the predictions look better than they were; those
+taus overshot their targets on test.
 
 - Telling hard from easy on unseen RouterArena prompts: AUC 0.76-0.80 across versions.
 - The privacy check (rules + PII model) keeps 99% of texts with restricted data and 97%
