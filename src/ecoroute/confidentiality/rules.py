@@ -100,6 +100,27 @@ RULES: list[Rule] = [
     Rule("credit_card", R, re.compile(r"\b(?:\d[ -]?){12,18}\d\b"), luhn_ok),
     Rule("iban", R, re.compile(r"\b[A-Z]{2}\d{2}(?: ?[A-Z0-9]){11,30}\b"), iban_ok),
     Rule("us_ssn", R, re.compile(r"\b\d{3}-\d{2}-\d{4}\b"), ssn_ok),
+    # An identifier announced by its name: "account number: 4021 77 1093", "passport no.
+    # X1234567". Account, ID-card and licence numbers have no shared format or checksum,
+    # so the label in front is what marks them (run 24: most restricted texts the PII
+    # model missed were account and ID numbers). Only the value is reported.
+    Rule(
+        "labelled_identifier",
+        R,
+        re.compile(
+            r"(?i)\b(?:(?:bank\s+|savings\s+|checking\s+)?account|acct|a/c|iban|routing"
+            r"|sort\s+code|(?:national\s+)?id(?:entity)?\s*card|national\s+id(?:entity)?"
+            r"|passport|driver'?s?\s+licen[cs]e|licen[cs]e|social\s+security|social\s+insurance"
+            r"|ssn|tax\s*(?:payer\s+)?id(?:entification)?|tax\s+(?:number|code)|tin|vat\s+id"
+            r")\b"
+            r"(?:\s*(?:number|num|no\.?|nr\.?|#|id|code))?\s*(?:is|was|:|=|-)?\s*"
+            # One token holding a digit, then optional space-separated digit groups.
+            r"(?P<value>(?=[A-Za-z\-]*\d)[A-Za-z0-9][A-Za-z0-9\-]{3,32}(?: \d{2,8}){0,4})"
+            r"(?![A-Za-z0-9])"
+        ),
+        # A real identifier carries several digits; this keeps "account settings" out.
+        lambda s: sum(c.isdigit() for c in s) >= 5,
+    ),
     # Contact details.
     Rule(
         "email", C, re.compile(r"\b[\w.+\-]+@[A-Za-z0-9\-]+(?:\.[A-Za-z0-9\-]+)*\.[A-Za-z]{2,}\b")
@@ -149,8 +170,10 @@ class RulesLayer:
         found: list[Finding] = []
         for rule in self.rules:
             for m in rule.pattern.finditer(text):
-                if rule.valid(m.group()):
-                    found.append(Finding(rule.kind, rule.level, m.start(), m.end()))
+                # A pattern with a "value" group reports only that part (not its label).
+                g = "value" if "value" in rule.pattern.groupindex else 0
+                if rule.valid(m.group(g)):
+                    found.append(Finding(rule.kind, rule.level, m.start(g), m.end(g)))
         for m in _TOKEN.finditer(text):
             tok = m.group()
             mixed = any(c.isdigit() for c in tok) and any(c.isalpha() for c in tok)

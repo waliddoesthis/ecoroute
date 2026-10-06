@@ -263,3 +263,33 @@ def test_kind_min_drops_low_scored_weak_kinds_only():
     assert kinds == {"socialnum"}
     assert {f.kind for f in NERLayer(tagger, kind_min={}).scan(text)} == {"givenname", "socialnum"}
     assert {f.kind for f in NERLayer(tagger).scan(text)} == {"socialnum"}  # default floors
+
+
+@pytest.mark.parametrize(
+    "text, value",
+    [
+        ("My account number is 4021 7710 93.", "4021 7710 93"),
+        ("Passport no. X1234567 expires soon", "X1234567"),
+        ("driver's license: D123-4567-8901", "D123-4567-8901"),
+        ("ID card number: 98765432A", "98765432A"),
+        ("acct#: 00123456789", "00123456789"),
+    ],
+)
+def test_labelled_identifiers_are_restricted(text, value):
+    f = [x for x in RulesLayer().scan(text) if x.kind == "labelled_identifier"]
+    assert [text[x.start : x.end] for x in f] == [value]
+    assert f[0].level == Level.RESTRICTED
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Change your account settings",
+        "In 2023, account balances rose 12345 percent",
+        "Account 2019 report",
+        "The license MIT-2020 applies",
+        "What is card 52 in the deck?",
+    ],
+)
+def test_labels_without_an_identifier_are_ignored(text):
+    assert not [x for x in RulesLayer().scan(text) if x.kind == "labelled_identifier"]
