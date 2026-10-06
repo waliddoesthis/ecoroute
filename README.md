@@ -42,6 +42,10 @@ on, and every 90% interval stays inside its profile's target.
   accuracy. Telling hard coding tasks from easy ones is still the weakest part (AUC 0.65).
 - **Speed:** a full routing decision takes about 72 ms on a T4 GPU; each response reports
   the time per stage in `X-EcoRoute-Time-Ms`.
+- **End to end (run 37):** `scripts/e2e_check.py` on router v14 with the PII model passes
+  all 16 checks through the real HTTP gateway: secrets, emails, bare account numbers,
+  caller labels and names with addresses all stay on the local model; matched secrets are
+  never echoed; uncleared or unknown models are refused; profiles and streaming behave.
 - **Graph vs black box:** a kNN/MF/IRT/MLP ensemble under the same protocol saves about the
   same (66.5% vs 64.9% in run 31), but the graph is better calibrated and explains itself.
 
