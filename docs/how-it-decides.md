@@ -64,8 +64,10 @@ profile's tau chosen on validation with one standard error of margin:
 | eco      | 0.85 | -2.7 points        | 77.4%      |
 
 - Telling hard from easy on unseen RouterArena prompts: AUC 0.76-0.80 across versions.
-- The privacy check (rules + PII model) finds 95% of prompts with personal data and 89%
-  of restricted ones, with 7.6% false alarms on ordinary prompts (run 23). First names,
+- The privacy check (rules + PII model) keeps 99% of texts with restricted data and 97%
+  of texts with any personal data off external models, with 7.6% false alarms on
+  ordinary prompts (run 27). Long bare numbers (9+ digits, not part of a calculation)
+  count as confidential: most missed account and ID numbers carry no label. First names,
   cities, building numbers and similar weak kinds need PII-model confidence 0.85,
   passwords 0.9. About 26 ms per request on a T4 GPU.
 - A whole routing decision (privacy check, embedding, prediction, explanation) takes
