@@ -42,9 +42,12 @@ class Policy:
             raise ValueError(f"unknown policy profile {value!r}; use {sorted(PROFILES)}") from None
 
 
+# lambda_energy prices energy in the ranking. balanced uses about $0.25 per kWh, roughly
+# electricity plus the social cost of its carbon (about $0.2/kg CO2 at 0.4 kg/kWh); eco
+# weighs energy ten times more; quality ignores it.
 PROFILES = {
-    "eco": Policy(tau=0.6, lambda_energy=0.01),
-    "balanced": Policy(tau=0.7, lambda_energy=0.002),
+    "eco": Policy(tau=0.6, lambda_energy=0.0025),
+    "balanced": Policy(tau=0.7, lambda_energy=0.00025),
     "quality": Policy(tau=0.85, lambda_energy=0.0),
 }
 
@@ -107,12 +110,15 @@ class Router:
         detector: Detector | None = None,
         policy: str | Policy = "balanced",
         default_wh_per_1k_out: float = 0.3,
+        usd_per_kwh: float = 0.15,
     ) -> None:
         self.catalog = [m for m in catalog if m.get("enabled", True)]
         self.detector = detector or Detector()
         self.policy = Policy.parse(policy)
         # Used when a model's energy is not known yet; such numbers are flagged as estimates.
         self.default_wh_per_1k_out = default_wh_per_1k_out
+        # Electricity price for self-hosted models (an API's price already includes it).
+        self.usd_per_kwh = usd_per_kwh
 
     @classmethod
     def from_yaml(cls, path: str | Path, **kw) -> Router:
@@ -186,13 +192,7 @@ class Router:
         )
 
     def _candidate(self, m, level, p_success, in_tokens, out_tokens) -> Candidate:
-        cost = (
-            in_tokens * m.get("price_in_per_mtok", 0.0)
-            + out_tokens * m.get("price_out_per_mtok", 0.0)
-        ) / 1e6
-        wh = (m.get("energy") or {}).get("wh_per_1k_out")
-        estimated = wh is None or (m.get("energy") or {}).get("source") != "measured"
-        energy = (wh if wh is not None else self.default_wh_per_1k_out) * out_tokens / 1000
+        cost, energy, estimated = self.true_cost(m, in_tokens, out_tokens)
         clearance = Level.parse(m.get("clearance", "public"))
         allowed = clearance >= level
         return Candidate(
@@ -204,6 +204,39 @@ class Router:
             allowed=allowed,
             excluded_because=None if allowed else f"clearance {clearance} < prompt level {level}",
         )
+
+    def true_cost(self, m: Mapping[str, Any], in_tokens: int, out_tokens: int):
+        """(USD, Wh, energy_is_estimate) for one answer from model m.
+
+        No model is free. An API model costs its token price. A self-hosted model (one with
+        a `hosting` block) costs the electricity its GPU draws while generating, plus the
+        hardware's hourly cost spread over that time:
+            seconds = out_tokens / tokens_per_second
+            Wh      = gpu_watts * seconds / 3600
+            USD     = Wh / 1000 * usd_per_kwh + gpu_usd_per_hour * seconds / 3600
+        Measured Wh per 1K tokens, when present, replaces the wattage estimate.
+        """
+        price = (
+            in_tokens * m.get("price_in_per_mtok", 0.0)
+            + out_tokens * m.get("price_out_per_mtok", 0.0)
+        ) / 1e6
+        energy_cfg = m.get("energy") or {}
+        wh_per_1k = energy_cfg.get("wh_per_1k_out")
+        measured = wh_per_1k is not None and energy_cfg.get("source") == "measured"
+        host = m.get("hosting")
+        if host:
+            seconds = out_tokens / float(host["tokens_per_second"])
+            wh = wh_per_1k * out_tokens / 1000 if measured else host["gpu_watts"] * seconds / 3600
+            cost = (
+                price
+                + wh / 1000 * self.usd_per_kwh
+                + host.get("gpu_usd_per_hour", 0.0) * seconds / 3600
+            )
+            return cost, wh, not measured
+        wh = (
+            (wh_per_1k if wh_per_1k is not None else self.default_wh_per_1k_out) * out_tokens / 1000
+        )
+        return price, wh, not measured
 
 
 def _fmt_p(p: float | None) -> str:

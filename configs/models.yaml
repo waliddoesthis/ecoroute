@@ -37,7 +37,13 @@ models:
     # The same model SPROUT grades, so its predictions need no shift. 4-bit may cost a little
     # accuracy against the full-precision scores; a fitted shift will measure it.
     anchor: {model: llama-3.1-8b-instruct, shift: 0.0, source: prior}
-    notes: "Runs on the 8 GB RTX 2070 Super through Ollama (about 5 GB at 4-bit)."
+    # Self-hosted, so it is costed from its hardware (see Router.true_cost): electricity
+    # while generating plus the GPU's hourly cost. 215 W is the RTX 2070 Super board power;
+    # tokens_per_second is an estimate for an 8B 4-bit model, replace with a measurement.
+    # gpu_usd_per_hour: what an hour of this GPU costs you (rental, or purchase spread over
+    # its life); 0 counts only the electricity.
+    hosting: {gpu_watts: 215, tokens_per_second: 50, gpu_usd_per_hour: 0.0}
+    notes: "Runs on an 8 GB GPU through Ollama (about 5 GB at 4-bit)."
 
   - name: qwen3.6-35b-a3b-local
     enabled: false
@@ -51,7 +57,8 @@ models:
     clearance: restricted
     label_source: free_eval
     anchor: {model: llama-3.3-70b-instruct, shift: 0.0, source: prior}
-    notes: "Needs a 24 GB GPU (cloud). On the 8 GB RTX 2070 Super use a 4-8B model at 4-bit instead."
+    hosting: {gpu_watts: 300, tokens_per_second: 60, gpu_usd_per_hour: 0.8}
+    notes: "Needs a 24 GB GPU (e.g. a rented L4/A10). Hosting numbers are estimates."
 
   - name: gpt-6-luna
     tier: 1
