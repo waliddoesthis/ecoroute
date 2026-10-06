@@ -51,15 +51,26 @@ WEAK_KINDS = frozenset({"givenname", "surname", "city", "zipcode", "buildingnum"
 Tagger = Callable[[str], list[Mapping]]
 
 
-def hf_tagger(model: str = DEFAULT_MODEL, device: int | str | None = None) -> Tagger:
-    """device: None for CPU, or a GPU index such as 0.
+def hf_tagger(
+    model: str = DEFAULT_MODEL, device: int | str | None = None, fp16: bool = False
+) -> Tagger:
+    """device: None for CPU, or a GPU index such as 0. fp16 halves the weights on a GPU,
+    which is usually faster with no loss for this kind of model; measure it with
+    scripts/eval_confidentiality.py --device 0 --fp16.
 
-    8-bit dynamic quantization was tried (run 11) and broke this DeBERTa model's
+    8-bit dynamic quantization on CPU was tried (run 11) and broke this DeBERTa model's
     predictions without making it faster, so it is not offered."""
     from transformers import pipeline
 
+    kw = {}
+    if fp16:
+        if device is None:
+            raise ValueError("fp16 needs a GPU device")
+        import torch
+
+        kw["torch_dtype"] = torch.float16
     return pipeline(
-        "token-classification", model=model, aggregation_strategy="simple", device=device
+        "token-classification", model=model, aggregation_strategy="simple", device=device, **kw
     )
 
 
