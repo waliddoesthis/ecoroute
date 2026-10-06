@@ -31,6 +31,7 @@ class EcoRoute:
         policy: str | Policy = "balanced",
         router: Router | None = None,
         taus: Mapping[str, float] | None = None,
+        parallel_privacy: bool = False,
     ) -> None:
         self.encoder_name = encoder
         self.catalog = [m for m in catalog if m.get("enabled", True)]
@@ -41,6 +42,11 @@ class EcoRoute:
             self.catalog, policy=policy, profiles=tuned_profiles(self.taus)
         )
         self._encoder = None
+        # Run the privacy check beside the embedding. It only pays when the two models sit
+        # on different devices (e.g. PII model on CPU, encoder on GPU): sharing one GPU,
+        # they slow each other down and the total got longer than doing them in turn
+        # (run 21: 74 ms in parallel against about 52 ms in sequence).
+        self.parallel_privacy = parallel_privacy
 
     def save(self, path: str | Path) -> None:
         """Save the trained predictor, encoder name and tuned taus (the catalog stays in YAML)."""
@@ -91,11 +97,13 @@ class EcoRoute:
         policy: str | Policy | None = None,
         scan_text: str | None = None,
     ) -> Decision:
-        # The privacy check and the embedding are independent model calls; running them
-        # side by side hides most of the privacy check's latency behind the embedding.
         text = prompt if scan_text is None else scan_text
         t0 = time.perf_counter()
-        conf = self._pool().submit(_timed, self.router.detector.classify, text, context)
+        if self.parallel_privacy:
+            conf = self._pool().submit(_timed, self.router.detector.classify, text, context)
+        else:
+            conf = _Done(_timed(self.router.detector.classify, text, context))
+        t_privacy = time.perf_counter()
         x = self.embed([prompt])[0]
         t_embed = time.perf_counter()
         p_success = self.predictor.predict_one(x)
@@ -125,8 +133,8 @@ class EcoRoute:
         t_end = time.perf_counter()
         ms = lambda a, b: 1000 * (b - a)  # noqa: E731
         decision.timings_ms = {
-            "privacy": privacy_ms,  # runs in parallel with embed and predict
-            "embed": ms(t0, t_embed),
+            "privacy": privacy_ms,  # overlaps embed and predict when parallel_privacy
+            "embed": ms(t_privacy, t_embed),
             "predict": ms(t_embed, t_predict),
             "privacy_wait": ms(t_predict, t_wait),
             "decide": ms(t_wait, t_decide),
@@ -139,3 +147,13 @@ class EcoRoute:
 def _timed(fn, *args):
     t0 = time.perf_counter()
     return fn(*args), 1000 * (time.perf_counter() - t0)
+
+
+class _Done:
+    """A finished result with the Future interface, for the sequential path."""
+
+    def __init__(self, value) -> None:
+        self.value = value
+
+    def result(self):
+        return self.value

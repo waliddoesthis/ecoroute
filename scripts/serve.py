@@ -34,6 +34,12 @@ def main() -> None:
     parser.add_argument("--pii-fp16", action="store_true", help="half-precision PII model (GPU)")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8080)
+    parser.add_argument(
+        "--parallel-privacy",
+        action="store_true",
+        help="run the privacy check beside the embedding (helps when they use different "
+        "devices; on one shared GPU it is slower)",
+    )
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO)
 
@@ -49,7 +55,10 @@ def main() -> None:
     router = Router(
         live, detector=Detector(layers), policy=args.policy, profiles=full.router.profiles
     )
-    eco = EcoRoute(full.predictor.base, full.encoder_name, live, router=router, taus=full.taus)
+    eco = EcoRoute(
+        full.predictor.base, full.encoder_name, live, router=router, taus=full.taus,
+        parallel_privacy=args.parallel_privacy,
+    )  # fmt: skip
     print("routing to:", ", ".join(m["name"] for m in live))
     uvicorn.run(create_app(eco, OpenAICompatibleBackend(providers)), host=args.host, port=args.port)
 

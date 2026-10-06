@@ -88,5 +88,7 @@ def test_route_reports_stage_timings(tmp_path, monkeypatch):
     eco = EcoRoute(base, "fake", catalog)
     monkeypatch.setattr(eco, "embed", lambda texts: np.zeros((len(texts), 3), np.float32))
     d = eco.route("hello")
+    eco.parallel_privacy = True
+    assert eco.route("mail jane.doe@example.com").level.name == "CONFIDENTIAL"
     assert {"privacy", "embed", "predict", "decide", "explain", "total"} <= set(d.timings_ms)
     assert "total=" in d.headers()["X-EcoRoute-Time-Ms"]
