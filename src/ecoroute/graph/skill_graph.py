@@ -63,7 +63,10 @@ class GraphExplanation:
             line = f"Graph: strongest paths to {model}: {via}"
             if self.beta > 0 and model in self.neighbours:
                 solved, answered, _ = self.neighbours[model]
-                line += f"; it solved {solved} of the {answered} most similar past prompts"
+                line += (
+                    f"; it solved {solved} of the {answered} most similar past prompts"
+                    f" (weight {self.beta:.2f})"
+                )
             out.append(line + ".")
         return out
 
@@ -125,12 +128,35 @@ class SkillGraph(Predictor):
         self.knn_ = KNNPredictor(k=self.k).fit(X, Y, self.models)
         return self
 
+    def _similarity(self, X) -> np.ndarray:
+        """Mean similarity of each prompt to its nearest past prompts."""
+        sim, _ = self.knn_.neighbours(X)
+        return np.clip(sim, 0, None).mean(axis=1)
+
+    def beta_for(self, X) -> np.ndarray:
+        """Per-prompt weight of the similar-prompt edges.
+
+        Past prompts only say something about a new prompt that resembles them. The weight
+        is beta for a prompt as close to its neighbours as a typical validation prompt, and
+        shrinks toward 0 as the neighbours get less similar, leaving the skill and
+        difficulty paths (which also learned from labelled prompts) to decide.
+        """
+        if self.beta == 0:
+            return np.zeros(len(X))
+        if getattr(self, "ref_similarity_", None) is None:
+            return np.full(len(X), self.beta)
+        return self.beta * np.clip(self._similarity(X) / self.ref_similarity_, 0, 1)
+
     def tune_beta(self, X_val, Y_val, grid=np.linspace(0, 1, 11)) -> float:
-        """Pick the weight of the similar-prompt edges that minimises Brier score on
-        validation data."""
+        """Pick beta (the similar-prompt edge weight for a typical prompt) that minimises
+        Brier score on validation data."""
+        self.ref_similarity_ = float(np.median(self._similarity(X_val)))
         paths, near = self._paths(X_val), self.knn_.predict_proba(X_val)
         seen = ~np.isnan(Y_val)
-        scores = [np.mean((((1 - b) * paths + b * near) - Y_val)[seen] ** 2) for b in grid]
+        scale = np.clip(self._similarity(X_val) / self.ref_similarity_, 0, 1)[:, None]
+        scores = [
+            np.mean((((1 - b * scale) * paths + b * scale * near) - Y_val)[seen] ** 2) for b in grid
+        ]
         self.beta = float(grid[int(np.argmin(scores))])
         return self.beta
 
@@ -148,14 +174,17 @@ class SkillGraph(Predictor):
         paths = self._paths(X)
         if self.beta == 0:
             return paths
-        return (1 - self.beta) * paths + self.beta * self.knn_.predict_proba(X)
+        b = self.beta_for(X)[:, None]
+        return (1 - b) * paths + b * self.knn_.predict_proba(X)
 
     def explain(self, x: np.ndarray) -> GraphExplanation:
         ps, pl = self._edges(np.asarray(x, dtype=np.float32).reshape(1, -1))
         ps, pl = ps[0], pl[0]
         order = np.argsort(-ps)
         skills = [(str(self.skill_clf_.classes_[i]), float(ps[i])) for i in order]
-        scale = 1 - self.beta
+        x2 = np.asarray(x, dtype=np.float32).reshape(1, -1)
+        beta = float(self.beta_for(x2)[0])
+        scale = 1 - beta
         edges = {}
         for j, model in enumerate(self.models):
             edges[model] = [
@@ -164,14 +193,11 @@ class SkillGraph(Predictor):
                 for i in range(len(ps)) for b in range(len(LEVELS))
             ]  # fmt: skip
         neighbours = {}
-        if self.beta > 0:
-            x2 = np.asarray(x, dtype=np.float32).reshape(1, -1)
+        if beta > 0:
             near = self.knn_.predict_proba(x2)[0]
             _, idx = self.knn_.neighbours(x2)
             y = self.knn_.Y_[idx[0]]
             for j, model in enumerate(self.models):
                 col = y[:, j][~np.isnan(y[:, j])]
-                neighbours[model] = (int((col >= 0.5).sum()), len(col), float(self.beta * near[j]))
-        return GraphExplanation(
-            skills, dict(zip(LEVELS, map(float, pl))), edges, self.beta, neighbours
-        )
+                neighbours[model] = (int((col >= 0.5).sum()), len(col), float(beta * near[j]))
+        return GraphExplanation(skills, dict(zip(LEVELS, map(float, pl))), edges, beta, neighbours)

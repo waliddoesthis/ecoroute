@@ -19,7 +19,7 @@ import yaml
 from ecoroute.data.prices import fill_missing_costs
 from ecoroute.eval.metrics import held_out_saving, quality_report
 from ecoroute.features.embed import DEFAULT_ENCODER, cached_embeddings
-from ecoroute.graph import SkillGraph
+from ecoroute.graph import SkillGraph, skill_name
 from ecoroute.predictors import (
     CalibratedPredictor,
     EnsemblePredictor,
@@ -59,7 +59,7 @@ def main() -> None:
         ids = part.prompt_id.tolist()
         X = cached_embeddings(ids, part.prompt.tolist(), cache, encoder=args.encoder)
         data[split] = (X, outcome_matrix(outcomes, ids, models), cost_matrix(outcomes, ids, models))
-        skills[split] = part.task.to_numpy()
+        skills[split] = part.task.map(skill_name).to_numpy()
     (X_tr, Y_tr, _), (X_va, Y_va, C_va), (X_te, Y_te, C_te) = (
         data["train"],
         data["val"],

@@ -105,3 +105,36 @@ def test_similar_prompt_edges_and_beta():
         solved, answered, _ = exp.neighbours["big"]
         assert 0 <= solved <= answered <= 16
         assert "most similar past prompts" in exp.lines("big")[1]
+
+
+@pytest.mark.parametrize(
+    "task, skill",
+    [
+        ("lighteval/MATH/all/test", "math"),
+        ("lighteval/MATH/all", "math"),
+        ("Idavidrein/gpqa/gpqa_extended", "graduate science"),
+        ("TAUR-Lab/MuSR/team_allocation", "multi-step reasoning"),
+        ("TIGER-Lab/MMLU-Pro", "general knowledge"),
+        ("rungalileo/ragbench/finqa", "reading financial documents"),
+        ("rungalileo/ragbench/hotpotqa", "answering from documents"),
+        ("openhermes/teknium", "general chat"),
+        ("something/new_task", "new task"),
+    ],
+)
+def test_skill_names_are_readable(task, skill):
+    from ecoroute.graph import skill_name
+
+    assert skill_name(task) == skill
+
+
+def test_far_away_prompts_lean_on_skill_paths():
+    X, Y, s = make(1500, 9)
+    g = SkillGraph(min_skill_prompts=10, k=16).fit(X, Y, MODELS, skills=s)
+    Xv, Yv, _ = make(400, 10)
+    g.tune_beta(Xv, Yv)
+    g.beta = 0.8  # force a visible effect
+    near = Xv[:1]
+    far = (near * -1.0).astype(np.float32)
+    far[0, 2:] = 0.0
+    assert g.beta_for(near)[0] >= g.beta_for(far)[0]
+    assert g.beta_for(Xv).max() <= 0.8 + 1e-9
