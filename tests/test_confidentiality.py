@@ -186,3 +186,24 @@ def test_ner_scans_long_text_in_bounded_windows():
     # A name straddling a window edge is whole in the next window.
     edge = "z" * 997 + "Amira" + "z" * 50
     assert [text_f.kind for text_f in layer.scan(edge)] == ["givenname"]
+
+
+def test_lone_first_name_is_not_confidential_but_a_full_identity_is():
+    from ecoroute.confidentiality import NERLayer
+
+    ner = NERLayer(
+        fake_tagger(
+            [("GIVENNAME", "Tom", 0.99), ("SURNAME", "Okafor", 0.99), ("CITY", "Paris", 0.99)]
+        )
+    )
+    d = Detector([CallerPolicyLayer(), RulesLayer(), ner])
+    assert d.classify("Tom has 3 apples and eats one").level == Level.INTERNAL
+    assert d.classify("cheap flights to Paris?").level == Level.INTERNAL
+    assert d.classify("Tom Okafor lives here").level == Level.CONFIDENTIAL
+    assert d.classify("email Tom at tom@acme.io").level == Level.CONFIDENTIAL
+    # A caller label is not personal content and doesn't make a lone name count.
+    got = d.classify("Tom has 3 apples", {"sensitivity_label": "internal"})
+    assert got.level == Level.INTERNAL
+    assert (
+        Detector([ner], combine_weak=False).classify("Tom has 3 apples").level == Level.CONFIDENTIAL
+    )

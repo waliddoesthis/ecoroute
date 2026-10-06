@@ -14,6 +14,7 @@ from __future__ import annotations
 import argparse
 import json
 import time
+from collections import Counter
 from pathlib import Path
 
 import pandas as pd
@@ -67,14 +68,26 @@ def main() -> None:
     )
 
     torch.set_grad_enabled(False)
-    rules = Detector([CallerPolicyLayer(), RulesLayer()])
-    full = Detector([CallerPolicyLayer(), RulesLayer(), NERLayer(hf_tagger(args.model))])
+    ner = NERLayer(hf_tagger(args.model))
+    detectors = {
+        "rules": Detector([CallerPolicyLayer(), RulesLayer()]),
+        "rules+ner, every finding counts": Detector(
+            [CallerPolicyLayer(), RulesLayer(), ner], combine_weak=False
+        ),
+        "rules+ner, lone names don't count": Detector([CallerPolicyLayer(), RulesLayer(), ner]),
+    }
     report = {}
-    for name, det in (("rules", rules), ("rules+ner", full)):
+    for name, det in detectors.items():
         r = evaluate(det, texts, expected)
-        r["false_alarm_rate"] = sum(det.classify(t).level > Level.INTERNAL for t in benign) / len(
-            benign
-        )
+        alarms: Counter = Counter()
+        n_alarms = 0
+        for t in benign:
+            c = det.classify(t)
+            if c.level > Level.INTERNAL:
+                n_alarms += 1
+                alarms.update({f.kind for f in c.findings if f.level > Level.INTERNAL})
+        r["false_alarm_rate"] = n_alarms / len(benign)
+        r["false_alarms_by_kind"] = dict(alarms.most_common(10))
         report[name] = r
         print(name, json.dumps(r, indent=2))
     args.out.parent.mkdir(parents=True, exist_ok=True)

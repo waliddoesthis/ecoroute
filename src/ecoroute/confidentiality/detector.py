@@ -33,17 +33,27 @@ class Detector:
 
     `floor` is the level every prompt starts at; the default treats unlabelled traffic as
     internal, since it comes from inside a company.
+
+    Weak findings (a lone first name or city) count only when the prompt also holds a
+    second kind of personal data, e.g. a full name, or a name with an email address.
+    Otherwise word problems and travel questions would all look confidential.
     """
 
     def __init__(
-        self, layers: Iterable[Layer] | None = None, floor: Level | str = Level.INTERNAL
+        self,
+        layers: Iterable[Layer] | None = None,
+        floor: Level | str = Level.INTERNAL,
+        combine_weak: bool = True,
     ) -> None:
         self.layers = list(layers) if layers is not None else [CallerPolicyLayer(), RulesLayer()]
         self.floor = Level.parse(floor)
+        self.combine_weak = combine_weak
 
     def classify(self, text: str, context: Mapping | None = None) -> Classification:
         findings: list[Finding] = []
         for layer in self.layers:
             findings.extend(layer.scan(text, context))
-        level = max([self.floor, *(f.level for f in findings)])
-        return Classification(level, findings)
+        personal = {f.kind for f in findings if f.end > f.start}  # content, not caller policy
+        weak_counts = not self.combine_weak or len(personal) >= 2
+        levels = [f.level for f in findings if weak_counts or not f.weak]
+        return Classification(max([self.floor, *levels]), findings)
