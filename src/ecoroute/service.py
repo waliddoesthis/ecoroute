@@ -65,7 +65,13 @@ class EcoRoute:
         context: Mapping | None = None,
         out_tokens: int = 500,
         policy: str | Policy | None = None,
+        scan_text: str | None = None,
     ) -> Decision:
         return self.router.decide(
-            prompt, self.predict(prompt), context=context, out_tokens=out_tokens, policy=policy
+            prompt,
+            self.predict(prompt),
+            context=context,
+            out_tokens=out_tokens,
+            policy=policy,
+            scan_text=scan_text,
         )

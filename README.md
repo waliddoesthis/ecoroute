@@ -89,3 +89,24 @@ The router is trained on SPROUT and scores the catalog models in `configs/models
 through their `anchor` (a SPROUT model of similar tier plus a logit shift). Shifts marked
 `source: prior` only encode tier order; fit real ones with `CatalogPredictor.fit_shift()`
 on a few hundred graded answers per model.
+
+## Run the gateway (OpenAI-compatible)
+
+```bash
+export ANTHROPIC_API_KEY=...   # only for the providers you use; see configs/providers.yaml
+python scripts/serve.py --router artifacts/router.pt --port 8080
+```
+
+```python
+from openai import OpenAI
+client = OpenAI(base_url="http://localhost:8080/v1", api_key="unused")
+r = client.chat.completions.with_raw_response.create(
+    model="ecoroute/auto", messages=[{"role": "user", "content": "Summarise this ..."}],
+    extra_headers={"X-EcoRoute-Sensitivity": "Internal", "X-EcoRoute-Policy": "balanced"},
+)
+r.headers["X-EcoRoute-Model"], r.headers["X-EcoRoute-Reason"]
+```
+
+`POST /route` returns the decision and explanation without calling any model. Naming a
+model instead of `ecoroute/auto` skips the ranking but never the confidentiality check.
+If the chosen provider fails, the gateway retries on the most likely other cleared model.

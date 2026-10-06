@@ -126,16 +126,20 @@ class Router:
         in_tokens: int | None = None,
         out_tokens: int = 500,
         policy: str | Policy | None = None,
+        scan_text: str | None = None,
     ) -> Decision:
         """Choose a model for `prompt` given predicted P(correct) per catalog model.
 
-        Models missing from p_success can still be chosen as a last resort but never
-        qualify on quality. Raises NoAllowedModel when nothing is cleared for the prompt.
+        scan_text is what the confidentiality check reads when it differs from the prompt
+        (for a chat, the whole conversation rather than the last question). Models missing
+        from p_success can still be chosen as a last resort but never qualify on quality.
+        Raises NoAllowedModel when nothing is cleared for the prompt.
         """
         pol = Policy.parse(policy) if policy is not None else self.policy
+        text = prompt if scan_text is None else scan_text
         if in_tokens is None:
-            in_tokens = max(1, len(prompt) // 4)  # rough: about 4 characters per token
-        conf = self.detector.classify(prompt, context)
+            in_tokens = max(1, len(text) // 4)  # rough: about 4 characters per token
+        conf = self.detector.classify(text, context)
         cands = [
             self._candidate(m, conf.level, p_success, in_tokens, out_tokens) for m in self.catalog
         ]
