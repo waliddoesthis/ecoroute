@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import yaml
 
@@ -115,8 +116,12 @@ def main() -> None:
     taus = {}
     P_va, P_te = predictor.predict_proba(X_va), predictor.predict_proba(X_te)
     print(f"\nprofile taus for {args.predictor}:")
+    grid = np.round(np.arange(0.50, 1.0, 0.01), 2)  # finer and higher than the 0.05 grid
     for profile, tol in PROFILE_TOLERANCE.items():
-        h = held_out_saving(P_va, Y_va, C_va, P_te, Y_te, C_te, models, tolerance=tol)
+        # quality takes the most accurate tau when nothing fully matches the best model.
+        h = held_out_saving(
+            P_va, Y_va, C_va, P_te, Y_te, C_te, models, tol, grid, closest=profile == "quality"
+        )
         if not h["matched"]:
             print(f"  {profile}: nothing within {100 * tol:.0f} points, keeping the default")
             continue

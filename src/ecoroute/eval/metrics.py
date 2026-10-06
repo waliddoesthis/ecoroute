@@ -196,19 +196,29 @@ def held_out_saving(
     C_test: np.ndarray,
     models: list[str],
     tolerance: float = 0.01,
+    taus: np.ndarray | None = None,
+    closest: bool = False,
 ) -> dict[str, float | str | bool]:
     """Pick tau on validation, then measure it on test.
+
+    taus is the grid searched (routing_curve's default if None). With closest=True and no
+    tau within tolerance, the most accurate tau on validation is taken instead.
 
     Choosing tau on the test set (as savings_at_quality does) is optimistic, because the
     best of 19 thresholds is picked after seeing the answers. This is the honest number.
     """
-    val_curve = routing_curve(P_val, Y_val, C_val, models)
+    val_curve = routing_curve(P_val, Y_val, C_val, models, taus)
     singles = val_curve[val_curve.policy.str.startswith("always")]
     reference = singles.loc[singles.accuracy.idxmax()].policy
     chosen = savings_at_quality(val_curve, reference, tolerance)
-    if not chosen["matched"]:
+    if chosen["matched"]:
+        policy = chosen["router_policy"]
+    elif closest:
+        routers = val_curve[val_curve.policy.str.startswith("router")]
+        policy = routers.loc[routers.accuracy.idxmax()].policy
+    else:
         return {"reference": reference, "matched": False}
-    tau = float(chosen["router_policy"].split("=")[1])
+    tau = float(policy.split("=")[1])
     test_curve = routing_curve(P_test, Y_test, C_test, models)
     ref = test_curve.loc[test_curve.policy == reference].iloc[0]
     got = evaluate_at_tau(P_test, Y_test, C_test, tau)

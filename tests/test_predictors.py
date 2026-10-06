@@ -167,3 +167,16 @@ def test_held_out_saving_picks_tau_on_validation(data):
         assert 0.05 <= got["tau"] <= 0.95
         assert got["within_tolerance"] == (got["acc_gap"] <= 0.01)
         assert got["cost_saving_pct"] <= 100
+
+
+def test_held_out_saving_closest_falls_back_to_most_accurate_tau(data):
+    (X_tr, Y_tr, _, _), (X_te, Y_te, C_te, _) = data
+    X_va, Y_va, C_va, _ = make_data(800, seed=2, missing=0.0)
+    knn = KNNPredictor(k=32).fit(X_tr, Y_tr, MODELS)
+    args = (knn.predict_proba(X_va), Y_va, C_va, knn.predict_proba(X_te), Y_te, C_te, MODELS)
+    grid = np.round(np.arange(0.50, 1.0, 0.01), 2)
+    strict = held_out_saving(*args, tolerance=-1.0, taus=grid)  # impossible target
+    assert not strict["matched"]
+    got = held_out_saving(*args, tolerance=-1.0, taus=grid, closest=True)
+    assert got["matched"] and got["tau"] in grid
+    assert not got["within_tolerance"]
