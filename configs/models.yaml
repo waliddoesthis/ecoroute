@@ -19,11 +19,28 @@
 #                    similar tier, ordered by their SPROUT accuracy. source "prior" shifts only
 #                    encode tier order (0, or +0.25 to separate the top tier from its anchor);
 #                    replace them with fitted shifts from a few hundred graded answers.
+# enabled          : false keeps an entry for reference without routing to it.
 
 levels: [public, internal, confidential, restricted]
 
 models:
+  - name: llama-3.1-8b-local
+    tier: 0
+    provider: local-ollama
+    api_id: llama3.1:8b-instruct-q4_K_M
+    context: 131072
+    price_in_per_mtok: 0.0
+    price_out_per_mtok: 0.0
+    energy: {wh_per_1k_out: null, source: measured}
+    clearance: restricted
+    label_source: free_eval
+    # The same model SPROUT grades, so its predictions need no shift. 4-bit may cost a little
+    # accuracy against the full-precision scores; a fitted shift will measure it.
+    anchor: {model: llama-3.1-8b-instruct, shift: 0.0, source: prior}
+    notes: "Runs on the 8 GB RTX 2070 Super through Ollama (about 5 GB at 4-bit)."
+
   - name: qwen3.6-35b-a3b-local
+    enabled: false
     tier: 0
     provider: local-vllm
     api_id: Qwen/Qwen3.6-35B-A3B

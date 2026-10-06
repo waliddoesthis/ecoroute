@@ -108,7 +108,7 @@ class Router:
         policy: str | Policy = "balanced",
         default_wh_per_1k_out: float = 0.3,
     ) -> None:
-        self.catalog = list(catalog)
+        self.catalog = [m for m in catalog if m.get("enabled", True)]
         self.detector = detector or Detector()
         self.policy = Policy.parse(policy)
         # Used when a model's energy is not known yet; such numbers are flagged as estimates.

@@ -30,7 +30,7 @@ class EcoRoute:
         router: Router | None = None,
     ) -> None:
         self.encoder_name = encoder
-        self.catalog = list(catalog)
+        self.catalog = [m for m in catalog if m.get("enabled", True)]
         self.predictor = CatalogPredictor.from_catalog(predictor, self.catalog)
         self.router = router or Router(self.catalog, policy=policy)
         self._encoder = None

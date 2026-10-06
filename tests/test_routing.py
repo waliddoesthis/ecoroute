@@ -30,10 +30,10 @@ def test_hard_prompt_goes_to_premium(router):
 
 def test_restricted_prompt_never_leaves_the_local_model(router):
     p = {m["name"]: 0.99 for m in router.catalog}
-    p["qwen3.6-35b-a3b-local"] = 0.1  # even when the local model is predicted to fail
+    p["llama-3.1-8b-local"] = 0.1  # even when the local model is predicted to fail
     d = router.decide(f"why is {AWS} rejected?", p)
     assert d.level == Level.RESTRICTED
-    assert d.model == "qwen3.6-35b-a3b-local" and d.below_floor
+    assert d.model == "llama-3.1-8b-local" and d.below_floor
     assert "aws_access_key" in d.explain() and AWS not in d.explain()
     for c in d.candidates:
         if c.name != d.model:
@@ -58,6 +58,13 @@ def test_headers_and_unknown_energy_flagged(router):
     p = {m["name"]: 0.95 for m in router.catalog}
     d = router.decide("hello", p, context={"min_level": "restricted"})
     h = d.headers()
-    assert h["X-EcoRoute-Model"] == "qwen3.6-35b-a3b-local"
+    assert h["X-EcoRoute-Model"] == "llama-3.1-8b-local"
     assert h["X-EcoRoute-Level"] == "restricted"
     assert d.chosen.energy_estimated
+
+
+def test_disabled_models_are_never_chosen(router):
+    assert "qwen3.6-35b-a3b-local" not in {m["name"] for m in router.catalog}
+    p = {m["name"]: 0.95 for m in router.catalog}
+    d = router.decide("hi", p, context={"min_level": "restricted"})
+    assert d.model == "llama-3.1-8b-local"

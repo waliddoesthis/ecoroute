@@ -3,6 +3,9 @@
 # never stored here. Check each base_url against the provider's docs before production.
 
 providers:
+  local-ollama:
+    base_url: http://localhost:11434/v1
+    api_key_env: null
   local-vllm:
     base_url: http://localhost:8000/v1
     api_key_env: null
