@@ -1,0 +1,72 @@
+{
+  "router": "artifacts/router_graph_v14.pt",
+  "commit": "1274b3b",
+  "source": "sprout",
+  "split": "test (prompt-id hash bucket, 10%)",
+  "n_test_prompts": 4295,
+  "models": [
+    "claude-3.5-sonnet",
+    "gpt-4o",
+    "gpt-4o-mini",
+    "granite-3-2b-instruct",
+    "granite-3-8b-instruct",
+    "llama-3.1-405b-instruct",
+    "llama-3.1-70b-instruct",
+    "llama-3.1-8b-instruct",
+    "llama-3.2-1b-instruct",
+    "llama-3.2-3b-instruct",
+    "llama-3.3-70b-instruct",
+    "mixtral-8x7b-instruct",
+    "titan-text-premier"
+  ],
+  "reference": "gpt-4o",
+  "reference_accuracy": 0.8452968568102445,
+  "reference_cost_per_request_usd": 0.004817030849825379,
+  "ci": "90% percentile bootstrap over test prompts, 1,000 paired resamples, seed 0",
+  "pricing": "SPROUT token counts x prices published with SPROUT (data/prices.py)",
+  "router_overhead_included": false,
+  "profiles": [
+    {
+      "profile": "eco",
+      "target_max_loss_pp": 3.0,
+      "tau": 0.86,
+      "fallback_margin": 0.0,
+      "accuracy": 0.829592549476135,
+      "accuracy_change_pp": -1.5704307334109435,
+      "accuracy_change_ci90_pp": [
+        -2.340046565774155,
+        -0.7868451688009312
+      ],
+      "cost_per_request_usd": 0.0012037822025611176,
+      "cost_saved_pct": 75.00987143138693
+    },
+    {
+      "profile": "balanced",
+      "target_max_loss_pp": 1.0,
+      "tau": 0.91,
+      "fallback_margin": 0.02,
+      "accuracy": 0.8425844004656577,
+      "accuracy_change_pp": -0.2712456344586722,
+      "accuracy_change_ci90_pp": [
+        -0.9899883585564605,
+        0.42636786961583245
+      ],
+      "cost_per_request_usd": 0.0014589009336437718,
+      "cost_saved_pct": 69.71368921798253
+    },
+    {
+      "profile": "quality",
+      "target_max_loss_pp": 0.0,
+      "tau": 0.98,
+      "fallback_margin": 0.0,
+      "accuracy": 0.8608381839348079,
+      "accuracy_change_pp": 1.5541327124563464,
+      "accuracy_change_ci90_pp": [
+        0.8462747380675206,
+        2.2237485448195575
+      ],
+      "cost_per_request_usd": 0.0031673362491268916,
+      "cost_saved_pct": 34.24712550384207
+    }
+  ]
+}

@@ -21,7 +21,7 @@ takes three steps:
 The response headers report the chosen model, the sensitivity level, the predicted
 difficulty and the reason for the choice.
 
-**Main result.** On TBD held-out SPROUT test prompts, the default profile cost 69.7% less
+**Main result.** On 4,295 held-out SPROUT test prompts, the default profile cost 69.7% less
 than always using GPT-4o. Its accuracy changed by -0.27 percentage points (90% CI -0.99
 to +0.43). The [Results](#results) section gives the full results and their scope.
 
@@ -85,9 +85,9 @@ it. That margin is tested on validation data.
 
 | | |
 |---|---|
-| Router | v14, evaluated at commit TBD |
-| Test set | TBD SPROUT prompts in the test split (prompt-id hash, 10%) that every model answered |
-| Reference | GPT-4o, the most accurate single model on validation (test accuracy 84.5%) |
+| Router | v14, evaluated at commit `1274b3b` |
+| Test set | 4,295 SPROUT prompts in the test split (prompt-id hash, 10%) that every model answered |
+| Reference | GPT-4o, the most accurate single model on validation (test accuracy 84.5%, $0.0048 per request) |
 | Cost | SPROUT token counts priced with the per-token prices published with SPROUT; router overhead not included |
 | Interval | 90% percentile bootstrap over test prompts (1,000 paired resamples) |
 | Report | `python scripts/eval_router.py --router <router.pt>` writes [`reports/eval_router_graph_v14_sprout.json`](reports/eval_router_graph_v14_sprout.json) |

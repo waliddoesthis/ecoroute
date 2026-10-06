@@ -43,6 +43,7 @@ def main() -> None:
     parser.add_argument("--catalog", type=Path, default=Path("configs/models.yaml"))
     parser.add_argument("--source", default="sprout")
     parser.add_argument("--out", type=Path, default=Path("reports"))
+    parser.add_argument("--commit", help="commit to record when the checkout has no .git")
     args = parser.parse_args()
 
     eco = EcoRoute.load(args.router, catalog=args.catalog)
@@ -68,9 +69,13 @@ def main() -> None:
     ref = names.index("gpt-4o") if "gpt-4o" in names else int(np.argmax(Y.mean(axis=0)))
     ref_acc, ref_cost = float(Y[:, ref].mean()), float(C[:, ref].mean())
 
-    commit = subprocess.run(
-        ["git", "rev-parse", "--short", "HEAD"], capture_output=True, text=True
-    ).stdout.strip()
+    commit = (
+        args.commit
+        or subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"], capture_output=True, text=True
+        ).stdout.strip()
+        or "unknown"
+    )
     rows = []
     for name in PROFILE_TOLERANCE:
         pol = eco.router.profiles[name]

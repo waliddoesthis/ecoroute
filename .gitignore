@@ -10,5 +10,8 @@ data/processed/
 *.egg-info/
 .pytest_cache/
 .ruff_cache/
-reports/
+reports/*
 artifacts/
+
+# Saved evaluation reports behind the published numbers are kept.
+!reports/eval_*.json

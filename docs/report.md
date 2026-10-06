@@ -125,7 +125,8 @@ paid grading was used.
 
 ### 4.1 Routing (SPROUT test split, router v14)
 
-Reference: always GPT-4o, accuracy 0.845. Accuracy change is in percentage points,
+Test set: 4,295 SPROUT prompts that every model answered. Reference: always GPT-4o,
+accuracy 0.845. Accuracy change is in percentage points,
 positive when the router is more accurate. Reproduce with `scripts/eval_router.py`
 (report in `reports/`).
 
