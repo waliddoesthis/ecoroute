@@ -15,20 +15,23 @@ OpenAI-compatible gateway that handles both problems for each request:
    correctly.
 3. The cheapest model predicted to succeed is chosen.
 
-Every decision comes with a plain-language explanation. Thresholds are chosen on held-out
-data with a statistical margin, so each operating profile carries an accuracy guarantee
-checked on a separate test set.
+Each response reports the chosen model and the reason. Thresholds are chosen on held-out
+data with a statistical margin so that each profile meets an accuracy target, and the
+target is then checked once on a separate test set. Holding on that test set does not
+guarantee the same accuracy on other traffic.
 
 Results on SPROUT test prompts, against always using GPT-4o:
 
 | Profile | Cost saved | Accuracy |
 |---|---|---|
-| default (balanced) | 69.7% | 0.3 points lower (90% CI -0.4 to 1.0) |
-| eco | 75.0% | 1.6 points lower |
-| quality | 34.2% | 1.6 points higher |
+| default (balanced) | 69.7% | -0.27 percentage points (90% CI -0.99 to +0.43) |
+| eco | 75.0% | -1.57 percentage points |
+| quality | 34.2% | +1.55 percentage points |
 
-The privacy filter keeps 99.0% of texts containing restricted data and 96.7% of texts
-containing personal data off external models, with 7.6% false alarms. A routing decision
+The privacy filter rated 99.0% of texts containing restricted data as restricted and
+96.7% of texts containing personal data as confidential or higher, with 7.6% false
+alarms. Models without clearance for the assigned level are always excluded; detection
+itself can miss. A routing decision
 adds about 74 ms on one T4 GPU.
 
 ## 1. Problem
@@ -122,14 +125,15 @@ paid grading was used.
 
 ### 4.1 Routing (SPROUT test split, router v14)
 
-Reference: always GPT-4o, accuracy 0.845. Points lost are negative when the router is
-more accurate.
+Reference: always GPT-4o, accuracy 0.845. Accuracy change is in percentage points,
+positive when the router is more accurate. Reproduce with `scripts/eval_router.py`
+(report in `reports/`).
 
-| Profile | Target | τ | δ | Points lost (90% CI) | Cost saved |
+| Profile | Target | τ | δ | Accuracy change (90% CI) | Cost saved |
 |---|---|---|---|---|---|
-| quality | 0 | 0.98 | 0 | -1.55 (-2.22 to -0.85) | 34.2% |
-| balanced | ≤ 1 | 0.91 | 0.02 | 0.27 (-0.43 to 0.99) | 69.7% |
-| eco | ≤ 3 | 0.86 | 0 | 1.57 (0.79 to 2.34) | 75.0% |
+| quality | ≥ 0 | 0.98 | 0 | +1.55 (+0.85 to +2.22) | 34.2% |
+| balanced | ≥ -1 | 0.91 | 0.02 | -0.27 (-0.99 to +0.43) | 69.7% |
+| eco | ≥ -3 | 0.86 | 0 | -1.57 (-2.34 to -0.79) | 75.0% |
 
 All three intervals lie within their targets. On the 108 BigCodeBench test tasks
 (GPT-4o solves 54.6%), the router is 1.8 points below GPT-4o at 48% lower cost, and 60%
@@ -149,13 +153,13 @@ lower with the balanced profile.
 
 **Decision protocol** (balanced profile):
 
-| Variant | Points lost (90% CI) | Saved | Meets target? |
+| Variant | Accuracy change, pp (90% CI) | Saved | Meets target? |
 |---|---|---|---|
 | τ chosen on calibration data (runs 15-29) | overstated | - | not verifiable (leakage) |
-| Leak-free τ (run 30) | -0.31 (-1.00 to 0.40) | 64.9% | yes |
-| + coding data (run 34) | -0.05 (-0.73 to 0.70) | 67.3% | yes |
-| + fallback margin, overall bound only (run 35) | 0.48 (-0.24 to 1.25) | 72.6% | no, CI exceeds 1 |
-| + margin limited to τ's slack (run 36, final) | 0.27 (-0.43 to 0.99) | 69.7% | yes |
+| Leak-free τ (run 30) | +0.31 (-0.40 to +1.00) | 64.9% | yes |
+| + coding data (run 34) | +0.05 (-0.70 to +0.73) | 67.3% | yes |
+| + fallback margin, overall bound only (run 35) | -0.48 (-1.25 to +0.24) | 72.6% | no, CI below -1 |
+| + margin limited to τ's slack (run 36, final) | -0.27 (-0.99 to +0.43) | 69.7% | yes |
 
 Under the same protocol (run 31), the ensemble saves 66.5% and the graph 64.9%. The graph
 is kept because it is better calibrated (ECE 0.017 against 0.019) and explains each
@@ -167,7 +171,7 @@ decision. A validation sweep of the graph's settings (C, k, shrinkage; run 32) w
 Recall is measured on 2,000 ai4privacy texts. False alarms are measured on 2,000 ordinary
 benchmark prompts.
 
-| Version | Restricted kept local | Personal data caught | False alarms |
+| Version | Restricted texts rated restricted | Personal-data texts rated ≥ confidential | False alarms |
 |---|---|---|---|
 | Rules + PII model, single threshold (run 6c) | 89.6% | 97.5% | 12.0% |
 | + per-kind floors, labelled identifiers, long numbers (run 27) | 99.0% | 96.7% | 7.6% |

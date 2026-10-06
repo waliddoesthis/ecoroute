@@ -9,9 +9,9 @@ prices are assumptions, stated next to each table, so every figure here is an
 
 | Comparison | Profile | Cost saved | Energy saved | Accuracy |
 |---|---|---|---|---|
-| **A. vs always GPT-4o**, SPROUT test prompts (run 36) | quality | 34.2% | n/a | 1.6 points better |
-| | balanced | 69.7% | n/a | 0.3 points lower (90% CI -0.4 to 1.0) |
-| | eco | 75.0% | n/a | 1.6 points lower |
+| **A. vs always GPT-4o**, SPROUT test prompts (run 36) | quality | 34.2% | n/a | +1.55 pp |
+| | balanced | 69.7% | n/a | -0.27 pp (90% CI -0.99 to +0.43) |
+| | eco | 75.0% | n/a | -1.57 pp |
 | **B. vs always the top deployed model** (claude-opus-5-5), 3,000 RouterArena prompts (run 38) | quality | 30.3% | 29.6% | not graded |
 | | balanced | 53.2% | 53.4% | not graded |
 | | eco | 55.4% | 54.8% | not graded |
@@ -73,9 +73,11 @@ cheaper models are also smaller.
 
 These benefits are not priced above, but they matter as much to a company:
 
-- **Leakage prevented.** 99.0% of texts with restricted data and 96.7% with personal data
-  are kept off external models (run 27). This happens without asking employees to judge
-  each prompt.
+- **Sensitive data detected before routing.** In evaluation, 99.0% of texts with
+  restricted data were rated restricted and 96.7% with personal data were rated
+  confidential or higher (run 27), so they were routed only to models cleared for them.
+  Employees don't have to judge each prompt. Detection can still miss, so this works
+  alongside existing DLP, not instead of it.
 - **Explainability.** Each decision states the level found, the models cleared and the
   reason for the choice, which gives audits and incident reviews a concrete record.
 - **Vendor flexibility.** Models are configuration. A company can add a new provider or a

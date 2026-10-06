@@ -37,20 +37,25 @@ the model becomes `ecoroute/auto`. Nothing else in the application changes.
 
 ## 3. Compliance and data protection
 
-The privacy filter is a hard rule that runs before any cost or quality trade-off. It
-cannot be outweighed by price, and a request no cleared model can take is refused (403),
-never sent.
+Two parts need to be told apart:
+
+- **Enforced:** once a request has a sensitivity level, models whose clearance is below
+  it are excluded before any cost or quality trade-off. Price cannot add them back. A
+  request that no configured model is cleared for is refused (403) and not sent.
+- **Detected:** the level itself comes from caller labels, rules and a PII model, and
+  detection can miss. A request classified too low is routed by that lower level.
 
 | Requirement | How EcoRoute supports it |
 |---|---|
-| **Data minimisation (GDPR Art. 5(1)(c))** | Personal data is detected in the whole conversation and kept on models cleared for it. `redact()` / `restore()` can mask values when a task does not need them. |
+| **Data minimisation (GDPR Art. 5(1)(c))** | Personal data detected anywhere in the conversation restricts the request to models cleared for it. `redact()` / `restore()` can mask values when a task does not need them. |
 | **Data residency and vendor contracts** | Each model has a `clearance` in `configs/models.yaml`. Raise an external model to `confidential` only when a DPA or zero-data-retention contract covers it. |
 | **Existing classification (DLP)** | Labels from Microsoft Purview, Google DLP or in-house schemes pass through `X-EcoRoute-Sensitivity`. The strictest of the caller's label and EcoRoute's own detection wins. |
-| **Secrets in prompts** | API keys, tokens, private keys and connection strings are restricted and never leave self-hosted models. Matched values are never echoed in headers, logs or explanations. |
+| **Secrets in prompts** | Detected API keys, tokens, private keys and connection strings make the request restricted, so it goes only to models cleared for restricted data (self-hosted in the default catalog). Matched values are not written to headers, logs or explanations. |
 | **Auditability** | Every response states the level found, the reason and the model chosen (`X-EcoRoute-Level`, `-Reason`, `-Model`). |
 
-Measured protection (run 27): 99.0% of texts with restricted data and 96.7% of texts with
-any personal data are kept off external models, with 7.6% false alarms. Detection
+Measured detection (run 27): 99.0% of texts with restricted data were rated restricted,
+96.7% of texts with any personal data were rated confidential or higher, and 7.6% of
+ordinary prompts were flagged. Detection
 favours recall: a false alarm only keeps a prompt on a self-hosted model, while a miss
 would leak it. EcoRoute is a technical control that supports compliance; it does not
 replace a data-protection assessment.
@@ -118,7 +123,7 @@ A team sets its default profile in the gateway, and a request can override it wi
 
 | Risk | Mitigation |
 |---|---|
-| A sensitive value is missed | Layered detection (caller labels, rules, PII model), recall-first thresholds, and labels from existing DLP |
+| A sensitive value is missed (detection is statistical) | Layered detection (caller labels, rules, PII model), recall-first thresholds, and labels from existing DLP |
 | The router is wrong for a company's own tasks | Fit model shifts on internal graded answers. Profiles are measured targets with confidence intervals, not promises |
 | Coding prompts | Predicting which model solves a coding task is the weakest part (AUC 0.65). Teams that need certainty can use `quality` or pin a model |
 | Prices and models change | The catalog is configuration: update prices or add a model without retraining |
