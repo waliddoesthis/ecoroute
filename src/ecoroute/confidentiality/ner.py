@@ -41,9 +41,10 @@ LABEL_LEVELS: dict[str, Level] = {
     "DRIVERLICENSENUM": R,
 }
 
-# Labels that rarely identify anyone on their own ("Tom has 3 apples", "flights to Paris").
-# They raise the level only next to another kind of personal data (see Detector).
-WEAK_LABELS = frozenset({"GIVENNAME", "SURNAME", "CITY", "ZIPCODE", "BUILDINGNUM", "USERNAME"})
+# Kinds that rarely identify anyone on their own ("Tom has 3 apples", "flights to Paris").
+# Pass them as Detector(weak_kinds=...) to count them only next to other personal data;
+# by default every finding counts (recall first).
+WEAK_KINDS = frozenset({"givenname", "surname", "city", "zipcode", "buildingnum", "username"})
 
 # A callable with the Hugging Face pipeline output shape:
 # text -> [{"entity_group": str, "score": float, "start": int, "end": int}, ...]
@@ -69,7 +70,6 @@ class NERLayer:
         label_levels: Mapping[str, Level] = LABEL_LEVELS,
         window: int = 1500,
         overlap: int = 200,
-        weak_labels: frozenset[str] = WEAK_LABELS,
     ) -> None:
         self._tagger = tagger
         self.threshold = threshold
@@ -82,7 +82,6 @@ class NERLayer:
             raise ValueError("overlap must be smaller than window")
         self.window = window
         self.overlap = overlap
-        self.weak_labels = frozenset(weak_labels)
 
     @property
     def tagger(self) -> Tagger:
@@ -111,7 +110,6 @@ class NERLayer:
                     level = Level.CONFIDENTIAL
                 start, end = offset + int(ent["start"]), offset + int(ent["end"])
                 key = (label, start, end)
-                if key not in found or level > found[key].level:  # overlap seen twice
-                    weak = label in self.weak_labels
-                    found[key] = Finding(label.lower(), level, start, end, self.name, weak)
+                if key not in found or score > found[key].score:  # overlap seen twice
+                    found[key] = Finding(label.lower(), level, start, end, self.name, score)
         return sorted(found.values(), key=lambda f: f.start)

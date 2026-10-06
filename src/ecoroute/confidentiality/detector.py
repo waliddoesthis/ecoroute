@@ -28,32 +28,40 @@ class Classification:
         return [f"{f.layer}: {f.kind} ({f.level})" for f in ordered]
 
 
+def combined_level(
+    findings: Iterable[Finding], floor: Level, weak_kinds: frozenset[str] = frozenset()
+) -> Level:
+    """Strictest level among the findings, where findings of a weak kind count only when
+    the text also holds a second kind of personal data (a full name, a name and an email).
+    Caller-policy findings (no span in the text) are not personal content."""
+    findings = list(findings)
+    personal = {f.kind for f in findings if f.end > f.start}
+    weak_counts = len(personal) >= 2
+    levels = [f.level for f in findings if weak_counts or f.kind not in weak_kinds]
+    return max([floor, *levels])
+
+
 class Detector:
     """Any layer can raise the level, none can lower it.
 
     `floor` is the level every prompt starts at; the default treats unlabelled traffic as
-    internal, since it comes from inside a company.
-
-    Weak findings (a lone first name or city) count only when the prompt also holds a
-    second kind of personal data, e.g. a full name, or a name with an email address.
-    Otherwise word problems and travel questions would all look confidential.
+    internal, since it comes from inside a company. `weak_kinds` (e.g. ner.WEAK_KINDS)
+    trades recall for fewer false alarms: those kinds only count next to other personal
+    data. It is empty by default, because a missed leak costs more than a false alarm.
     """
 
     def __init__(
         self,
         layers: Iterable[Layer] | None = None,
         floor: Level | str = Level.INTERNAL,
-        combine_weak: bool = True,
+        weak_kinds: Iterable[str] = (),
     ) -> None:
         self.layers = list(layers) if layers is not None else [CallerPolicyLayer(), RulesLayer()]
         self.floor = Level.parse(floor)
-        self.combine_weak = combine_weak
+        self.weak_kinds = frozenset(weak_kinds)
 
     def classify(self, text: str, context: Mapping | None = None) -> Classification:
         findings: list[Finding] = []
         for layer in self.layers:
             findings.extend(layer.scan(text, context))
-        personal = {f.kind for f in findings if f.end > f.start}  # content, not caller policy
-        weak_counts = not self.combine_weak or len(personal) >= 2
-        levels = [f.level for f in findings if weak_counts or not f.weak]
-        return Classification(max([self.floor, *levels]), findings)
+        return Classification(combined_level(findings, self.floor, self.weak_kinds), findings)

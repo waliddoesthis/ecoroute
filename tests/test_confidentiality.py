@@ -196,7 +196,9 @@ def test_lone_first_name_is_not_confidential_but_a_full_identity_is():
             [("GIVENNAME", "Tom", 0.99), ("SURNAME", "Okafor", 0.99), ("CITY", "Paris", 0.99)]
         )
     )
-    d = Detector([CallerPolicyLayer(), RulesLayer(), ner])
+    from ecoroute.confidentiality.ner import WEAK_KINDS
+
+    d = Detector([CallerPolicyLayer(), RulesLayer(), ner], weak_kinds=WEAK_KINDS)
     assert d.classify("Tom has 3 apples and eats one").level == Level.INTERNAL
     assert d.classify("cheap flights to Paris?").level == Level.INTERNAL
     assert d.classify("Tom Okafor lives here").level == Level.CONFIDENTIAL
@@ -204,6 +206,4 @@ def test_lone_first_name_is_not_confidential_but_a_full_identity_is():
     # A caller label is not personal content and doesn't make a lone name count.
     got = d.classify("Tom has 3 apples", {"sensitivity_label": "internal"})
     assert got.level == Level.INTERNAL
-    assert (
-        Detector([ner], combine_weak=False).classify("Tom has 3 apples").level == Level.CONFIDENTIAL
-    )
+    assert Detector([ner]).classify("Tom has 3 apples").level == Level.CONFIDENTIAL  # default

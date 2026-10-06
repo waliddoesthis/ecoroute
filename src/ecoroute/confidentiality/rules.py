@@ -23,9 +23,7 @@ class Finding:
     start: int
     end: int
     layer: str = "rules"
-    # A weak finding (a first name, a city) is only sensitive in combination: alone it
-    # counts as internal; with a second kind of personal data it keeps its level.
-    weak: bool = False
+    score: float = 1.0  # model confidence; rules are certain
 
     def describe(self) -> str:
         return f"{self.kind} at {self.start}-{self.end} ({self.level})"
