@@ -80,3 +80,13 @@ def test_service_saves_tuned_taus(tmp_path):
     eco = EcoRoute.load(tmp_path / "r.pt", catalog=tmp_path / "models.yaml")
     assert eco.router.policy.tau == 0.93
     assert eco.router.profiles["quality"].tau == 0.93
+
+
+def test_route_reports_stage_timings(tmp_path, monkeypatch):
+    catalog = [{"name": "local", "tier": 0, "clearance": "restricted", "anchor": {"model": "a"}}]
+    base = ModelMeanPredictor().fit(np.zeros((4, 3)), np.array([[1.0]] * 4), ["a"])
+    eco = EcoRoute(base, "fake", catalog)
+    monkeypatch.setattr(eco, "embed", lambda texts: np.zeros((len(texts), 3), np.float32))
+    d = eco.route("hello")
+    assert {"privacy", "embed", "predict", "decide", "explain", "total"} <= set(d.timings_ms)
+    assert "total=" in d.headers()["X-EcoRoute-Time-Ms"]

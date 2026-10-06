@@ -60,6 +60,9 @@ def main() -> None:
     for name, ms in rows.items():
         p50, p95 = np.percentile(ms, [50, 95])
         print(f"{name:28s} p50 {p50:6.1f} ms   p95 {p95:6.1f} ms")
+    stages = pd.DataFrame([eco.route(p).timings_ms for p in prompts])
+    print("\nroute() stages, ms (privacy runs in parallel with embed and predict):")
+    print(stages.describe(percentiles=[0.5, 0.95]).loc[["50%", "95%"]].round(1).to_string())
 
 
 if __name__ == "__main__":

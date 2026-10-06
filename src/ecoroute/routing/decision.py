@@ -98,6 +98,8 @@ class Decision:
     confidentiality: Classification
     steps: list[str] = field(default_factory=list)
     below_floor: bool = False
+    # Milliseconds per stage of the decision, filled in by EcoRoute.route().
+    timings_ms: dict[str, float] = field(default_factory=dict)
 
     @property
     def chosen(self) -> Candidate:
@@ -117,6 +119,8 @@ class Decision:
             h["X-EcoRoute-Difficulty"] = (
                 f"{self.difficulty:.2f} ({difficulty_label(self.difficulty)})"
             )
+        if self.timings_ms:
+            h["X-EcoRoute-Time-Ms"] = ", ".join(f"{k}={v:.1f}" for k, v in self.timings_ms.items())
         return h
 
 

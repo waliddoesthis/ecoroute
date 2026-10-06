@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from concurrent.futures import ThreadPoolExecutor
+import time
 from pathlib import Path
 
 import numpy as np
@@ -55,6 +56,12 @@ class EcoRoute:
         kw.setdefault("taus", state.get("taus"))
         return cls(state["predictor"], state["encoder"], models, **kw)
 
+    def _pool(self) -> ThreadPoolExecutor:
+        # One worker kept for the process: starting a thread per request costs time too.
+        if getattr(self, "_executor", None) is None:
+            self._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="privacy")
+        return self._executor
+
     def embed(self, texts: list[str]) -> np.ndarray:
         if self._encoder is None:
             from sentence_transformers import SentenceTransformer
@@ -87,11 +94,14 @@ class EcoRoute:
         # The privacy check and the embedding are independent model calls; running them
         # side by side hides most of the privacy check's latency behind the embedding.
         text = prompt if scan_text is None else scan_text
-        with ThreadPoolExecutor(max_workers=1) as pool:
-            conf = pool.submit(self.router.detector.classify, text, context)
-            x = self.embed([prompt])[0]
-            p_success = self.predictor.predict_one(x)
-            classification = conf.result()
+        t0 = time.perf_counter()
+        conf = self._pool().submit(_timed, self.router.detector.classify, text, context)
+        x = self.embed([prompt])[0]
+        t_embed = time.perf_counter()
+        p_success = self.predictor.predict_one(x)
+        t_predict = time.perf_counter()
+        classification, privacy_ms = conf.result()
+        t_wait = time.perf_counter()
         decision = self.router.decide(
             prompt,
             p_success,
@@ -101,6 +111,7 @@ class EcoRoute:
             scan_text=scan_text,
             classification=classification,
         )
+        t_decide = time.perf_counter()
         graph = self.graph()
         if graph is not None:
             # Show the graph paths behind the choice, through the chosen model's anchor.
@@ -111,4 +122,20 @@ class EcoRoute:
                     f"to {anchor.model}:", f"to {decision.model} (via {anchor.model}):"
                 )
             decision.steps[1:1] = lines
+        t_end = time.perf_counter()
+        ms = lambda a, b: 1000 * (b - a)  # noqa: E731
+        decision.timings_ms = {
+            "privacy": privacy_ms,  # runs in parallel with embed and predict
+            "embed": ms(t0, t_embed),
+            "predict": ms(t_embed, t_predict),
+            "privacy_wait": ms(t_predict, t_wait),
+            "decide": ms(t_wait, t_decide),
+            "explain": ms(t_decide, t_end),
+            "total": ms(t0, t_end),
+        }
         return decision
+
+
+def _timed(fn, *args):
+    t0 = time.perf_counter()
+    return fn(*args), 1000 * (time.perf_counter() - t0)
