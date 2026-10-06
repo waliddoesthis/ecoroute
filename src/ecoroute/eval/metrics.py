@@ -245,9 +245,8 @@ def held_out_saving(
 ) -> dict[str, float | str | bool]:
     """Pick tau on validation, then measure it on test.
 
-    With margins, the fallback margin (see route_cheapest_above) is then chosen the same
-    way at that tau: the cheapest margin whose bound stays within tolerance, or, when tau
-    itself only came closest, no worse than margin 0.
+    With margins, the fallback margin (see route_cheapest_above) is then chosen at that
+    tau; see _choose_margin.
 
     taus is the grid searched (routing_curve's default if None). With closest=True and no
     tau within tolerance, the tau with the smallest gap on validation is taken instead.
@@ -275,14 +274,7 @@ def held_out_saving(
         return {"reference": reference, "matched": False}
     margin = 0.0
     if margins is not None:
-        bound0 = gap_upper_bound(P_val, Y_val, C_val, ref_j, [tau], z)[0]
-        limit = tolerance if bound0 <= tolerance else bound0
-        best_cost = np.inf
-        for m in margins:
-            if gap_upper_bound(P_val, Y_val, C_val, ref_j, [tau], z, m)[0] <= limit + 1e-12:
-                cost = evaluate_at_tau(P_val, Y_val, C_val, tau, m)["cost"]
-                if cost < best_cost - 1e-15:
-                    margin, best_cost = float(m), cost
+        margin = _choose_margin(P_val, Y_val, C_val, ref_j, tau, tolerance, margins, z)
     test_curve = routing_curve(P_test, Y_test, C_test, models)
     ref = test_curve.loc[test_curve.policy == reference].iloc[0]
     got = evaluate_at_tau(P_test, Y_test, C_test, tau, margin)
@@ -309,8 +301,34 @@ def held_out_saving(
         # 90% bootstrap interval of the test gap: how much the verdict could move.
         "acc_gap_ci90": (gap_lo, gap_hi),
         # What validation said at the chosen tau: the gap, and the gap plus the margin.
-        "val_gap": float(routers.loc[routers.tau == tau, "raw_gap"].iloc[0]),
-        "val_gap_bound": float(routers.loc[routers.tau == tau, "gap"].iloc[0]),
+        "val_gap": float(gap_upper_bound(P_val, Y_val, C_val, ref_j, [tau], 0.0, margin)[0]),
+        "val_gap_bound": float(gap_upper_bound(P_val, Y_val, C_val, ref_j, [tau], z, margin)[0]),
         "n_val": int((~np.isnan(Y_val).any(axis=1) & ~np.isnan(C_val).any(axis=1)).sum()),
         "cost_saving_pct": float(100 * (1 - got["cost"] / ref.cost)) if ref.cost > 0 else 0.0,
     }
+
+
+def _choose_margin(P, Y, C, ref, tau, tolerance, margins, z) -> float:
+    """The cheapest fallback margin that only spends the slack tau left over.
+
+    The accuracy the margin itself costs (routing with it against routing without it, per
+    prompt) must stay, plus z standard errors, within tolerance minus tau's own bound. In
+    run 35 the margin was only held to the overall bound, so it used the slack that tau's
+    bound keeps for noise: balanced's test interval ran to 1.25 points against a target
+    of 1. With no slack left (quality, whose tau only came closest), a margin must be
+    confidently free.
+    """
+    full = ~np.isnan(Y).any(axis=1) & ~np.isnan(C).any(axis=1)
+    P, Y, C = P[full], Y[full], C[full]
+    idx = np.arange(len(Y))
+    slack = max(tolerance - gap_upper_bound(P, Y, C, ref, [tau], z)[0], 0.0)
+    base = Y[idx, route_cheapest_above(P, C, tau)]
+    best, best_cost = 0.0, C[idx, route_cheapest_above(P, C, tau)].mean()
+    for m in margins:
+        pick = route_cheapest_above(P, C, tau, m)
+        d = base - Y[idx, pick]
+        se = d.std(ddof=1) / np.sqrt(len(d)) if len(d) > 1 else 0.0
+        cost = C[idx, pick].mean()
+        if d.mean() + z * se <= slack + 1e-12 and cost < best_cost - 1e-15:
+            best, best_cost = float(m), cost
+    return best
