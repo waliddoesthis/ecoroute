@@ -16,9 +16,9 @@ nothing else can bring them back. Layers run cheapest first and the strictest wi
 | PII model | names, addresses, IDs, passwords in free text (DeBERTa-v3 on ai4privacy) | ~26 ms on a T4 |
 
 Once a prompt is restricted the slower layers are skipped. Measured on 2,000 labelled
-texts and 2,000 benchmark prompts (run 27): 99.0% of texts with restricted data and 96.7%
-with any personal data are kept off external models, and 7.6% of ordinary prompts are
-flagged. Recall comes first: a false alarm only keeps a
+texts and 2,000 benchmark prompts (run 27): 99.0% of texts with restricted data were rated
+restricted, 96.7% with any personal data were rated confidential or higher, and 7.6% of
+ordinary prompts were flagged. Recall comes first: a false alarm only keeps a
 prompt on a cleared model, a miss leaks it.
 
 ## 2. The decision graph: who is likely to answer correctly
@@ -67,13 +67,14 @@ always using GPT-4o (test accuracy 0.845 on SPROUT prompts). Each profile's tau 
 fallback margin are chosen on validation prompts the calibrator never saw, and qualify
 only if the gap plus 1.645 standard errors stays within the profile's target.
 
-Points lost against GPT-4o on test (negative means more accurate), with a 90% interval:
+Accuracy change against GPT-4o on test, in percentage points (positive means more
+accurate), with a 90% interval:
 
-| Profile  | Target           | tau  | Margin | Points lost (90% CI)  | Cost saved |
-|----------|------------------|------|--------|-----------------------|------------|
-| quality  | no loss          | 0.98 | 0      | -1.6 (-2.2 to -0.9)   | 34.2%      |
-| balanced | at most 1 point  | 0.91 | 0.02   | 0.3 (-0.4 to 1.0)     | 69.7%      |
-| eco      | at most 3 points | 0.86 | 0      | 1.6 (0.8 to 2.3)      | 75.0%      |
+| Profile  | Target           | tau  | Margin | Accuracy change (90% CI) | Cost saved |
+|----------|------------------|------|--------|--------------------------|------------|
+| quality  | no loss          | 0.98 | 0      | +1.55 (+0.85 to +2.22)   | 34.2%      |
+| balanced | at most 1 point  | 0.91 | 0.02   | -0.27 (-0.99 to +0.43)   | 69.7%      |
+| eco      | at most 3 points | 0.86 | 0      | -1.57 (-2.34 to -0.79)   | 75.0%      |
 
 On the 108 coding test prompts (BigCodeBench, hard: GPT-4o solves 54.6%), the router is
 1.8 points below GPT-4o at 48% lower cost (60% for balanced, whose fallback margin takes
@@ -87,8 +88,8 @@ they were.
   ensemble saves 66.5% and the graph 64.9%. The graph is better calibrated (ECE 0.017
   vs 0.019) and explains every decision, so it stays the default.
 - Telling hard from easy on unseen RouterArena prompts: AUC 0.76-0.80 across versions.
-- The privacy check (rules + PII model) keeps 99% of texts with restricted data and 97%
-  of texts with any personal data off external models, with 7.6% false alarms on
+- The privacy check (rules + PII model) rates 99% of texts with restricted data as restricted and 97%
+  of texts with any personal data as confidential or higher, with 7.6% false alarms on
   ordinary prompts (run 27). Long bare numbers (9+ digits, not part of a calculation)
   count as confidential: most missed account and ID numbers carry no label. First names,
   cities, building numbers and similar weak kinds need PII-model confidence 0.85,

@@ -7,6 +7,8 @@ name = "ecoroute"
 version = "0.1.0"
 description = "Explainable, eco-aware LLM router"
 readme = "README.md"
+license = {text = "MIT"}
+authors = [{name = "Walid Ichchou"}]
 requires-python = ">=3.10"
 dependencies = [
     "pandas>=2.1",
