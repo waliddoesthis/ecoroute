@@ -7,25 +7,43 @@ decision.
 
 Apps keep their OpenAI client and change only `base_url` and `model="ecoroute/auto"`.
 
+## Impact at a glance
+
+| | |
+|---|---|
+| **70% lower cost** | than always using GPT-4o, at the same accuracy (default profile; 0.3 points lower, within its 1-point target) |
+| **99% of restricted data kept local** | keys, account and ID numbers, cards never reach an external model |
+| **97% of personal data caught** | names, addresses, emails, phones, with 7.6% false alarms on ordinary prompts |
+| **72 ms per decision** | privacy check + prediction + explanation on a T4 GPU, small next to the LLM call |
+| **Every decision explained** | which models were cleared, who is likely to succeed, and why this one was chosen |
+| **$0 to build** | open benchmark data only, trained on Lightning AI's free tier |
+
+![Cost saved vs always using GPT-4o, per profile](docs/img/savings.svg)
+
+For every $100 an app spends sending all prompts to GPT-4o, EcoRoute's default profile
+spends about $30, and its answers are as accurate to within a third of a point.
+
 ## Results
 
 Router v14, measured on held-out SPROUT test prompts against always using GPT-4o (accuracy
 0.845). Thresholds are chosen on validation prompts the router never trained or calibrated
-on.
+on, and every 90% interval stays inside its profile's target.
 
-| Profile  | Accuracy target       | Points lost vs GPT-4o (90% CI) | Cost saved |
-|----------|-----------------------|--------------------------------|------------|
-| quality  | no loss               | -1.6 (-2.2 to -0.9), i.e. better | 34%      |
-| balanced | at most 1 point lost  | 0.3 (-0.4 to 1.0)              | 70%        |
-| eco      | at most 3 points lost | 1.6 (0.8 to 2.3)               | 75%        |
+| Profile  | Accuracy target       | Points lost vs GPT-4o (90% CI)   | Cost saved |
+|----------|-----------------------|----------------------------------|------------|
+| quality  | no loss               | -1.6 (-2.2 to -0.9), i.e. better | 34%        |
+| balanced | at most 1 point lost  | 0.3 (-0.4 to 1.0)                | 70%        |
+| eco      | at most 3 points lost | 1.6 (0.8 to 2.3)                 | 75%        |
 
-- **Privacy filter:** keeps 99% of texts with restricted data (keys, account and ID
-  numbers, cards) and 97% of texts with personal data off external models, with 7.6% false
-  alarms on ordinary prompts.
+- **Privacy filter** (2,000 texts with personal data, 2,000 ordinary prompts): 99.0% of
+  texts with restricted data and 96.7% of texts with any personal data are kept off
+  external models; 7.6% false alarms. About 31 ms per request on a T4.
 - **Coding prompts (BigCodeBench):** 48% to 60% cheaper than GPT-4o for 1.8 points lower
   accuracy. Telling hard coding tasks from easy ones is still the weakest part (AUC 0.65).
-- **Speed:** a full routing decision (privacy check, embedding, prediction, explanation)
-  takes about 72 ms on a T4 GPU, small next to the LLM call itself.
+- **Speed:** a full routing decision takes about 72 ms on a T4 GPU; each response reports
+  the time per stage in `X-EcoRoute-Time-Ms`.
+- **Graph vs black box:** a kNN/MF/IRT/MLP ensemble under the same protocol saves about the
+  same (66.5% vs 64.9% in run 31), but the graph is better calibrated and explains itself.
 
 The method, every number and how it was measured are in
 [`docs/how-it-decides.md`](docs/how-it-decides.md).
