@@ -15,8 +15,11 @@ takes three steps:
    and excludes every model whose configured clearance is below that level.
 2. **Quality.** A weighted graph predicts, for each remaining model, the probability
    that it answers correctly.
-3. **Cost.** It takes the cheapest remaining model whose predicted probability reaches
-   the threshold of the selected profile.
+3. **Cost.** Among the remaining models whose predicted probability reaches the
+   selected profile's threshold, it takes the one with the lowest `cost + lambda *
+   energy`. With `lambda = 0` (the `quality` profile) this is simply the cheapest. If no
+   model reaches the threshold, it takes the most likely model, or the cheapest one
+   within a small margin of it.
 
 The response headers report the chosen model, the sensitivity level, the predicted
 difficulty and the reason for the choice.
@@ -33,7 +36,7 @@ to +0.43). The [Results](#results) section gives the full results and their scop
 flowchart LR
     R[Request] --> F{Sensitivity level<br/>caller label, rules, PII model}
     F -->|exclude models below<br/>that clearance| G[Decision graph<br/>P correct per model]
-    G --> D[Cheapest model above<br/>the profile threshold]
+    G --> D[Lowest cost + lambda x energy<br/>above the profile threshold]
     D --> M[Provider call]
     D -.-> X[X-EcoRoute-* headers]
 ```
@@ -44,7 +47,8 @@ flowchart LR
 model whose `clearance` in `configs/models.yaml` is below that level is excluded:
 
 - Price, predicted quality and the profile cannot add the model back.
-- A caller who names the model directly gets a 403 refusal.
+- A caller who names an uncleared model directly gets a 403 refusal. Naming a cleared
+  model works as usual.
 - If no configured model is cleared, the request is refused and nothing is sent.
 
 **Detected: statistical.** The level comes from three layers, and the strictest one wins:
@@ -77,9 +81,14 @@ weighted by the share of such prompts that model answered correctly. The sum is
 calibrated into P(correct).
 
 Among the cleared models with P(correct) at or above the profile's threshold, EcoRoute
-takes the one with the lowest `cost + lambda * energy`. If no model reaches the
-threshold, it takes the most likely model, or the cheapest one within a small margin of
-it. That margin is tested on validation data.
+takes the one with the lowest `cost + lambda * energy`, where cost is the estimated USD
+for the request and energy its estimated Wh. `lambda` is 0 for `quality` (cost alone),
+$0.00025 per Wh for `balanced` and $0.0025 per Wh for `eco`.
+
+If no model reaches the threshold, EcoRoute considers the most likely model and any
+model within the profile's fallback margin of it, and takes the lowest `cost + lambda *
+energy` among them. The margin is chosen on validation data and is 0 except for
+`balanced` (0.02).
 
 ## Results
 
@@ -116,7 +125,7 @@ The [technical report](docs/report.md) has more results:
   evaluation protocol that was found and fixed.
 
 Projections to company volumes (yearly cost, energy, CO2) are estimates under stated
-assumptions. They are kept in [docs/impact.md](docs/impact.md).
+assumptions. See [docs/impact.md](docs/impact.md) for assumptions and projections.
 
 ## Getting started
 
@@ -131,6 +140,8 @@ assumptions. They are kept in [docs/impact.md](docs/impact.md).
   - on first use, the encoder and the PII model download from Hugging Face.
 
 ```bash
+git clone https://github.com/waliddoesthis/ecoroute.git
+cd ecoroute
 pip install -e ".[dev]"
 pytest
 ```
@@ -144,18 +155,32 @@ python scripts/eval_router.py --router artifacts/router.pt --data data/processed
 ```
 
 [docs/reproducing.md](docs/reproducing.md) covers every command and data source, and how
-to run them on Lightning AI's free GPU tier.
+to run them on Lightning AI's free GPU tier. Training time has not been benchmarked
+separately; all published runs completed on one T4.
 
 ### Try it without calling any model
 
 ```bash
 python scripts/route_demo.py --router artifacts/router.pt          # decisions, explained
-python scripts/serve.py --router artifacts/router.pt --dry-run     # gateway, no API keys
-python scripts/e2e_check.py --router artifacts/router.pt           # end-to-end checks
 ```
 
-With `--dry-run`, every enabled catalog model can be chosen, and each answer names the
-model that would have been used.
+To run the gateway as a dry run, start it in one terminal. It keeps running until you
+stop it:
+
+```bash
+python scripts/serve.py --router artifacts/router.pt --dry-run     # http://127.0.0.1:8080
+```
+
+With `--dry-run`, every enabled catalog model can be chosen, no API keys are needed, and
+each answer names the model that would have been used. You can then send requests to it
+from a second terminal.
+
+The end-to-end check does not need that server: it starts its own in-process copy of the
+gateway, so it can run on its own:
+
+```bash
+python scripts/e2e_check.py --router artifacts/router.pt           # PASS/FAIL per check
+```
 
 ### Run the gateway
 
@@ -180,11 +205,21 @@ r.headers["X-EcoRoute-Model"], r.headers["X-EcoRoute-Reason"]
 
 | Endpoint | Notes |
 |---|---|
-| `POST /v1/chat/completions` | OpenAI Chat Completions format, including `stream: true`. The body is forwarded to the chosen provider unchanged except for `model`. |
+| `POST /v1/chat/completions` | OpenAI Chat Completions format, including `stream: true` |
 | `GET /v1/models` | `ecoroute/auto` plus the models that can be routed to |
 | `POST /route` | The decision and its explanation, without calling any model |
 
 Other OpenAI endpoints (legacy Completions, Embeddings, Responses) are not implemented.
+
+**How requests reach providers.** EcoRoute has no provider-specific adapters. Every
+provider in `configs/providers.yaml` must expose an OpenAI-compatible
+`/chat/completions` endpoint, for example OpenAI itself, Google's and Anthropic's
+OpenAI-compatible endpoints, vLLM or Ollama. EcoRoute posts the request body as
+received, replacing only `model` with the chosen model's `api_id`. It does not translate
+or validate other parameters. Whether a parameter such as `tools`, `response_format` or
+`logprobs` works therefore depends on that provider's OpenAI compatibility, and a
+parameter the provider rejects returns as a provider error. `max_tokens` (or
+`max_completion_tokens`) is also read to estimate the request's cost.
 
 | Request header | Effect |
 |---|---|
@@ -198,20 +233,25 @@ Response headers: `X-EcoRoute-Model`, `-Level`, `-Difficulty`, `-Reason` and `-T
   their provider's API key set. Self-hosted models (vLLM, Ollama) are configured in
   `configs/providers.yaml`.
 - **Naming a model:** asking for a specific model instead of `ecoroute/auto` skips the
-  quality ranking. The clearance rule still applies.
-- **Provider failures:** if the chosen provider fails, the gateway retries once, on the
-  most likely other model cleared for the same level.
+  quality ranking. The clearance rule still applies: an uncleared model returns 403, and
+  an unknown model returns 404.
+- **Provider failures:** for non-streaming requests, if the chosen provider fails, the
+  gateway retries once, on the most likely other model cleared for the same level.
+  Streaming requests are not retried.
 
 ### Running without the PII model
 
-`--no-pii-model` removes a detection layer; it is more than a hardware setting.
+`--no-pii-model` disables the PII model. Sensitivity detection then relies on caller
+labels and deterministic rules.
 
-- **Still caught by the rules:** structured data such as keys, cards, IBANs, SSNs, ID
-  numbers, emails and phones.
+- **Rules remain active for** structured patterns such as keys, cards, IBANs, SSNs, ID
+  numbers, emails and phones. Like any pattern matching, they can miss values in
+  unexpected formats.
 - **No longer detected:** names, addresses and other personal data in free text. Such
   requests may be classified as internal and sent to external models.
 - **When to use it:** only when callers label sensitive data themselves, or for testing.
-- **Speed:** without the model, routing takes about 33 ms on CPU.
+- **Speed:** without the model, routing took about 33 ms median in the end-to-end check
+  (run 37).
 
 ## Limitations
 
@@ -234,7 +274,7 @@ Response headers: `X-EcoRoute-Model`, `-Level`, `-Difficulty`, `-Reason` and `-T
 | Document | Contents |
 |---|---|
 | [Technical report](docs/report.md) | Method, datasets, protocol, results with intervals, ablations |
-| [How it decides](docs/how-it-decides.md) | The decision path, step by step (the maintained design document) |
+| [How it decides](docs/how-it-decides.md) | Design and routing decisions |
 | [Reproducing](docs/reproducing.md) | Commands, data, hardware and all measurement scripts |
 | [Integration guide](docs/enterprise-integration.md) | Where it fits in a company's stack, compliance support, rollout |
 | [Impact estimates](docs/impact.md) | Cost, energy and CO2 projections, with their assumptions |
