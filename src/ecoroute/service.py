@@ -10,6 +10,7 @@ The gateway and the Python SDK both sit on top of this.
 from __future__ import annotations
 
 from collections.abc import Mapping
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import numpy as np
@@ -83,14 +84,22 @@ class EcoRoute:
         policy: str | Policy | None = None,
         scan_text: str | None = None,
     ) -> Decision:
-        x = self.embed([prompt])[0]
+        # The privacy check and the embedding are independent model calls; running them
+        # side by side hides most of the privacy check's latency behind the embedding.
+        text = prompt if scan_text is None else scan_text
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            conf = pool.submit(self.router.detector.classify, text, context)
+            x = self.embed([prompt])[0]
+            p_success = self.predictor.predict_one(x)
+            classification = conf.result()
         decision = self.router.decide(
             prompt,
-            self.predictor.predict_one(x),
+            p_success,
             context=context,
             out_tokens=out_tokens,
             policy=policy,
             scan_text=scan_text,
+            classification=classification,
         )
         graph = self.graph()
         if graph is not None:

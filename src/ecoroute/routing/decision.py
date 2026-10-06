@@ -156,6 +156,7 @@ class Router:
         out_tokens: int = 500,
         policy: str | Policy | None = None,
         scan_text: str | None = None,
+        classification: Classification | None = None,
     ) -> Decision:
         """Choose a model for `prompt` given predicted P(correct) per catalog model.
 
@@ -168,7 +169,8 @@ class Router:
         text = prompt if scan_text is None else scan_text
         if in_tokens is None:
             in_tokens = max(1, len(text) // 4)  # rough: about 4 characters per token
-        conf = self.detector.classify(text, context)
+        # A caller may pass a classification it computed alongside the prediction.
+        conf = classification or self.detector.classify(text, context)
         cands = [
             self._candidate(m, conf.level, p_success, in_tokens, out_tokens) for m in self.catalog
         ]

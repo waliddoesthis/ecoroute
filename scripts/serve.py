@@ -45,8 +45,11 @@ def main() -> None:
     layers = [CallerPolicyLayer(), RulesLayer()]
     if not args.no_pii_model:
         layers.append(NERLayer(hf_tagger(device=args.pii_device, fp16=args.pii_fp16)))
-    router = Router(live, detector=Detector(layers), policy=args.policy)
-    eco = EcoRoute(full.predictor.base, full.encoder_name, live, router=router)
+    # Keep the quality floors the router was trained with.
+    router = Router(
+        live, detector=Detector(layers), policy=args.policy, profiles=full.router.profiles
+    )
+    eco = EcoRoute(full.predictor.base, full.encoder_name, live, router=router, taus=full.taus)
     print("routing to:", ", ".join(m["name"] for m in live))
     uvicorn.run(create_app(eco, OpenAICompatibleBackend(providers)), host=args.host, port=args.port)
 

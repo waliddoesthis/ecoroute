@@ -68,3 +68,15 @@ def test_service_round_trip(tmp_path, monkeypatch):
     monkeypatch.setattr(eco, "embed", lambda texts: np.zeros((len(texts), 3), np.float32))
     assert eco.route("what is 2+2?").model == "cloud"
     assert eco.route("hi", context={"min_level": "restricted"}).model == "local"
+    # The email is found by the privacy check that runs beside the embedding.
+    assert eco.route("mail jane.doe@example.com the notes").model == "local"
+
+
+def test_service_saves_tuned_taus(tmp_path):
+    catalog = [{"name": "local", "tier": 0, "clearance": "restricted", "anchor": {"model": "a"}}]
+    base = ModelMeanPredictor().fit(np.zeros((4, 3)), np.array([[1.0]] * 4), ["a"])
+    (tmp_path / "models.yaml").write_text(yaml.safe_dump({"models": catalog}))
+    EcoRoute(base, "fake", catalog, taus={"balanced": 0.93}).save(tmp_path / "r.pt")
+    eco = EcoRoute.load(tmp_path / "r.pt", catalog=tmp_path / "models.yaml")
+    assert eco.router.policy.tau == 0.93
+    assert eco.router.profiles["quality"].tau == 0.93
