@@ -70,6 +70,10 @@ Earlier runs reported larger savings (71.7% for balanced) with taus picked partl
 calibrator's own data, which made the predictions look better than they were; those
 taus overshot their targets on test.
 
+- Against a black-box ensemble (kNN, matrix factorization, IRT and MLP) under the same
+  protocol (run 31), both reach GPT-4o's accuracy on test (0.848 vs 0.845); the
+  ensemble saves 66.5% and the graph 64.9%. The graph is better calibrated (ECE 0.017
+  vs 0.019) and explains every decision, so it stays the default.
 - Telling hard from easy on unseen RouterArena prompts: AUC 0.76-0.80 across versions.
 - The privacy check (rules + PII model) keeps 99% of texts with restricted data and 97%
   of texts with any personal data off external models, with 7.6% false alarms on
