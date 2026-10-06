@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 from collections.abc import AsyncIterator, Mapping
 from typing import Any, Protocol
@@ -67,3 +68,35 @@ class OpenAICompatibleBackend:
             r.raise_for_status()
             async for chunk in r.aiter_bytes():
                 yield chunk
+
+
+class EchoBackend:
+    """Calls no provider: answers with the model that would have been called. For trying
+    the gateway, and for end-to-end checks, without API keys or cost."""
+
+    def _text(self, model: Mapping[str, Any]) -> str:
+        return f"[dry run] {model['name']} would answer this."
+
+    async def complete(self, model, body):
+        return {
+            "id": "ecoroute-dry-run",
+            "object": "chat.completion",
+            "model": model["name"],
+            "choices": [
+                {
+                    "index": 0,
+                    "message": {"role": "assistant", "content": self._text(model)},
+                    "finish_reason": "stop",
+                }
+            ],
+        }
+
+    async def stream(self, model, body):
+        chunk = {
+            "id": "ecoroute-dry-run",
+            "object": "chat.completion.chunk",
+            "model": model["name"],
+            "choices": [{"index": 0, "delta": {"content": self._text(model)}}],
+        }
+        yield f"data: {json.dumps(chunk)}\n\n".encode()
+        yield b"data: [DONE]\n\n"

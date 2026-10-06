@@ -127,3 +127,17 @@ def test_split_messages_handles_content_parts():
         ]
     )
     assert q == "hi" and "be brief" in conv
+
+
+def test_echo_backend_names_the_chosen_model():
+    from ecoroute.gateway import EchoBackend
+
+    client = make_client(EchoBackend())
+    r = chat(client, "hello")
+    model = r.headers["X-EcoRoute-Model"]
+    assert r.status_code == 200 and model in r.json()["choices"][0]["message"]["content"]
+    with client.stream(
+        "POST", "/v1/chat/completions",
+        json={"model": "ecoroute/auto", "stream": True, "messages": [{"role": "user", "content": "x"}]},
+    ) as s:  # fmt: skip
+        assert "".join(s.iter_text()).strip().endswith("[DONE]")

@@ -4,7 +4,9 @@
     python scripts/serve.py --router artifacts/router.pt --port 8080
 
 Then point any OpenAI client at http://localhost:8080/v1 with model="ecoroute/auto".
-Only models with a confirmed api_id and an API key present are routed to.
+Only models with a confirmed api_id and an API key present are routed to. With --dry-run
+no provider is called: every enabled catalog model can be chosen, and each answer names
+the model that would have been used (no API keys, no cost).
 """
 
 from __future__ import annotations
@@ -16,11 +18,8 @@ from pathlib import Path
 import uvicorn
 import yaml
 
-from ecoroute.confidentiality import CallerPolicyLayer, Detector, NERLayer, RulesLayer
-from ecoroute.confidentiality.ner import hf_tagger
-from ecoroute.gateway import OpenAICompatibleBackend, create_app, deployable
-from ecoroute.routing import Router
-from ecoroute.service import EcoRoute
+from ecoroute.gateway import EchoBackend, OpenAICompatibleBackend, create_app
+from ecoroute.gateway.load import load_gateway_router
 
 
 def main() -> None:
@@ -35,6 +34,9 @@ def main() -> None:
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8080)
     parser.add_argument(
+        "--dry-run", action="store_true", help="call no provider; answers name the chosen model"
+    )
+    parser.add_argument(
         "--parallel-privacy",
         action="store_true",
         help="run the privacy check beside the embedding (helps when they use different "
@@ -44,23 +46,14 @@ def main() -> None:
     logging.basicConfig(level=logging.INFO)
 
     providers = yaml.safe_load(args.providers.read_text())["providers"]
-    full = EcoRoute.load(args.router, catalog=args.catalog)
-    live = deployable(full.catalog, providers)
-    if not live:
-        raise SystemExit("no deployable models: set api_id in models.yaml and the API key env vars")
-    layers = [CallerPolicyLayer(), RulesLayer()]
-    if not args.no_pii_model:
-        layers.append(NERLayer(hf_tagger(device=args.pii_device, fp16=args.pii_fp16)))
-    # Keep the quality floors the router was trained with.
-    router = Router(
-        live, detector=Detector(layers), policy=args.policy, profiles=full.router.profiles
-    )
-    eco = EcoRoute(
-        full.predictor.base, full.encoder_name, live, router=router, taus=full.taus, margins=full.margins,
-        parallel_privacy=args.parallel_privacy,
+    eco = load_gateway_router(
+        args.router, args.catalog, providers, policy=args.policy,
+        pii_model=not args.no_pii_model, pii_device=args.pii_device, pii_fp16=args.pii_fp16,
+        dry_run=args.dry_run, parallel_privacy=args.parallel_privacy,
     )  # fmt: skip
-    print("routing to:", ", ".join(m["name"] for m in live))
-    uvicorn.run(create_app(eco, OpenAICompatibleBackend(providers)), host=args.host, port=args.port)
+    print("routing to:", ", ".join(m["name"] for m in eco.catalog))
+    backend = EchoBackend() if args.dry_run else OpenAICompatibleBackend(providers)
+    uvicorn.run(create_app(eco, backend), host=args.host, port=args.port)
 
 
 if __name__ == "__main__":
