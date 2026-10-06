@@ -73,3 +73,18 @@ def test_service_puts_graph_paths_in_the_explanation(graph):
     assert d.model == "premium"
     assert any("premium (via big)" in step for step in d.steps)
     assert eco.route("hello").model == "cheap"
+
+
+def test_labelled_prompts_feed_only_the_difficulty_edge():
+    X, Y, s = make(600, 5)
+    rng = np.random.default_rng(6)
+    X2 = rng.normal(size=(300, 8)).astype(np.float32)
+    X2[:, 1] += 4.0  # a direction the outcome data never shows as hard
+    g = SkillGraph(min_skill_prompts=10).fit(
+        X, Y, MODELS, skills=s, level_extra=(X2, np.full(300, 2))
+    )
+    probe = np.zeros((1, 8), np.float32)
+    probe[0, 1] = 4.0
+    assert g.explain(probe[0]).levels["hard"] > 0.5
+    plain = SkillGraph(min_skill_prompts=10).fit(X, Y, MODELS, skills=s)
+    assert np.allclose(g.acc_, plain.acc_)  # model edges come from outcomes only

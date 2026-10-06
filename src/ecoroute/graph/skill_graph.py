@@ -64,7 +64,11 @@ class SkillGraph(Predictor):
         self.C = C
         self.min_skill_prompts = min_skill_prompts
 
-    def fit(self, X, Y, models, skills=None):
+    def fit(self, X, Y, models, skills=None, level_extra=None):
+        """skills: task label per training prompt. level_extra: optional (X2, levels) of
+        prompts with a labelled difficulty (0 easy, 1 medium, 2 hard) but no outcomes,
+        added to the prompt -> difficulty classifier only. Outcome data alone is mostly
+        exam questions; labelled prompts from elsewhere teach it what "hard" looks like."""
         if skills is None:
             raise ValueError("SkillGraph needs a skill (task) label per training prompt")
         self.models = list(models)
@@ -78,7 +82,11 @@ class SkillGraph(Predictor):
         known = ~np.isnan(share)
         level = level_of(np.where(known, share, 0.5))
         self.skill_clf_ = LogisticRegression(C=self.C, max_iter=1000).fit(X[known], skills[known])
-        self.level_clf_ = LogisticRegression(C=self.C, max_iter=1000).fit(X[known], level[known])
+        X_lv, y_lv = X[known], level[known]
+        if level_extra is not None:
+            X_lv = np.concatenate([X_lv, np.asarray(level_extra[0], dtype=X.dtype)])
+            y_lv = np.concatenate([y_lv, np.asarray(level_extra[1])])
+        self.level_clf_ = LogisticRegression(C=self.C, max_iter=1000).fit(X_lv, y_lv)
 
         m = len(self.models)
         overall = np.nanmean(Y, axis=0)

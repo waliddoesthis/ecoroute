@@ -32,7 +32,10 @@ def main() -> None:
 
     eco = EcoRoute.load(args.router, catalog=args.catalog)
     prompts = pd.read_parquet(args.data / "prompts.parquet")
-    prompts = prompts[prompts.difficulty.isin(["easy", "medium", "hard"])]
+    # Only val/test prompts: the graph may have learned difficulty from the train split.
+    prompts = prompts[
+        prompts.difficulty.isin(["easy", "medium", "hard"]) & (prompts.split != "train")
+    ]
     if args.n:
         prompts = prompts.sample(min(args.n, len(prompts)), random_state=0)
     cache = args.data / f"embeddings_{eco.encoder_name.replace('/', '_')}.npz"

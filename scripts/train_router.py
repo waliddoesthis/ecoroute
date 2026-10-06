@@ -42,6 +42,11 @@ def main() -> None:
     parser.add_argument("--catalog", type=Path, default=Path("configs/models.yaml"))
     parser.add_argument("--out", type=Path, default=Path("artifacts/router.pt"))
     parser.add_argument("--predictor", choices=["graph", "ensemble"], default="graph")
+    parser.add_argument(
+        "--no-difficulty-labels",
+        action="store_true",
+        help="don't add RouterArena's labelled train prompts to the graph's difficulty edge",
+    )
     args = parser.parse_args()
 
     outcomes = fill_missing_costs(pd.read_parquet(args.data / "outcomes.parquet"))
@@ -61,7 +66,15 @@ def main() -> None:
         data["test"],
     )
 
-    graph = SkillGraph().fit(X_tr, Y_tr, models, skills=skills["train"])
+    level_extra = None
+    labelled = args.data / "prompts.parquet"
+    if not args.no_difficulty_labels and labelled.exists():
+        lab = pd.read_parquet(labelled)
+        lab = lab[(lab.split == "train") & lab.difficulty.isin(["easy", "medium", "hard"])]
+        X_lab = cached_embeddings(lab.prompt_id.tolist(), lab.prompt.tolist(), cache, args.encoder)
+        level_extra = (X_lab, lab.difficulty.map({"easy": 0, "medium": 1, "hard": 2}).to_numpy())
+        print(f"difficulty edge: adding {len(lab):,} labelled RouterArena train prompts")
+    graph = SkillGraph().fit(X_tr, Y_tr, models, skills=skills["train"], level_extra=level_extra)
     print(f"graph skills: {graph.skills_}")
     members = [
         KNNPredictor(k=32),
