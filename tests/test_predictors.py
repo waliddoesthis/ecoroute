@@ -82,6 +82,29 @@ def test_route_cheapest_above():
     assert route_cheapest_above(P, C, 0.7).tolist() == [0, 1, 1]  # last: none ok, most likely
 
 
+def test_fallback_margin_takes_the_cheapest_near_the_top():
+    P = np.array([[0.70, 0.72, 0.74], [0.40, 0.60, 0.74], [0.95, 0.5, 0.5]])
+    C = np.array([[1.0, 3.0, 9.0], [1.0, 3.0, 9.0], [1.0, 3.0, 9.0]])
+    assert route_cheapest_above(P, C, 0.9).tolist() == [2, 2, 0]
+    # Within 0.05 of the top: the first row's cheapest model qualifies, the second's doesn't.
+    assert route_cheapest_above(P, C, 0.9, margin=0.05).tolist() == [0, 2, 0]
+    assert route_cheapest_above(P, C, 0.9, margin=0.15).tolist() == [0, 1, 0]
+
+
+def test_held_out_saving_chooses_a_margin_within_tolerance(data):
+    (X_tr, Y_tr, _, _), (X_te, Y_te, C_te, _) = data
+    X_va, Y_va, C_va, _ = make_data(800, seed=2, missing=0.0)
+    knn = KNNPredictor(k=32).fit(X_tr, Y_tr, MODELS)
+    args = (knn.predict_proba(X_va), Y_va, C_va, knn.predict_proba(X_te), Y_te, C_te, MODELS)
+    grid = np.round(np.arange(0.50, 1.0, 0.01), 2)
+    margins = np.round(np.arange(0.0, 0.155, 0.01), 2)
+    plain = held_out_saving(*args, tolerance=0.02, taus=grid, closest=True)
+    got = held_out_saving(*args, tolerance=0.02, taus=grid, closest=True, margins=margins)
+    assert plain["margin"] == 0.0 and got["margin"] in margins
+    assert got["tau"] == plain["tau"]  # the margin is chosen after tau
+    assert got["cost_saving_pct"] >= plain["cost_saving_pct"] - 1e-9 or got["margin"] == 0
+
+
 def test_routing_saves_cost_at_large_model_quality(data):
     (X_tr, Y_tr, _, _), (X_te, Y_te, C_te, _) = data
     irt = IRTPredictor(epochs=40, batch_size=512, lr=3e-3).fit(X_tr, Y_tr, MODELS)

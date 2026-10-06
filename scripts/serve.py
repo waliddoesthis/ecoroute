@@ -56,7 +56,7 @@ def main() -> None:
         live, detector=Detector(layers), policy=args.policy, profiles=full.router.profiles
     )
     eco = EcoRoute(
-        full.predictor.base, full.encoder_name, live, router=router, taus=full.taus,
+        full.predictor.base, full.encoder_name, live, router=router, taus=full.taus, margins=full.margins,
         parallel_privacy=args.parallel_privacy,
     )  # fmt: skip
     print("routing to:", ", ".join(m["name"] for m in live))

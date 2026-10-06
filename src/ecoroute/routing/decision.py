@@ -6,7 +6,8 @@ explanation is the decision itself, not a story told afterwards:
 1. Confidentiality: classify the prompt; drop models without enough clearance (hard rule).
 2. Quality floor: keep allowed models whose predicted P(correct) >= tau.
 3. Cost and energy: among those, take the lowest cost + lambda_energy * energy.
-   If none reaches tau, take the allowed model most likely to succeed.
+   If none reaches tau, take the allowed model most likely to succeed, or the cheapest
+   one within the profile's fallback margin of it.
 
 P(correct) per model comes from a predictor; this module does not care which one.
 """
@@ -31,6 +32,11 @@ class NoAllowedModel(RuntimeError):
 class Policy:
     tau: float  # quality floor on predicted P(correct)
     lambda_energy: float  # USD charged per Wh when ranking, to favour efficient models
+    # When no model reaches tau, models whose P is within this of the most likely one
+    # count as equally good and the cheapest is taken. The predictor rarely separates
+    # models by a few points on prompts it finds hard (coding prompts sit at P 0.69-0.74
+    # for every model), so paying the top price for a 0.03 edge mostly buys nothing.
+    fallback_margin: float = 0.0
 
     @classmethod
     def parse(cls, value: str | Policy, profiles: Mapping[str, Policy] | None = None) -> Policy:
@@ -59,17 +65,21 @@ PROFILES = {
 PROFILE_TOLERANCE = {"eco": 0.03, "balanced": 0.01, "quality": 0.0}
 
 
-def tuned_profiles(taus: Mapping[str, float] | None) -> dict[str, Policy]:
-    """PROFILES with tau replaced by the values a trained router measured for them.
+def tuned_profiles(
+    taus: Mapping[str, float] | None, margins: Mapping[str, float] | None = None
+) -> dict[str, Policy]:
+    """PROFILES with tau (and fallback margin) replaced by the values a trained router
+    measured for them.
 
     A stricter profile never gets a lower floor than a looser one (eco <= balanced <=
     quality), even when only some taus were measured.
     """
-    taus = taus or {}
+    taus, margins = taus or {}, margins or {}
     out, floor = {}, 0.0
     for name in PROFILE_TOLERANCE:
         floor = max(floor, taus.get(name, PROFILES[name].tau))
-        out[name] = replace(PROFILES[name], tau=floor)
+        margin = margins.get(name, PROFILES[name].fallback_margin)
+        out[name] = replace(PROFILES[name], tau=floor, fallback_margin=margin)
     return out
 
 
@@ -201,11 +211,27 @@ class Router:
             best = min(qualified, key=lambda c: (c.score(pol), -(c.p_success or 0)))
             steps.append(_choice_step(best, allowed))
         else:
-            best = max(allowed, key=lambda c: (c.p_success or -1, -c.score(pol)))
-            steps.append(
-                f"No allowed model reaches tau, so {best.name} was chosen as the most likely "
-                f"to succeed (P={_fmt_p(best.p_success)}, {_fmt_cost(best.cost_usd)})."
-            )
+            top = max(allowed, key=lambda c: (c.p_success or -1, -c.score(pol)))
+            best = top
+            if top.p_success is not None and pol.fallback_margin > 0:
+                near = [
+                    c for c in allowed
+                    if c.p_success is not None
+                    and c.p_success >= top.p_success - pol.fallback_margin - 1e-12
+                ]  # fmt: skip
+                best = min(near, key=lambda c: (c.score(pol), -(c.p_success or 0)))
+            if best is top:
+                steps.append(
+                    f"No allowed model reaches tau, so {best.name} was chosen as the most "
+                    f"likely to succeed (P={_fmt_p(best.p_success)}, {_fmt_cost(best.cost_usd)})."
+                )
+            else:
+                steps.append(
+                    f"No allowed model reaches tau. {best.name} (P={_fmt_p(best.p_success)}, "
+                    f"{_fmt_cost(best.cost_usd)}) was chosen as the cheapest within "
+                    f"{pol.fallback_margin:.2f} of the most likely, {top.name} "
+                    f"(P={_fmt_p(top.p_success)}, {_fmt_cost(top.cost_usd)})."
+                )
 
         known = [p for p in p_success.values() if p is not None]
         difficulty = 1 - sum(known) / len(known) if known else None

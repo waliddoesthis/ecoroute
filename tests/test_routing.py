@@ -119,3 +119,24 @@ def test_router_uses_its_own_profiles():
     r = Router.from_yaml("configs/models.yaml", profiles=tuned_profiles({"balanced": 0.95}))
     assert r.policy.tau == 0.95
     assert Router.from_yaml("configs/models.yaml").policy.tau == PROFILES["balanced"].tau
+
+
+def test_fallback_margin_takes_a_cheaper_model_near_the_top():
+    from dataclasses import replace
+
+    r = Router.from_yaml("configs/models.yaml", policy="balanced")
+    p = {m["name"]: 0.61 for m in r.catalog}  # below the default tau 0.7
+    p["claude-opus-5-5"] = 0.64  # opus leads by 0.03
+    assert r.decide("merge intervals", p).model == "claude-opus-5-5"
+    pol = replace(r.policy, fallback_margin=0.05)
+    d = r.decide("merge intervals", p, policy=pol)
+    assert d.model != "claude-opus-5-5" and d.below_floor
+    assert d.chosen.cost_usd < next(c.cost_usd for c in d.candidates if c.name == "claude-opus-5-5")
+    assert "cheapest within 0.05" in d.explain()
+
+
+def test_tuned_profiles_carry_margins():
+    from ecoroute.routing import tuned_profiles
+
+    prof = tuned_profiles({"balanced": 0.9}, {"balanced": 0.04})
+    assert prof["balanced"].fallback_margin == 0.04 and prof["eco"].fallback_margin == 0.0

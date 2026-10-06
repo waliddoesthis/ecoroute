@@ -46,13 +46,22 @@ def quality_report(P: np.ndarray, Y: np.ndarray) -> dict[str, float]:
     return {"brier": brier(P, Y), "ece": ece(P, Y), "auc": mean_auc(P, Y)}
 
 
-def route_cheapest_above(P: np.ndarray, C: np.ndarray, tau: float) -> np.ndarray:
-    """Index of the cheapest model with P >= tau per prompt; the most likely model if none."""
+def route_cheapest_above(
+    P: np.ndarray, C: np.ndarray, tau: float, margin: float = 0.0
+) -> np.ndarray:
+    """Index of the cheapest model with P >= tau per prompt.
+
+    When none reaches tau, the cheapest model whose P is within `margin` of the most
+    likely one (margin 0: the most likely model itself).
+    """
     ok = P >= tau
-    masked_cost = np.where(ok, C, np.inf)
-    choice = masked_cost.argmin(axis=1)
+    choice = np.where(ok, C, np.inf).argmin(axis=1)
     none_ok = ~ok.any(axis=1)
-    choice[none_ok] = P[none_ok].argmax(axis=1)
+    if none_ok.any():
+        Pn, Cn = P[none_ok], C[none_ok]
+        near = Pn >= Pn.max(axis=1, keepdims=True) - margin - 1e-12
+        # Ties on cost go to the more likely model.
+        choice[none_ok] = np.lexsort((-Pn, np.where(near, Cn, np.inf)), axis=1)[:, 0]
     return choice
 
 
@@ -178,25 +187,28 @@ def breakdown_by_difficulty(
     return out
 
 
-def evaluate_at_tau(P: np.ndarray, Y: np.ndarray, C: np.ndarray, tau: float) -> dict[str, float]:
+def evaluate_at_tau(
+    P: np.ndarray, Y: np.ndarray, C: np.ndarray, tau: float, margin: float = 0.0
+) -> dict[str, float]:
     """Accuracy and mean cost of the router at a fixed tau, on prompts with full rows."""
     full = ~np.isnan(Y).any(axis=1) & ~np.isnan(C).any(axis=1)
     P, Y, C = P[full], Y[full], C[full]
-    pick = route_cheapest_above(P, C, tau)
+    pick = route_cheapest_above(P, C, tau, margin)
     idx = np.arange(len(Y))
     return {"accuracy": float(Y[idx, pick].mean()), "cost": float(C[idx, pick].mean())}
 
 
 def gap_upper_bound(
-    P: np.ndarray, Y: np.ndarray, C: np.ndarray, ref: int, taus, z: float = 0.0
-) -> np.ndarray:
+    P: np.ndarray, Y: np.ndarray, C: np.ndarray, ref: int, taus, z: float = 0.0,
+    margin: float = 0.0,
+) -> np.ndarray:  # fmt: skip
     """Accuracy lost against model `ref` at each tau, plus z paired standard errors."""
     full = ~np.isnan(Y).any(axis=1) & ~np.isnan(C).any(axis=1)
     P, Y, C = P[full], Y[full], C[full]
     idx = np.arange(len(Y))
     out = []
     for tau in taus:
-        d = Y[:, ref] - Y[idx, route_cheapest_above(P, C, tau)]
+        d = Y[:, ref] - Y[idx, route_cheapest_above(P, C, tau, margin)]
         se = d.std(ddof=1) / np.sqrt(len(d)) if len(d) > 1 else 0.0
         out.append(d.mean() + z * se)
     return np.array(out)
@@ -204,13 +216,13 @@ def gap_upper_bound(
 
 def bootstrap_gap(
     P: np.ndarray, Y: np.ndarray, C: np.ndarray, ref: int, tau: float,
-    n_boot: int = 1000, seed: int = 0,
+    n_boot: int = 1000, seed: int = 0, margin: float = 0.0,
 ) -> tuple[float, float]:  # fmt: skip
     """5th and 95th percentile of the accuracy lost against model `ref`, over prompts
     resampled with replacement."""
     full = ~np.isnan(Y).any(axis=1) & ~np.isnan(C).any(axis=1)
     P, Y, C = P[full], Y[full], C[full]
-    d = Y[:, ref] - Y[np.arange(len(Y)), route_cheapest_above(P, C, tau)]
+    d = Y[:, ref] - Y[np.arange(len(Y)), route_cheapest_above(P, C, tau, margin)]
     rng = np.random.default_rng(seed)
     means = d[rng.integers(0, len(d), size=(n_boot, len(d)))].mean(axis=1)
     lo, hi = np.percentile(means, [5, 95])
@@ -229,8 +241,13 @@ def held_out_saving(
     taus: np.ndarray | None = None,
     closest: bool = False,
     z: float = 0.0,
+    margins: np.ndarray | None = None,
 ) -> dict[str, float | str | bool]:
     """Pick tau on validation, then measure it on test.
+
+    With margins, the fallback margin (see route_cheapest_above) is then chosen the same
+    way at that tau: the cheapest margin whose bound stays within tolerance, or, when tau
+    itself only came closest, no worse than margin 0.
 
     taus is the grid searched (routing_curve's default if None). With closest=True and no
     tau within tolerance, the tau with the smallest gap on validation is taken instead.
@@ -256,12 +273,27 @@ def held_out_saving(
         tau = float(routers.loc[routers.gap.idxmin()].tau)
     else:
         return {"reference": reference, "matched": False}
+    margin = 0.0
+    if margins is not None:
+        bound0 = gap_upper_bound(P_val, Y_val, C_val, ref_j, [tau], z)[0]
+        limit = tolerance if bound0 <= tolerance else bound0
+        best_cost = np.inf
+        for m in margins:
+            if gap_upper_bound(P_val, Y_val, C_val, ref_j, [tau], z, m)[0] <= limit + 1e-12:
+                cost = evaluate_at_tau(P_val, Y_val, C_val, tau, m)["cost"]
+                if cost < best_cost - 1e-15:
+                    margin, best_cost = float(m), cost
     test_curve = routing_curve(P_test, Y_test, C_test, models)
     ref = test_curve.loc[test_curve.policy == reference].iloc[0]
-    got = evaluate_at_tau(P_test, Y_test, C_test, tau)
+    got = evaluate_at_tau(P_test, Y_test, C_test, tau, margin)
     gap = float(ref.accuracy) - got["accuracy"]
     gap_lo, gap_hi = bootstrap_gap(
-        P_test, Y_test, C_test, models.index(reference.removeprefix("always ")), tau
+        P_test,
+        Y_test,
+        C_test,
+        models.index(reference.removeprefix("always ")),
+        tau,
+        margin=margin,
     )
     return {
         "reference": reference,
@@ -269,6 +301,7 @@ def held_out_saving(
         # on test is within_tolerance; the gap can widen because tau was not tuned on test.
         "matched": True,
         "tau": tau,
+        "margin": margin,
         "router_accuracy": got["accuracy"],
         "reference_accuracy": float(ref.accuracy),
         "acc_gap": gap,

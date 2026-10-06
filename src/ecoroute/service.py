@@ -31,6 +31,7 @@ class EcoRoute:
         policy: str | Policy = "balanced",
         router: Router | None = None,
         taus: Mapping[str, float] | None = None,
+        margins: Mapping[str, float] | None = None,
         parallel_privacy: bool = False,
     ) -> None:
         self.encoder_name = encoder
@@ -38,8 +39,9 @@ class EcoRoute:
         self.predictor = CatalogPredictor.from_catalog(predictor, self.catalog)
         # Profile quality floors measured on held-out data when the router was trained.
         self.taus = dict(taus or {})
+        self.margins = dict(margins or {})
         self.router = router or Router(
-            self.catalog, policy=policy, profiles=tuned_profiles(self.taus)
+            self.catalog, policy=policy, profiles=tuned_profiles(self.taus, self.margins)
         )
         self._encoder = None
         # Run the privacy check beside the embedding. It only pays when the two models sit
@@ -49,9 +51,15 @@ class EcoRoute:
         self.parallel_privacy = parallel_privacy
 
     def save(self, path: str | Path) -> None:
-        """Save the trained predictor, encoder name and tuned taus (the catalog stays in YAML)."""
+        """Save the trained predictor, encoder name and tuned profile settings (the catalog
+        stays in YAML)."""
         Path(path).parent.mkdir(parents=True, exist_ok=True)
-        state = {"predictor": self.predictor.base, "encoder": self.encoder_name, "taus": self.taus}
+        state = {
+            "predictor": self.predictor.base,
+            "encoder": self.encoder_name,
+            "taus": self.taus,
+            "margins": self.margins,
+        }
         torch.save(state, path)
 
     @classmethod
@@ -60,6 +68,7 @@ class EcoRoute:
         state = torch.load(path, map_location="cpu", weights_only=False)
         models = yaml.safe_load(Path(catalog).read_text())["models"]
         kw.setdefault("taus", state.get("taus"))
+        kw.setdefault("margins", state.get("margins"))
         return cls(state["predictor"], state["encoder"], models, **kw)
 
     def _pool(self) -> ThreadPoolExecutor:

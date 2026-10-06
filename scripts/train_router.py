@@ -125,7 +125,10 @@ def main() -> None:
 
     # Each profile's quality floor is the cheapest tau that kept accuracy within its
     # tolerance of the best single model on validation; test shows whether it held.
-    taus = {}
+    taus, margins = {}, {}
+    # When no model reaches tau, the cheapest model within a margin of the most likely one
+    # is taken; each profile's margin is chosen after its tau, on the same validation half.
+    margin_grid = np.round(np.arange(0.0, 0.155, 0.01), 2)
     # Taus are chosen on the half of validation the calibrator never saw: on the half it
     # was fitted to, the predictions look better than they are, and the chosen taus
     # missed their targets on test by more than chance would explain (runs 28 and 29).
@@ -143,14 +146,15 @@ def main() -> None:
         # them (balanced 0.22 to 1.72 points against a 1-point target).
         h = held_out_saving(
             P_va, Y_tune, C_tune, P_te, Y_te, C_te, models, tol, grid,
-            closest=profile == "quality", z=z,
+            closest=profile == "quality", z=z, margins=margin_grid,
         )  # fmt: skip
         if not h["matched"]:
             print(f"  {profile}: nothing within {100 * tol:.0f} points, keeping the default")
             continue
-        taus[profile] = h["tau"]
+        taus[profile], margins[profile] = h["tau"], h["margin"]
         print(
-            f"  {profile} (within {100 * tol:.0f} pts): tau {h['tau']:.2f}, test accuracy "
+            f"  {profile} (within {100 * tol:.0f} pts): tau {h['tau']:.2f}, "
+            f"fallback margin {h['margin']:.2f}, test accuracy "
             f"{h['router_accuracy']:.4f} vs {h['reference_accuracy']:.4f}, "
             f"gap {100 * h['acc_gap']:.2f} pts (90% CI {100 * h['acc_gap_ci90'][0]:.2f} to "
             f"{100 * h['acc_gap_ci90'][1]:.2f}), saving {h['cost_saving_pct']:.1f}%; "
@@ -172,14 +176,17 @@ def main() -> None:
         print(f"  quality on coding prompts: {q}")
         print(f"  best single model: {cols[best]} accuracy {Yc[:, best].mean():.4f}")
         for profile, tau in taus.items():
-            got = evaluate_at_tau(Pc, Yc, Cc, tau)
-            print(
-                f"  {profile} (tau {tau:.2f}): accuracy {got['accuracy']:.4f}, saving "
-                f"{100 * (1 - got['cost'] / Cc[:, best].mean()):.1f}% vs {cols[best]}"
-            )
+            for m in sorted({0.0, margins[profile]}):
+                got = evaluate_at_tau(Pc, Yc, Cc, tau, m)
+                print(
+                    f"  {profile} (tau {tau:.2f}, margin {m:.2f}): accuracy "
+                    f"{got['accuracy']:.4f}, saving "
+                    f"{100 * (1 - got['cost'] / Cc[:, best].mean()):.1f}% vs {cols[best]}"
+                )
 
     catalog = yaml.safe_load(args.catalog.read_text())["models"]
-    eco = EcoRoute(predictor, args.encoder, catalog, taus=taus)  # fails if an anchor is missing
+    # Fails if an anchor is missing.
+    eco = EcoRoute(predictor, args.encoder, catalog, taus=taus, margins=margins)
     eco.save(args.out)
     print(f"saved {args.out} ({len(eco.predictor.names)} catalog models anchored)")
 
