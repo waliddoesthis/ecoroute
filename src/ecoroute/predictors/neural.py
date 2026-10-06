@@ -146,3 +146,39 @@ class IRTPredictor(_TorchPredictor):
     def abilities(self) -> dict[str, np.ndarray]:
         w = self.net_.ability.weight.detach().cpu().numpy()
         return {m: w[i] for i, m in enumerate(self.models)}
+
+
+class _MLPNet(nn.Module):
+    def __init__(self, dim: int, n_models: int, hidden: int, dropout: float) -> None:
+        super().__init__()
+        self.body = nn.Sequential(
+            nn.Linear(dim, hidden),
+            nn.GELU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden, hidden),
+            nn.GELU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden, n_models),
+        )
+
+    def forward(self, x, model_idx):
+        return self.body(x).gather(1, model_idx[:, None]).squeeze(-1)
+
+
+class MLPPredictor(_TorchPredictor):
+    """Two-layer network with one output per model, trained on observed cells only.
+
+    More flexible than MF or IRT: it can learn that a model is strong on one kind of
+    prompt and weak on another, which is where the hard prompts get lost.
+    """
+
+    name = "mlp"
+
+    def __init__(self, hidden: int = 512, dropout: float = 0.2, **kw) -> None:
+        kw.setdefault("weight_decay", 1e-4)
+        super().__init__(**kw)
+        self.hidden = hidden
+        self.dropout = dropout
+
+    def _build(self, dim, n_models):
+        return _MLPNet(dim, n_models, self.hidden, self.dropout)

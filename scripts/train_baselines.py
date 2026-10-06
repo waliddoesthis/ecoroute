@@ -32,6 +32,7 @@ from ecoroute.predictors import (
     IRTPredictor,
     KNNPredictor,
     MatrixFactorizationPredictor,
+    MLPPredictor,
     ModelMeanPredictor,
     cost_matrix,
     outcome_matrix,
@@ -77,6 +78,7 @@ def main() -> None:
             KNNPredictor(k=32),
             MatrixFactorizationPredictor(epochs=args.epochs, seed=seed),
             IRTPredictor(epochs=args.epochs, seed=seed),
+            MLPPredictor(epochs=args.epochs, seed=seed),
         ]
         results = []
 

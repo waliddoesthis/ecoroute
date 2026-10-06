@@ -143,7 +143,9 @@ def breakdown_by_difficulty(
     """Router (at tau) vs. oracle accuracy and cost per difficulty bucket.
 
     The gap column shows where the router loses accuracy; the 2026 Routing Plateau study
-    found most of the gap to the oracle sits in the hard bucket.
+    found most of the gap to the oracle sits in the hard bucket. On hard prompts the
+    oracle is partly luck (some weak model happens to be right), so best_single_accuracy,
+    the most accurate single model overall, is the realistic target there.
     """
     full = ~np.isnan(Y).any(axis=1) & ~np.isnan(C).any(axis=1)
     P, Y, C = P[full], Y[full], C[full]
@@ -154,6 +156,7 @@ def breakdown_by_difficulty(
         correct.any(axis=1), np.where(correct, C, np.inf).argmin(axis=1), C.argmin(axis=1)
     )
     buckets = difficulty_buckets(Y)
+    best = int((Y >= 0.5).mean(axis=0).argmax())
     rows = []
     for b in ("easy", "medium", "hard"):
         sel = buckets == b
@@ -165,6 +168,7 @@ def breakdown_by_difficulty(
                 "share": float(sel.mean()),
                 "router_accuracy": float(Y[idx[sel], pick[sel]].mean()),
                 "oracle_accuracy": float(Y[idx[sel], oracle[sel]].mean()),
+                "best_single_accuracy": float(Y[sel, best].mean()),
                 "router_cost": float(C[idx[sel], pick[sel]].mean()),
                 "oracle_cost": float(C[idx[sel], oracle[sel]].mean()),
             }

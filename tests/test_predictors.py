@@ -20,6 +20,7 @@ from ecoroute.predictors import (
     IRTPredictor,
     KNNPredictor,
     MatrixFactorizationPredictor,
+    MLPPredictor,
     ModelMeanPredictor,
     cost_matrix,
     outcome_matrix,
@@ -54,6 +55,7 @@ def data():
         (KNNPredictor(k=32), 0.72),
         (MatrixFactorizationPredictor(epochs=40, batch_size=512, lr=3e-3), 0.75),
         (IRTPredictor(epochs=40, batch_size=512, lr=3e-3), 0.75),
+        (MLPPredictor(epochs=40, batch_size=512, lr=1e-3), 0.75),
     ],
 )
 def test_predictors_beat_model_mean(data, pred, min_auc):
@@ -150,6 +152,7 @@ def test_breakdown_puts_most_of_the_gap_in_hard_prompts(data):
     assert set(table.bucket) == {"easy", "medium", "hard"}
     assert abs(table.share.sum() - 1) < 1e-9
     assert (table.gap >= -1e-9).all()  # the oracle is never worse
+    assert (table.oracle_accuracy >= table.best_single_accuracy - 1e-9).all()
 
 
 def test_held_out_saving_picks_tau_on_validation(data):
