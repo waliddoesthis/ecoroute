@@ -167,6 +167,9 @@ def main() -> None:
             "restricted_missed_by_label": dict(missed.most_common(8)),
             "restricted_recall": sum(g == Level.RESTRICTED for g in restricted)
             / max(1, len(restricted)),
+            # Kept off external models (at least confidential), even if not restricted.
+            "restricted_protected": sum(g >= Level.CONFIDENTIAL for g in restricted)
+            / max(1, len(restricted)),
             "pii_recall": sum(g >= Level.CONFIDENTIAL for g in pii) / max(1, len(pii)),
             "false_alarm_rate": alarms / len(benign),
             "false_alarms_by_kind": dict(kinds.most_common(6)),

@@ -61,6 +61,11 @@ def shannon_entropy(s: str) -> float:
     return -sum(c / len(s) * math.log2(c / len(s)) for c in counts.values())
 
 
+def _epoch_ms(s: str) -> bool:
+    """A Unix timestamp in milliseconds (2000-2040), common in logs and code."""
+    return s.isdigit() and len(s) == 13 and 946_684_800_000 <= int(s) <= 2_208_988_800_000
+
+
 def _always(_: str) -> bool:
     return True
 
@@ -121,6 +126,25 @@ RULES: list[Rule] = [
         # A real identifier carries several digits; this keeps "account settings" out.
         lambda s: sum(c.isdigit() for c in s) >= 5,
     ),
+    # A long bare number. Account, ID and tax numbers often appear with no label at all
+    # (run 26: 52 of 56 missed restricted values were bare digit runs), so a run of 9+
+    # digits that is not part of a calculation or a decimal is treated as personal data.
+    # It is confidential, not restricted: it may as well be an order or ticket number,
+    # but either way it stays off external models.
+    Rule(
+        "long_number",
+        C,
+        re.compile(
+            r"(?<![\w.,/*+=^%-])(?<![.,/*+=^%×-]\s)"
+            r"\d(?:[ -]?\d){8,29}"
+            r"(?![\w,%]|\.\d)(?!\s*[*/+=^×-]\s*\d)"
+        ),
+        lambda s: (
+            sum(c.isdigit() for c in s) >= 9
+            and len(set(s) - {" ", "-"}) > 2  # not 100000000 or 111-111-111
+            and not _epoch_ms(s)
+        ),
+    ),
     # Contact details.
     Rule(
         "email", C, re.compile(r"\b[\w.+\-]+@[A-Za-z0-9\-]+(?:\.[A-Za-z0-9\-]+)*\.[A-Za-z]{2,}\b")
@@ -130,7 +154,11 @@ RULES: list[Rule] = [
         C,
         re.compile(r"(?<![\w.])\+?\d{1,3}[ .\-]?\(?\d{2,4}\)?(?:[ .\-]?\d{2,4}){2,3}(?![\w.])"),
         # A bare digit run is more often an ID or timestamp than a phone number.
-        lambda s: 9 <= sum(c.isdigit() for c in s) <= 15 and any(c in s for c in "+ .-("),
+        lambda s: (
+            9 <= sum(c.isdigit() for c in s) <= 15
+            and any(c in s for c in "+ .-(")
+            and not re.fullmatch(r"\d+\.\d+", s)
+        ),  # a decimal such as 3.14159265
     ),
     # Network identifiers.
     Rule(

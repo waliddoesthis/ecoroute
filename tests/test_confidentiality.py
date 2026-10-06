@@ -293,3 +293,23 @@ def test_labelled_identifiers_are_restricted(text, value):
 )
 def test_labels_without_an_identifier_are_ignored(text):
     assert not [x for x in RulesLayer().scan(text) if x.kind == "labelled_identifier"]
+
+
+@pytest.mark.parametrize(
+    "text, hit",
+    [
+        ("Ensure 9168414363 is filled in the banking section.", True),
+        ("Confirm if 521 156 4235 is valid.", True),
+        ("the account ending in 574554323844825. We", True),
+        ("What is 123456789 * 987654321?", False),
+        ("The population is 1,234,567,890.", False),
+        ("pi is 3.14159265358979", False),
+        ("In 2023 we had 100000000 users", False),
+        ("Event at timestamp 1696543200000 was logged", False),
+    ],
+)
+def test_long_bare_numbers_are_kept_off_external_models(text, hit):
+    kinds = {f.kind for f in RulesLayer().scan(text) if f.level >= Level.CONFIDENTIAL}
+    assert ("long_number" in kinds) == hit
+    if not hit:
+        assert not kinds
