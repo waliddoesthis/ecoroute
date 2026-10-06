@@ -57,3 +57,23 @@ matrix-factorization and IRT predictors, and writes `reports/baselines_<source>.
 calibration, AUC and the cost-vs-accuracy routing curve. SPROUT has token counts but no
 cost, so its cost is estimated from the price table its authors published
 (`src/ecoroute/data/prices.py`).
+
+## Confidentiality check
+
+Every prompt is classified before routing as public, internal, confidential or restricted.
+The strictest layer wins, and only models whose `clearance` in `configs/models.yaml` covers
+the level are allowed.
+
+```python
+from ecoroute.confidentiality import Detector, allowed_models
+
+result = Detector().classify(prompt, {"sensitivity_label": "Confidential"})
+result.level      # e.g. Level.RESTRICTED
+result.reasons()  # e.g. ["rules: aws_access_key (restricted)"]; matched values are never echoed
+```
+
+Layers so far: caller policy (labels such as Purview/DLP, or a minimum level) and
+deterministic rules (secrets, cards with Luhn, IBANs with mod-97, SSNs, emails, phones, IPs,
+high-entropy strings, and a company dictionary). `redact()` / `restore()` mask sensitive
+values so a cheaper external model can be used when the task doesn't need them.
+`tests/test_confidentiality.py` holds the prompts that must never reach an uncleared model.
