@@ -41,7 +41,7 @@ plus a shift that can be fitted on a few hundred graded answers.
 
 Among the allowed models whose predicted success is at least tau, take the lowest
 `cost + lambda_energy * energy`. If none reaches tau, take the allowed model most likely
-to succeed.
+to succeed, or the cheapest one within the profile's fallback margin of it.
 
 - API models cost their token prices. Self-hosted models cost their GPU's electricity
   while generating (plus an optional hourly hardware cost); nothing is free.
@@ -51,26 +51,35 @@ to succeed.
   read on the predictor's own scale. Energy is ignored by `quality`, priced at about
   $0.25/kWh (electricity plus its carbon) by `balanced`, and ten times that by `eco`.
   Untrained defaults are 0.85, 0.7 and 0.6.
+- The fallback margin covers prompts where no model reaches tau. The predictor rarely
+  separates models by a few points there (a coding prompt sits at P 0.69 to 0.74 for
+  every model), so paying the top price for that edge mostly buys nothing. Each margin is
+  chosen after its tau, on the same validation prompts, and may only spend the slack
+  that tau's bound leaves: what the margin itself costs, plus 1.645 standard errors, must
+  fit within the target minus tau's bound (run 36). Held only to the overall bound
+  (run 35), it saved more but pushed balanced's test interval to 1.25 points.
 
 ## What it achieves (SPROUT test set, held-out threshold)
 
-Graph router v12 (run 34, trained on SPROUT plus BigCodeBench coding tasks), against
-always using GPT-4o (test accuracy 0.845 on SPROUT prompts). Each profile's tau is chosen
-on validation prompts the calibrator never saw, and qualifies only if the gap plus 1.645
-standard errors stays within the profile's target.
+Graph router v14 (run 36, trained on SPROUT plus BigCodeBench coding tasks), against
+always using GPT-4o (test accuracy 0.845 on SPROUT prompts). Each profile's tau and
+fallback margin are chosen on validation prompts the calibrator never saw, and qualify
+only if the gap plus 1.645 standard errors stays within the profile's target.
 
 Points lost against GPT-4o on test (negative means more accurate), with a 90% interval:
 
-| Profile  | Target           | tau  | Points lost (90% CI)  | Cost saved |
-|----------|------------------|------|-----------------------|------------|
-| quality  | no loss          | 0.98 | -1.6 (-2.2 to -0.9)   | 34.2%      |
-| balanced | at most 1 point  | 0.91 | -0.1 (-0.7 to 0.7)    | 67.3%      |
-| eco      | at most 3 points | 0.86 | 1.6 (0.8 to 2.3)      | 75.0%      |
+| Profile  | Target           | tau  | Margin | Points lost (90% CI)  | Cost saved |
+|----------|------------------|------|--------|-----------------------|------------|
+| quality  | no loss          | 0.98 | 0      | -1.6 (-2.2 to -0.9)   | 34.2%      |
+| balanced | at most 1 point  | 0.91 | 0.02   | 0.3 (-0.4 to 1.0)     | 69.7%      |
+| eco      | at most 3 points | 0.86 | 0      | 1.6 (0.8 to 2.3)      | 75.0%      |
 
 On the 108 coding test prompts (BigCodeBench, hard: GPT-4o solves 54.6%), the router is
-1.8 points below GPT-4o at 48% lower cost; predicting which model solves a coding task is
-still weak there (AUC 0.65). Earlier runs reported larger savings with taus picked partly
-on the calibrator's own data, which made the predictions look better than they were.
+1.8 points below GPT-4o at 48% lower cost (60% for balanced, whose fallback margin takes
+a cheaper model where none is clearly better); predicting which model solves a coding
+task is still weak there (AUC 0.65). Earlier runs reported larger savings with taus
+picked partly on the calibrator's own data, which made the predictions look better than
+they were.
 
 - Against a black-box ensemble (kNN, matrix factorization, IRT and MLP) under the same
   protocol (run 31), both reach GPT-4o's accuracy on test (0.848 vs 0.845); the

@@ -1,118 +1,187 @@
 # EcoRoute
 
-An explainable, eco-aware LLM router. For every prompt it picks the cheapest, lowest-energy model that can handle it, treats confidentiality as a hard rule, and explains each decision.
+An explainable, eco-aware LLM router behind an OpenAI-compatible gateway. For every prompt
+it picks the cheapest, lowest-energy model that is predicted to answer it correctly. It
+never sends confidential data to a model that isn't cleared for it, and it explains each
+decision.
 
-Design docs: [`docs/brainstorm.md`](docs/brainstorm.md), [`docs/model-research.md`](docs/model-research.md), [`docs/zero-cost-plan.md`](docs/zero-cost-plan.md).
+Apps keep their OpenAI client and change only `base_url` and `model="ecoroute/auto"`.
 
-## Setup
+## Results
+
+Router v14, measured on held-out SPROUT test prompts against always using GPT-4o (accuracy
+0.845). Thresholds are chosen on validation prompts the router never trained or calibrated
+on.
+
+| Profile  | Accuracy target       | Points lost vs GPT-4o (90% CI) | Cost saved |
+|----------|-----------------------|--------------------------------|------------|
+| quality  | no loss               | -1.6 (-2.2 to -0.9), i.e. better | 34%      |
+| balanced | at most 1 point lost  | 0.3 (-0.4 to 1.0)              | 70%        |
+| eco      | at most 3 points lost | 1.6 (0.8 to 2.3)               | 75%        |
+
+- **Privacy filter:** keeps 99% of texts with restricted data (keys, account and ID
+  numbers, cards) and 97% of texts with personal data off external models, with 7.6% false
+  alarms on ordinary prompts.
+- **Coding prompts (BigCodeBench):** 48% to 60% cheaper than GPT-4o for 1.8 points lower
+  accuracy. Telling hard coding tasks from easy ones is still the weakest part (AUC 0.65).
+- **Speed:** a full routing decision (privacy check, embedding, prediction, explanation)
+  takes about 72 ms on a T4 GPU, small next to the LLM call itself.
+
+The method, every number and how it was measured are in
+[`docs/how-it-decides.md`](docs/how-it-decides.md).
+
+## How it decides
+
+1. **Privacy filter (hard rule).** The prompt and the whole conversation are classified as
+   public, internal, confidential or restricted. The check combines the caller's label,
+   deterministic rules (secrets, cards with Luhn, IBANs, SSNs, labelled and long ID
+   numbers, emails, phones) and a PII model
+   ([piiranha](https://huggingface.co/iiiorg/piiranha-v1-detect-personal-information)).
+   Models whose `clearance` is below the level are removed. Nothing can override this.
+2. **Decision graph.** The prompt is linked to skills (code, math, chat, ...), to a
+   difficulty level, and to the most similar past prompts. Each path ends at a model with
+   the share of such prompts that model answered correctly. The result is a calibrated
+   P(correct) for every model, plus the heaviest paths that explain it.
+3. **Cost and energy.** Among the allowed models with P(correct) at or above the profile's
+   threshold, take the one with the lowest `cost + lambda * energy`. If none reaches the
+   threshold, take the most likely model, or the cheapest one within the profile's small
+   fallback margin of it.
+
+Every response carries the decision in headers: `X-EcoRoute-Model`, `-Level`,
+`-Difficulty`, `-Reason` and `-Time-Ms`.
+
+## Quick start
 
 ```bash
 pip install -e ".[dev]"
 pytest
 ```
 
-## Run everything on Lightning AI from your machine
+You need a trained router file (`router.pt`); see [Train a router](#train-a-router).
+Encoder and PII models are downloaded from Hugging Face on first use.
 
-`scripts/lightning_run.py` does the two steps below in one go. It ships the current commit to a
-Studio (no GitHub token needed), builds the data, trains the baselines on a GPU, downloads the
-reports to `reports/lightning/` and always stops the Studio at the end.
-
-```bash
-pip install lightning-sdk
-export LIGHTNING_USER_ID=... LIGHTNING_API_KEY=...   # Lightning account settings, Keys
-python scripts/lightning_run.py --teamspace <your-teamspace> --machine T4
-```
-
-It refuses to start below `--min-credits` (default 3) and stops the Studio after
-`--max-hours` (default 2). A full run on a T4 takes about 11 minutes and about 0.2 credits.
-Add `--skip-build` to reuse the data already in the Studio, `--pytest` to run the tests first,
-and `--train-args "--seeds 3"` to pass options through to `train_baselines.py`.
-
-## Build the training data (Lightning AI Studio)
-
-1. Create a Studio (CPU is enough for this step; no GPU credits needed).
-2. In its terminal:
-   ```bash
-   git clone https://github.com/waliddoesthis/ecoroute && cd ecoroute
-   git checkout design/brainstorm
-   pip install -e ".[dev]"
-   python scripts/build_dataset.py --out data/processed
-   ```
-3. It downloads SPROUT, RouterBench and RouterArena (~2 GB) and writes
-   `data/processed/outcomes.parquet` and `prompts.parquet`, then prints a summary.
-
-Since the repo is private, step 2 needs a GitHub token or the Studio's GitHub integration to clone.
-
-## Train the baseline predictors (Lightning AI, GPU)
-
-After the data build above, on an L4 or T4 Studio:
+**See decisions without calling any model:**
 
 ```bash
-python scripts/train_baselines.py --source routerbench
-python scripts/train_baselines.py --source sprout
-```
-
-It embeds every prompt once (cached next to the data), trains the model-mean, kNN,
-matrix-factorization and IRT predictors, and writes `reports/baselines_<source>.json` with
-calibration, AUC and the cost-vs-accuracy routing curve. SPROUT has token counts but no
-cost, so its cost is estimated from the price table its authors published
-(`src/ecoroute/data/prices.py`).
-
-## Confidentiality check
-
-Every prompt is classified before routing as public, internal, confidential or restricted.
-The strictest layer wins, and only models whose `clearance` in `configs/models.yaml` covers
-the level are allowed.
-
-```python
-from ecoroute.confidentiality import Detector, allowed_models
-
-result = Detector().classify(prompt, {"sensitivity_label": "Confidential"})
-result.level      # e.g. Level.RESTRICTED
-result.reasons()  # e.g. ["rules: aws_access_key (restricted)"]; matched values are never echoed
-```
-
-Layers so far: caller policy (labels such as Purview/DLP, or a minimum level) and
-deterministic rules (secrets, cards with Luhn, IBANs with mod-97, SSNs, emails, phones, IPs,
-high-entropy strings, and a company dictionary). `redact()` / `restore()` mask sensitive
-values so a cheaper external model can be used when the task doesn't need them.
-`tests/test_confidentiality.py` holds the prompts that must never reach an uncleared model.
-
-## Train and try the deployable router
-
-```bash
-python scripts/train_router.py --data data/processed --out artifacts/router.pt
 python scripts/route_demo.py --router artifacts/router.pt
 ```
 
-The router is a weighted graph: prompt -> skills (from the task labels) -> difficulty
-(easy / medium / hard) -> models, where each skill-and-difficulty edge to a model is the
-share of such training prompts it answered correctly. A model's score is the sum over its
-paths, and the heaviest paths are printed in the explanation. `--predictor ensemble`
-trains the kNN/MF/IRT/MLP ensemble instead, for comparison.
-
-It is trained on SPROUT and scores the catalog models in `configs/models.yaml`
-through their `anchor` (a SPROUT model of similar tier plus a logit shift). Shifts marked
-`source: prior` only encode tier order; fit real ones with `CatalogPredictor.fit_shift()`
-on a few hundred graded answers per model.
-
-## Run the gateway (OpenAI-compatible)
+**Run the gateway as a dry run** (no API keys, no cost; each answer names the model that
+would have been used):
 
 ```bash
-export ANTHROPIC_API_KEY=...   # only for the providers you use; see configs/providers.yaml
-python scripts/serve.py --router artifacts/router.pt --port 8080
+python scripts/serve.py --router artifacts/router.pt --dry-run
+python scripts/e2e_check.py --router artifacts/router.pt   # end-to-end checks, PASS/FAIL
+```
+
+**Run it for real:**
+
+```bash
+export ANTHROPIC_API_KEY=... OPENAI_API_KEY=... GEMINI_API_KEY=...   # only those you use
+python scripts/serve.py --router artifacts/router.pt --port 8080 --pii-device 0
 ```
 
 ```python
 from openai import OpenAI
+
 client = OpenAI(base_url="http://localhost:8080/v1", api_key="unused")
 r = client.chat.completions.with_raw_response.create(
-    model="ecoroute/auto", messages=[{"role": "user", "content": "Summarise this ..."}],
-    extra_headers={"X-EcoRoute-Sensitivity": "Internal", "X-EcoRoute-Policy": "balanced"},
+    model="ecoroute/auto",
+    messages=[{"role": "user", "content": "Summarise this ..."}],
+    extra_headers={"X-EcoRoute-Policy": "balanced"},  # eco / balanced / quality
 )
 r.headers["X-EcoRoute-Model"], r.headers["X-EcoRoute-Reason"]
 ```
 
-`POST /route` returns the decision and explanation without calling any model. Naming a
-model instead of `ecoroute/auto` skips the ranking but never the confidentiality check.
-If the chosen provider fails, the gateway retries on the most likely other cleared model.
+- **Routable models:** only models with a confirmed `api_id` in `configs/models.yaml` and
+  their provider's API key set. Local models go through Ollama or vLLM; see
+  `configs/providers.yaml`.
+- **Request headers:** `X-EcoRoute-Sensitivity` passes your own data label (e.g.
+  `Confidential`), and `X-EcoRoute-Min-Level` sets a minimum level.
+- **Naming a model:** asking for a specific model instead of `ecoroute/auto` skips the
+  ranking but never the privacy check. An uncleared model gets a 403.
+- **Explanation only:** `POST /route` returns the decision and explanation without
+  calling any model.
+- **Provider failures:** if the chosen provider fails, the gateway retries on the most
+  likely other cleared model.
+- **CPU only:** add `--no-pii-model` to keep only the rules.
+
+## Train a router
+
+The training data is free and open, and no paid grading is needed.
+
+- **[SPROUT](https://huggingface.co/datasets/CARROT-LLM-Routing/SPROUT):** about 44k
+  prompts graded on 13 models.
+- **[RouterArena](https://huggingface.co/datasets/RouteWorks/RouterArena):** difficulty
+  labels.
+- **[BigCodeBench](https://huggingface.co/datasets/bigcode/bigcodebench):** 1,140 Python
+  tasks graded on 11 of the same models.
+- **[RouterBench](https://huggingface.co/datasets/withmartian/routerbench):** used for the
+  baseline comparisons.
+
+```bash
+python scripts/build_dataset.py --out data/processed          # about 2 GB download
+python scripts/train_router.py --data data/processed --out artifacts/router.pt
+python scripts/check_routing.py --router artifacts/router.pt --data data/processed
+```
+
+`train_router.py` does four things:
+
+- It fits the decision graph on the train split.
+- It calibrates it on half of validation.
+- On the other half, it chooses each profile's threshold and fallback margin.
+- It prints test results with 90% intervals and the coding-prompt breakdown.
+
+The router file stores the predictor, the encoder name, the thresholds and the margins.
+`--predictor ensemble` trains the kNN, matrix factorization, IRT and MLP ensemble instead,
+for comparison.
+
+The catalog in `configs/models.yaml` holds prices, energy, clearance and an `anchor` for
+each model. The anchor is a graded model of a similar tier plus a logit shift, so you can
+add a new model without retraining. Fit the shift from a few hundred graded answers with
+`CatalogPredictor.fit_shift()`.
+
+### On Lightning AI (free GPU tier)
+
+```bash
+pip install lightning-sdk
+export LIGHTNING_USER_ID=... LIGHTNING_API_KEY=...
+python scripts/lightning_run.py --teamspace <your-teamspace> --machine T4 --pytest
+```
+
+This ships the current commit to a Studio, builds the data, trains, downloads the reports
+to `reports/lightning/` and always stops the Studio at the end. It refuses to start below
+`--min-credits` (default 3) and stops after `--max-hours` (default 2). Inside a Studio you
+can also run the commands above directly.
+
+## Measuring
+
+| Script | What it measures |
+|---|---|
+| `scripts/train_router.py` | Routing accuracy and cost per profile, with intervals |
+| `scripts/check_routing.py` | Decisions on sampled prompts, by difficulty |
+| `scripts/eval_confidentiality.py` | Privacy filter recall, false alarms and speed |
+| `scripts/bench_route.py` | Routing time per stage |
+| `scripts/e2e_check.py` | The gateway end to end (privacy, routing, profiles, streaming) |
+| `scripts/train_baselines.py` | Baseline predictors on SPROUT and RouterBench |
+| `scripts/sweep_graph.py` | The graph's settings, chosen on validation only |
+
+## Repository layout
+
+```
+configs/      models.yaml (catalog: price, energy, clearance), providers.yaml (endpoints)
+src/ecoroute/
+  confidentiality/  levels, rules, PII model layer, caller policy, redaction
+  graph/            the decision graph (skills, difficulty, similar prompts)
+  predictors/       baselines, calibration, catalog anchoring
+  routing/          profiles and the decision with its explanation
+  gateway/          OpenAI-compatible FastAPI app and provider backends
+  data/, eval/      dataset loaders and routing metrics
+  service.py        EcoRoute: embed, predict, decide (save/load the router file)
+scripts/      build, train, evaluate, serve
+docs/         how-it-decides.md (method and results), design notes and research
+```
+
+Design background: [`docs/brainstorm.md`](docs/brainstorm.md),
+[`docs/model-research.md`](docs/model-research.md),
+[`docs/zero-cost-plan.md`](docs/zero-cost-plan.md).
