@@ -119,3 +119,46 @@ def test_missing_clearance_means_public_only():
     catalog = [{"name": "a", "clearance": "restricted"}, {"name": "b"}]
     assert allowed_models(Level.INTERNAL, catalog) == ["a"]
     assert allowed_models(Level.PUBLIC, catalog) == ["a", "b"]
+
+
+def fake_tagger(entities):
+    return lambda text: [
+        {
+            "entity_group": label,
+            "score": score,
+            "start": text.index(word),
+            "end": text.index(word) + len(word),
+        }
+        for label, word, score in entities
+        if word in text
+    ]
+
+
+def test_ner_layer_levels_and_grey_zone():
+    from ecoroute.confidentiality import NERLayer
+
+    tagger = fake_tagger(
+        [("GIVENNAME", "Amira", 0.98), ("SOCIALNUM", "AB123456", 0.4), ("CITY", "Lyon", 0.1)]
+    )
+    d = Detector([CallerPolicyLayer(), RulesLayer(), NERLayer(tagger)])
+    got = d.classify("Amira from Lyon, ID AB123456")
+    kinds = {f.kind: f.level for f in got.findings}
+    assert kinds["givenname"] == Level.CONFIDENTIAL
+    assert kinds["socialnum"] == Level.CONFIDENTIAL  # uncertain: reported, not dropped
+    assert "city" not in kinds  # below the grey zone
+    assert got.level == Level.CONFIDENTIAL
+    assert d.classify("Amira's id AB123456 again").level == Level.CONFIDENTIAL
+    sure = NERLayer(fake_tagger([("SOCIALNUM", "AB123456", 0.9)]))
+    assert Detector([sure]).classify("id AB123456").level == Level.RESTRICTED
+
+
+def test_ner_findings_can_be_redacted():
+    from ecoroute.confidentiality import NERLayer
+
+    d = Detector([NERLayer(fake_tagger([("GIVENNAME", "Amira", 0.98)]))])
+    masked, mapping = redact(
+        "Write a birthday note for Amira", d.classify("Write a birthday note for Amira").findings
+    )
+    assert masked == "Write a birthday note for <GIVENNAME_1>" and restore(
+        masked, mapping
+    ).endswith("Amira")

@@ -7,6 +7,7 @@ the same Layer interface.
 
 from ecoroute.confidentiality.detector import Classification, Detector, Layer
 from ecoroute.confidentiality.levels import Level, allowed_models
+from ecoroute.confidentiality.ner import NERLayer
 from ecoroute.confidentiality.policy import CallerPolicyLayer
 from ecoroute.confidentiality.redact import redact, restore
 from ecoroute.confidentiality.rules import Finding, RulesLayer
@@ -18,6 +19,7 @@ __all__ = [
     "Finding",
     "Layer",
     "Level",
+    "NERLayer",
     "RulesLayer",
     "allowed_models",
     "redact",
