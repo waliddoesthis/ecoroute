@@ -31,6 +31,7 @@ def main() -> None:
     parser.add_argument("--policy", default="balanced")
     parser.add_argument("--no-pii-model", action="store_true", help="rules only, no PII model")
     parser.add_argument("--pii-device", type=int, default=None, help="GPU index for the PII model")
+    parser.add_argument("--pii-fp16", action="store_true", help="half-precision PII model (GPU)")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8080)
     args = parser.parse_args()
@@ -43,7 +44,7 @@ def main() -> None:
         raise SystemExit("no deployable models: set api_id in models.yaml and the API key env vars")
     layers = [CallerPolicyLayer(), RulesLayer()]
     if not args.no_pii_model:
-        layers.append(NERLayer(hf_tagger(device=args.pii_device)))
+        layers.append(NERLayer(hf_tagger(device=args.pii_device, fp16=args.pii_fp16)))
     router = Router(live, detector=Detector(layers), policy=args.policy)
     eco = EcoRoute(full.predictor.base, full.encoder_name, live, router=router)
     print("routing to:", ", ".join(m["name"] for m in live))

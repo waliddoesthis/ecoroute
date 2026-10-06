@@ -63,6 +63,7 @@ def main() -> None:
     parser.add_argument("--model", default=DEFAULT_MODEL)
     parser.add_argument("--min-pii-recall", type=float, default=0.95)
     parser.add_argument("--device", type=int, default=None, help="GPU index for the PII model")
+    parser.add_argument("--fp16", action="store_true", help="half-precision PII model (GPU)")
     parser.add_argument("--out", type=Path, default=Path("reports/confidentiality.json"))
     args = parser.parse_args()
 
@@ -81,7 +82,7 @@ def main() -> None:
 
     torch.set_grad_enabled(False)
     rules = RulesLayer()
-    tagger = hf_tagger(args.model, device=args.device)
+    tagger = hf_tagger(args.model, device=args.device, fp16=args.fp16)
     ner = NERLayer(tagger, threshold=0.0, grey=0.0)  # keep every score
     t0 = time.perf_counter()
     scanned_pii = [rules.scan(t) + ner.scan(t) for t in texts]
@@ -89,7 +90,7 @@ def main() -> None:
     ms = 1000 * (time.perf_counter() - t0) / (len(texts) + len(benign))
     lengths = sorted(len(t) for t in benign)
     print(
-        f"scan time: {ms:.1f} ms per prompt (rules + PII model, device={args.device if args.device is not None else 'cpu'}); "
+        f"scan time: {ms:.1f} ms per prompt (rules + PII model, device={args.device if args.device is not None else 'cpu'}, fp16={args.fp16}); "
         f"benchmark prompt length median {lengths[len(lengths) // 2]} chars"
     )
 
