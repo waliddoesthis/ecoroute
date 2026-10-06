@@ -191,3 +191,19 @@ def test_margin_makes_tau_choice_more_cautious(data):
     loose = held_out_saving(*args, tolerance=0.02, taus=grid, closest=True)
     safe = held_out_saving(*args, tolerance=0.02, taus=grid, closest=True, z=2.0)
     assert safe["tau"] >= loose["tau"]
+
+
+def test_knn_search_matches_sklearn_and_reuses_last_answer():
+    from sklearn.neighbors import NearestNeighbors
+
+    rng = np.random.default_rng(0)
+    X, Q = rng.normal(size=(500, 16)), rng.normal(size=(7, 16))
+    knn = KNNPredictor(k=10).fit(X, rng.random((500, 3)), ["a", "b", "c"])
+    sim, idx = knn.neighbours(Q)
+    dist, ref = NearestNeighbors(n_neighbors=10, metric="cosine").fit(X).kneighbors(Q)
+    assert (idx == ref).all()
+    assert np.allclose(sim, 1 - dist, atol=1e-5)
+    assert knn.neighbours(Q)[1] is idx  # same query: cached
+    import pickle
+
+    assert not hasattr(pickle.loads(pickle.dumps(knn)), "_last")
