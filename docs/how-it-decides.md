@@ -54,21 +54,23 @@ to succeed.
 
 ## What it achieves (SPROUT test set, held-out threshold)
 
-Graph router v10 (run 30), against always using GPT-4o (test accuracy 0.845). Each
-profile's tau is chosen on validation prompts the calibrator never saw, and qualifies
-only if the gap plus 1.645 standard errors stays within the profile's target:
+Graph router v12 (run 34, trained on SPROUT plus BigCodeBench coding tasks), against
+always using GPT-4o (test accuracy 0.845 on SPROUT prompts). Each profile's tau is chosen
+on validation prompts the calibrator never saw, and qualifies only if the gap plus 1.645
+standard errors stays within the profile's target.
 
 Points lost against GPT-4o on test (negative means more accurate), with a 90% interval:
 
 | Profile  | Target           | tau  | Points lost (90% CI)  | Cost saved |
 |----------|------------------|------|-----------------------|------------|
-| quality  | no loss          | 0.97 | -1.6 (-2.3 to -0.9)   | 38.6%      |
-| balanced | at most 1 point  | 0.91 | -0.3 (-1.0 to 0.4)    | 64.9%      |
-| eco      | at most 3 points | 0.86 | 1.8 (1.0 to 2.5)      | 75.6%      |
+| quality  | no loss          | 0.98 | -1.6 (-2.2 to -0.9)   | 34.2%      |
+| balanced | at most 1 point  | 0.91 | -0.1 (-0.7 to 0.7)    | 67.3%      |
+| eco      | at most 3 points | 0.86 | 1.6 (0.8 to 2.3)      | 75.0%      |
 
-Earlier runs reported larger savings (71.7% for balanced) with taus picked partly on the
-calibrator's own data, which made the predictions look better than they were; those
-taus overshot their targets on test.
+On the 108 coding test prompts (BigCodeBench, hard: GPT-4o solves 54.6%), the router is
+1.8 points below GPT-4o at 48% lower cost; predicting which model solves a coding task is
+still weak there (AUC 0.65). Earlier runs reported larger savings with taus picked partly
+on the calibrator's own data, which made the predictions look better than they were.
 
 - Against a black-box ensemble (kNN, matrix factorization, IRT and MLP) under the same
   protocol (run 31), both reach GPT-4o's accuracy on test (0.848 vs 0.845); the
