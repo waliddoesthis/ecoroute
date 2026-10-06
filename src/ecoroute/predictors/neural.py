@@ -68,7 +68,8 @@ class _TorchPredictor(Predictor):
 
     @torch.no_grad()
     def predict_proba(self, X):
-        dev = _device()
+        # Use the network's own device, so a model trained on a GPU still runs on a CPU box.
+        dev = next(self.net_.parameters()).device
         Xt = torch.as_tensor(X, dtype=torch.float32, device=dev)
         n, m = len(X), len(self.models)
         rows = torch.arange(n, device=dev).repeat_interleave(m)
@@ -140,7 +141,8 @@ class IRTPredictor(_TorchPredictor):
     @torch.no_grad()
     def difficulty(self, X: np.ndarray) -> np.ndarray:
         """Per-prompt difficulty b_q (higher is harder)."""
-        Xt = torch.as_tensor(X, dtype=torch.float32, device=_device())
+        dev = next(self.net_.parameters()).device
+        Xt = torch.as_tensor(X, dtype=torch.float32, device=dev)
         return self.net_.item_params(Xt)[1].cpu().numpy()
 
     def abilities(self) -> dict[str, np.ndarray]:

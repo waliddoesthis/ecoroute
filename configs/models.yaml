@@ -14,6 +14,11 @@
 # label_source     : how the router learns this model's ability (see docs/zero-cost-plan.md):
 #                    free_eval (we grade it on free compute / free API tier),
 #                    benchmark_prior (placed from published benchmark scores, no API calls).
+# anchor           : how the trained predictor scores this model (see predictors/catalog.py):
+#                    logit P = logit P(anchor model) + shift. Anchors are SPROUT models of a
+#                    similar tier, ordered by their SPROUT accuracy. source "prior" shifts only
+#                    encode tier order (0, or +0.25 to separate the top tier from its anchor);
+#                    replace them with fitted shifts from a few hundred graded answers.
 
 levels: [public, internal, confidential, restricted]
 
@@ -28,6 +33,7 @@ models:
     energy: {wh_per_1k_out: null, source: measured}
     clearance: restricted
     label_source: free_eval
+    anchor: {model: llama-3.3-70b-instruct, shift: 0.0, source: prior}
     notes: "Needs a 24 GB GPU (cloud). On the 8 GB RTX 2070 Super use a 4-8B model at 4-bit instead."
 
   - name: gpt-6-luna
@@ -40,6 +46,7 @@ models:
     energy: {wh_per_1k_out: 0.05, source: prior}
     clearance: internal
     label_source: benchmark_prior
+    anchor: {model: gpt-4o-mini, shift: 0.0, source: prior}
 
   - name: gemini-3.1-flash-lite
     tier: 1
@@ -51,6 +58,7 @@ models:
     energy: {wh_per_1k_out: 0.05, source: prior}
     clearance: internal
     label_source: benchmark_prior
+    anchor: {model: gpt-4o-mini, shift: 0.0, source: prior}
 
   - name: claude-haiku-4-5
     tier: 2
@@ -62,6 +70,7 @@ models:
     energy: {wh_per_1k_out: 0.15, source: prior}
     clearance: internal
     label_source: benchmark_prior
+    anchor: {model: claude-3.5-sonnet, shift: 0.0, source: prior}
 
   - name: gemini-3.8-flash
     tier: 2
@@ -73,6 +82,7 @@ models:
     energy: {wh_per_1k_out: 0.15, source: prior}
     clearance: internal
     label_source: free_eval
+    anchor: {model: claude-3.5-sonnet, shift: 0.0, source: prior}
 
   - name: claude-sonnet-5-5
     tier: 3
@@ -84,6 +94,7 @@ models:
     energy: {wh_per_1k_out: 0.4, source: prior}
     clearance: internal
     label_source: benchmark_prior
+    anchor: {model: gpt-4o, shift: 0.0, source: prior}
 
   - name: gemini-3.1-pro
     tier: 3
@@ -96,6 +107,7 @@ models:
     energy: {wh_per_1k_out: 0.4, source: prior}
     clearance: internal
     label_source: benchmark_prior
+    anchor: {model: gpt-4o, shift: 0.0, source: prior}
 
   - name: claude-opus-5-5
     tier: 4
@@ -107,3 +119,4 @@ models:
     energy: {wh_per_1k_out: 1.0, source: prior}
     clearance: internal
     label_source: benchmark_prior
+    anchor: {model: gpt-4o, shift: 0.25, source: prior}

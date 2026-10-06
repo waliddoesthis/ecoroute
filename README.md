@@ -77,3 +77,15 @@ deterministic rules (secrets, cards with Luhn, IBANs with mod-97, SSNs, emails, 
 high-entropy strings, and a company dictionary). `redact()` / `restore()` mask sensitive
 values so a cheaper external model can be used when the task doesn't need them.
 `tests/test_confidentiality.py` holds the prompts that must never reach an uncleared model.
+
+## Train and try the deployable router
+
+```bash
+python scripts/train_router.py --data data/processed --out artifacts/router.pt
+python scripts/route_demo.py --router artifacts/router.pt
+```
+
+The router is trained on SPROUT and scores the catalog models in `configs/models.yaml`
+through their `anchor` (a SPROUT model of similar tier plus a logit shift). Shifts marked
+`source: prior` only encode tier order; fit real ones with `CatalogPredictor.fit_shift()`
+on a few hundred graded answers per model.
