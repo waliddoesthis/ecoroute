@@ -1,7 +1,7 @@
 import pytest
 
 from ecoroute.confidentiality import Level
-from ecoroute.routing import NoAllowedModel, Router
+from ecoroute.routing import PROFILES, NoAllowedModel, Router
 
 AWS = "AKIA" + "IOSFODNN7" + "EXAMPLE"
 
@@ -100,3 +100,22 @@ def test_eco_profile_trades_cost_for_energy():
     assert r.decide("hi", p, policy="quality").model == "local"  # cheapest in dollars
     assert r.decide("hi", p, policy="eco").model == "api"  # far less energy
     assert r.decide("hi", p, policy="eco", context={"min_level": "restricted"}).model == "local"
+
+
+def test_tuned_profiles_replace_taus_and_stay_ordered():
+    from ecoroute.routing import tuned_profiles
+
+    prof = tuned_profiles({"eco": 0.8, "balanced": 0.9})
+    assert prof["eco"].tau == 0.8 and prof["balanced"].tau == 0.9
+    # quality was not measured: its default 0.85 would be looser than balanced
+    assert prof["quality"].tau == 0.9
+    assert prof["eco"].lambda_energy == PROFILES["eco"].lambda_energy
+    assert tuned_profiles(None)["balanced"] == PROFILES["balanced"]
+
+
+def test_router_uses_its_own_profiles():
+    from ecoroute.routing import tuned_profiles
+
+    r = Router.from_yaml("configs/models.yaml", profiles=tuned_profiles({"balanced": 0.95}))
+    assert r.policy.tau == 0.95
+    assert Router.from_yaml("configs/models.yaml").policy.tau == PROFILES["balanced"].tau

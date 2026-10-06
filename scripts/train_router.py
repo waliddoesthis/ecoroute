@@ -20,6 +20,7 @@ from ecoroute.data.prices import fill_missing_costs
 from ecoroute.eval.metrics import held_out_saving, quality_report
 from ecoroute.features.embed import DEFAULT_ENCODER, cached_embeddings
 from ecoroute.graph import SkillGraph, skill_name
+from ecoroute.routing import PROFILE_TOLERANCE
 from ecoroute.predictors import (
     CalibratedPredictor,
     EnsemblePredictor,
@@ -109,8 +110,25 @@ def main() -> None:
             print(f"[{name}] no threshold kept accuracy within 1 point on validation")
     predictor = candidates[args.predictor]
 
+    # Each profile's quality floor is the cheapest tau that kept accuracy within its
+    # tolerance of the best single model on validation; test shows whether it held.
+    taus = {}
+    P_va, P_te = predictor.predict_proba(X_va), predictor.predict_proba(X_te)
+    print(f"\nprofile taus for {args.predictor}:")
+    for profile, tol in PROFILE_TOLERANCE.items():
+        h = held_out_saving(P_va, Y_va, C_va, P_te, Y_te, C_te, models, tolerance=tol)
+        if not h["matched"]:
+            print(f"  {profile}: nothing within {100 * tol:.0f} points, keeping the default")
+            continue
+        taus[profile] = h["tau"]
+        print(
+            f"  {profile} (within {100 * tol:.0f} pts): tau {h['tau']:.2f}, test accuracy "
+            f"{h['router_accuracy']:.4f} vs {h['reference_accuracy']:.4f}, "
+            f"saving {h['cost_saving_pct']:.1f}%"
+        )
+
     catalog = yaml.safe_load(args.catalog.read_text())["models"]
-    eco = EcoRoute(predictor, args.encoder, catalog)  # fails here if an anchor is missing
+    eco = EcoRoute(predictor, args.encoder, catalog, taus=taus)  # fails if an anchor is missing
     eco.save(args.out)
     print(f"saved {args.out} ({len(eco.predictor.names)} catalog models anchored)")
 

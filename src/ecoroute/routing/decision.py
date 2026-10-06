@@ -14,7 +14,7 @@ P(correct) per model comes from a predictor; this module does not care which one
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any
 
@@ -33,15 +33,18 @@ class Policy:
     lambda_energy: float  # USD charged per Wh when ranking, to favour efficient models
 
     @classmethod
-    def parse(cls, value: str | Policy) -> Policy:
+    def parse(cls, value: str | Policy, profiles: Mapping[str, Policy] | None = None) -> Policy:
         if isinstance(value, Policy):
             return value
+        profiles = PROFILES if profiles is None else profiles
         try:
-            return PROFILES[value]
+            return profiles[value]
         except KeyError:
-            raise ValueError(f"unknown policy profile {value!r}; use {sorted(PROFILES)}") from None
+            raise ValueError(f"unknown policy profile {value!r}; use {sorted(profiles)}") from None
 
 
+# These taus are fallbacks: a trained router stores the tau that each profile's accuracy
+# target needs on held-out data (see tuned_profiles), and those replace them.
 # lambda_energy prices energy in the ranking. balanced uses about $0.25 per kWh, roughly
 # electricity plus the social cost of its carbon (about $0.2/kg CO2 at 0.4 kg/kWh); eco
 # weighs energy ten times more; quality ignores it.
@@ -50,6 +53,24 @@ PROFILES = {
     "balanced": Policy(tau=0.7, lambda_energy=0.00025),
     "quality": Policy(tau=0.85, lambda_energy=0.0),
 }
+
+
+# Accuracy each profile may give up against always using the most accurate model.
+PROFILE_TOLERANCE = {"eco": 0.03, "balanced": 0.01, "quality": 0.0}
+
+
+def tuned_profiles(taus: Mapping[str, float] | None) -> dict[str, Policy]:
+    """PROFILES with tau replaced by the values a trained router measured for them.
+
+    A stricter profile never gets a lower floor than a looser one (eco <= balanced <=
+    quality), even when only some taus were measured.
+    """
+    taus = taus or {}
+    out, floor = {}, 0.0
+    for name in PROFILE_TOLERANCE:
+        floor = max(floor, taus.get(name, PROFILES[name].tau))
+        out[name] = replace(PROFILES[name], tau=floor)
+    return out
 
 
 @dataclass
@@ -111,10 +132,12 @@ class Router:
         policy: str | Policy = "balanced",
         default_wh_per_1k_out: float = 0.3,
         usd_per_kwh: float = 0.15,
+        profiles: Mapping[str, Policy] | None = None,
     ) -> None:
         self.catalog = [m for m in catalog if m.get("enabled", True)]
         self.detector = detector or Detector()
-        self.policy = Policy.parse(policy)
+        self.profiles = dict(PROFILES if profiles is None else profiles)
+        self.policy = Policy.parse(policy, self.profiles)
         # Used when a model's energy is not known yet; such numbers are flagged as estimates.
         self.default_wh_per_1k_out = default_wh_per_1k_out
         # Electricity price for self-hosted models (an API's price already includes it).
@@ -141,7 +164,7 @@ class Router:
         from p_success can still be chosen as a last resort but never qualify on quality.
         Raises NoAllowedModel when nothing is cleared for the prompt.
         """
-        pol = Policy.parse(policy) if policy is not None else self.policy
+        pol = Policy.parse(policy, self.profiles) if policy is not None else self.policy
         text = prompt if scan_text is None else scan_text
         if in_tokens is None:
             in_tokens = max(1, len(text) // 4)  # rough: about 4 characters per token

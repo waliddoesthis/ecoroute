@@ -45,8 +45,12 @@ to succeed.
 
 - API models cost their token prices. Self-hosted models cost their GPU's electricity
   while generating (plus an optional hourly hardware cost); nothing is free.
-- Profiles: `quality` (tau 0.85, energy ignored), `balanced` (tau 0.7, energy at about
-  $0.25/kWh, roughly electricity plus its carbon), `eco` (tau 0.6, energy x10).
+- Profiles are accuracy targets: `quality` gives up nothing against the most accurate
+  model, `balanced` at most 1 point, `eco` at most 3. Training measures on validation
+  the cheapest tau that meets each target and stores it in the router file, so tau is
+  read on the predictor's own scale. Energy is ignored by `quality`, priced at about
+  $0.25/kWh (electricity plus its carbon) by `balanced`, and ten times that by `eco`.
+  Untrained defaults are 0.85, 0.7 and 0.6.
 
 ## What it achieves (SPROUT test set, held-out threshold)
 

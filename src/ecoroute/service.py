@@ -17,7 +17,7 @@ import torch
 import yaml
 
 from ecoroute.predictors import CatalogPredictor, Predictor
-from ecoroute.routing import Decision, Policy, Router
+from ecoroute.routing import Decision, Policy, Router, tuned_profiles
 
 
 class EcoRoute:
@@ -28,23 +28,30 @@ class EcoRoute:
         catalog: list[Mapping],
         policy: str | Policy = "balanced",
         router: Router | None = None,
+        taus: Mapping[str, float] | None = None,
     ) -> None:
         self.encoder_name = encoder
         self.catalog = [m for m in catalog if m.get("enabled", True)]
         self.predictor = CatalogPredictor.from_catalog(predictor, self.catalog)
-        self.router = router or Router(self.catalog, policy=policy)
+        # Profile quality floors measured on held-out data when the router was trained.
+        self.taus = dict(taus or {})
+        self.router = router or Router(
+            self.catalog, policy=policy, profiles=tuned_profiles(self.taus)
+        )
         self._encoder = None
 
     def save(self, path: str | Path) -> None:
-        """Save the trained predictor and encoder name (the catalog stays in YAML)."""
+        """Save the trained predictor, encoder name and tuned taus (the catalog stays in YAML)."""
         Path(path).parent.mkdir(parents=True, exist_ok=True)
-        torch.save({"predictor": self.predictor.base, "encoder": self.encoder_name}, path)
+        state = {"predictor": self.predictor.base, "encoder": self.encoder_name, "taus": self.taus}
+        torch.save(state, path)
 
     @classmethod
     def load(cls, path: str | Path, catalog: str | Path = "configs/models.yaml", **kw) -> EcoRoute:
         # The file holds pickled Python objects: only load files you produced yourself.
         state = torch.load(path, map_location="cpu", weights_only=False)
         models = yaml.safe_load(Path(catalog).read_text())["models"]
+        kw.setdefault("taus", state.get("taus"))
         return cls(state["predictor"], state["encoder"], models, **kw)
 
     def embed(self, texts: list[str]) -> np.ndarray:
