@@ -246,9 +246,9 @@ def held_out_saving(
     reference = singles.loc[singles.accuracy.idxmax()].policy
     routers = val_curve[val_curve.policy.str.startswith("router")].copy()
     routers["tau"] = routers.policy.str.split("=").str[1].astype(float)
-    routers["gap"] = gap_upper_bound(
-        P_val, Y_val, C_val, models.index(reference.removeprefix("always ")), routers.tau, z
-    )
+    ref_j = models.index(reference.removeprefix("always "))
+    routers["gap"] = gap_upper_bound(P_val, Y_val, C_val, ref_j, routers.tau, z)
+    routers["raw_gap"] = gap_upper_bound(P_val, Y_val, C_val, ref_j, routers.tau, 0.0)
     ok = routers[routers.gap <= tolerance]
     if not ok.empty:
         tau = float(ok.loc[ok.cost.idxmin()].tau)
@@ -275,5 +275,9 @@ def held_out_saving(
         "within_tolerance": gap <= tolerance,
         # 90% bootstrap interval of the test gap: how much the verdict could move.
         "acc_gap_ci90": (gap_lo, gap_hi),
+        # What validation said at the chosen tau: the gap, and the gap plus the margin.
+        "val_gap": float(routers.loc[routers.tau == tau, "raw_gap"].iloc[0]),
+        "val_gap_bound": float(routers.loc[routers.tau == tau, "gap"].iloc[0]),
+        "n_val": int((~np.isnan(Y_val).any(axis=1) & ~np.isnan(C_val).any(axis=1)).sum()),
         "cost_saving_pct": float(100 * (1 - got["cost"] / ref.cost)) if ref.cost > 0 else 0.0,
     }

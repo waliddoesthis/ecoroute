@@ -114,8 +114,14 @@ def main() -> None:
     # Each profile's quality floor is the cheapest tau that kept accuracy within its
     # tolerance of the best single model on validation; test shows whether it held.
     taus = {}
-    P_va, P_te = predictor.predict_proba(X_va), predictor.predict_proba(X_te)
-    print(f"\nprofile taus for {args.predictor}:")
+    # Taus are chosen on the half of validation the calibrator never saw: on the half it
+    # was fitted to, the predictions look better than they are, and the chosen taus
+    # missed their targets on test by more than chance would explain (runs 28 and 29).
+    tune = slice(0, half) if args.predictor == "graph" else slice(None)
+    P_va, P_te = predictor.predict_proba(X_va[tune]), predictor.predict_proba(X_te)
+    Y_tune, C_tune = Y_va[tune], C_va[tune]
+    z = 1.645
+    print(f"\nprofile taus for {args.predictor} (margin z={z}):")
     grid = np.round(np.arange(0.50, 1.0, 0.01), 2)  # finer and higher than the 0.05 grid
     for profile, tol in PROFILE_TOLERANCE.items():
         # quality takes the closest tau when nothing fully matches the best model. With a
@@ -124,8 +130,8 @@ def main() -> None:
         # error (run 28) met the targets on average, but the 90% test intervals ran past
         # them (balanced 0.22 to 1.72 points against a 1-point target).
         h = held_out_saving(
-            P_va, Y_va, C_va, P_te, Y_te, C_te, models, tol, grid,
-            closest=profile == "quality", z=1.645,
+            P_va, Y_tune, C_tune, P_te, Y_te, C_te, models, tol, grid,
+            closest=profile == "quality", z=z,
         )  # fmt: skip
         if not h["matched"]:
             print(f"  {profile}: nothing within {100 * tol:.0f} points, keeping the default")
@@ -135,7 +141,9 @@ def main() -> None:
             f"  {profile} (within {100 * tol:.0f} pts): tau {h['tau']:.2f}, test accuracy "
             f"{h['router_accuracy']:.4f} vs {h['reference_accuracy']:.4f}, "
             f"gap {100 * h['acc_gap']:.2f} pts (90% CI {100 * h['acc_gap_ci90'][0]:.2f} to "
-            f"{100 * h['acc_gap_ci90'][1]:.2f}), saving {h['cost_saving_pct']:.1f}%"
+            f"{100 * h['acc_gap_ci90'][1]:.2f}), saving {h['cost_saving_pct']:.1f}%; "
+            f"validation ({h['n_val']} prompts) gap {100 * h['val_gap']:.2f}, "
+            f"bound {100 * h['val_gap_bound']:.2f}"
         )
 
     catalog = yaml.safe_load(args.catalog.read_text())["models"]
