@@ -19,6 +19,7 @@ Apps keep their OpenAI client and change only `base_url` and `model="ecoroute/au
 |---|---|
 | **70% lower LLM cost** | than always using GPT-4o at the same accuracy (default profile: 0.3 points lower, inside its 1-point target, 90% CI) |
 | **About $540k a year** | saved at 10M requests a month, estimated from that measured rate ([impact.md](docs/impact.md)) |
+| **About half the energy per request** | against always using the top deployed model; about 13 t CO2 a year avoided at 10M requests a month (estimate) |
 | **99% of restricted data kept in-house** | keys, account and ID numbers and cards never reach an external model |
 | **97% of personal data caught** | names, addresses, emails and phones, with 7.6% false alarms on ordinary prompts |
 | **74 ms per decision** | privacy check, prediction and explanation on one T4 GPU, small next to the LLM call |
