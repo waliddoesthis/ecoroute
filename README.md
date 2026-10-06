@@ -264,7 +264,7 @@ reports/      saved evaluation reports behind the published numbers
 
 ```bibtex
 @software{ecoroute2026,
-  author = {Walid},
+  author = {Ichchou, Walid},
   title  = {EcoRoute: An LLM Gateway Routing by Predicted Quality, Cost and Data Sensitivity},
   year   = {2026},
   url    = {https://github.com/waliddoesthis/ecoroute}
