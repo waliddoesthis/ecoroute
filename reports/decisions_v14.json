@@ -1,0 +1,6848 @@
+[
+  {
+    "prompt": "Translate 'thank you very much' into French.",
+    "context": null,
+    "profile": "quality",
+    "tau": 0.98,
+    "fallback_margin": 0.0,
+    "lambda_energy": 0.0,
+    "model": "claude-opus-5-5",
+    "level": "internal",
+    "difficulty": 0.11961951698814766,
+    "difficulty_label": "easy",
+    "below_floor": true,
+    "steps": [
+      "Confidentiality: internal (no sensitive content found). 8 of 8 models are cleared.",
+      "Graph: the prompt looks like general chat 0.99, math 0.01, answering from documents 0.00; difficulty easy 0.83, medium 0.15, hard 0.01.",
+      "Graph: strongest paths to claude-opus-5-5 (via gpt-4o): general chat/easy: solves 97%; general chat/medium: solves 79%; it solved 25 of the 32 most similar past prompts (weight 0.54).",
+      "Quality floor tau=0.98: 0 of 8 allowed models are predicted to succeed.",
+      "No allowed model reaches tau, so claude-opus-5-5 was chosen as the most likely to succeed (P=0.93, $0.01004)."
+    ],
+    "headers": {
+      "X-EcoRoute-Model": "claude-opus-5-5",
+      "X-EcoRoute-Level": "internal",
+      "X-EcoRoute-Reason": "No allowed model reaches tau, so claude-opus-5-5 was chosen as the most likely to succeed (P=0.93, $0.01004).",
+      "X-EcoRoute-Difficulty": "0.12 (easy)",
+      "X-EcoRoute-Time-Ms": "privacy=528.0, embed=1113.7, predict=30.7, privacy_wait=0.0, decide=0.2, explain=4.3, total=1676.9"
+    },
+    "candidates": [
+      {
+        "name": "llama-3.1-8b-local",
+        "p_success": 0.6815028901734103,
+        "cost_usd": 8.958333333333332e-05,
+        "energy_wh": 0.5972222222222222,
+        "score": 8.958333333333332e-05,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.68 < tau 0.98"
+      },
+      {
+        "name": "gpt-6-luna",
+        "p_success": 0.8932330827067668,
+        "cost_usd": 0.0002511,
+        "energy_wh": 0.025,
+        "score": 0.0002511,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.89 < tau 0.98"
+      },
+      {
+        "name": "gemini-3.1-flash-lite",
+        "p_success": 0.8932330827067668,
+        "cost_usd": 0.00075275,
+        "energy_wh": 0.025,
+        "score": 0.00075275,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.89 < tau 0.98"
+      },
+      {
+        "name": "claude-haiku-4-5",
+        "p_success": 0.9128491620111732,
+        "cost_usd": 0.002511,
+        "energy_wh": 0.075,
+        "score": 0.002511,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.91 < tau 0.98"
+      },
+      {
+        "name": "gemini-3.8-flash",
+        "p_success": 0.9128491620111732,
+        "cost_usd": 0.00188325,
+        "energy_wh": 0.075,
+        "score": 0.00188325,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.91 < tau 0.98"
+      },
+      {
+        "name": "claude-sonnet-5-5",
+        "p_success": 0.9103174603174603,
+        "cost_usd": 0.005022,
+        "energy_wh": 0.2,
+        "score": 0.005022,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.91 < tau 0.98"
+      },
+      {
+        "name": "gemini-3.1-pro",
+        "p_success": 0.9103174603174603,
+        "cost_usd": 0.006022,
+        "energy_wh": 0.2,
+        "score": 0.006022,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.91 < tau 0.98"
+      },
+      {
+        "name": "claude-opus-5-5",
+        "p_success": 0.9287415638506077,
+        "cost_usd": 0.010044,
+        "energy_wh": 0.5,
+        "score": 0.010044,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.93 < tau 0.98"
+      }
+    ],
+    "graph": {
+      "skills": [
+        [
+          "general chat",
+          0.985326886177063
+        ],
+        [
+          "math",
+          0.007711327169090509
+        ],
+        [
+          "answering from documents",
+          0.0020272645633667707
+        ],
+        [
+          "reading legal documents",
+          0.0008805713150650263
+        ],
+        [
+          "multi-step reasoning",
+          0.0007867075619287789
+        ]
+      ],
+      "levels": {
+        "easy": 0.834855854511261,
+        "medium": 0.153560072183609,
+        "hard": 0.011584144085645676
+      },
+      "beta": 0.5394450570828498,
+      "edges": {
+        "claude-3.5-sonnet": [
+          [
+            "general chat",
+            "easy",
+            0.961080548796779,
+            0.36411038497557974
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7552782983583658,
+            0.05263166327049822
+          ],
+          [
+            "math",
+            "easy",
+            0.9826341537960323,
+            0.002913492665698604
+          ]
+        ],
+        "gpt-4o": [
+          [
+            "general chat",
+            "easy",
+            0.9690851756838562,
+            0.36714297967442
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7898415769309075,
+            0.05504020968750556
+          ],
+          [
+            "math",
+            "easy",
+            0.9913738997002169,
+            0.0029394058557638426
+          ]
+        ],
+        "gpt-4o-mini": [
+          [
+            "general chat",
+            "easy",
+            0.9690071059588687,
+            0.3671134025514039
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7336342296644388,
+            0.05112339361972403
+          ],
+          [
+            "math",
+            "easy",
+            0.988383786489708,
+            0.002930540223651655
+          ]
+        ],
+        "llama-3.1-8b-instruct": [
+          [
+            "general chat",
+            "easy",
+            0.8978733291458311,
+            0.34016399972290196
+          ],
+          [
+            "general chat",
+            "medium",
+            0.4231862635835014,
+            0.02948978803447497
+          ],
+          [
+            "math",
+            "easy",
+            0.9682972388987042,
+            0.0028709839698215617
+          ]
+        ]
+      },
+      "neighbours": {
+        "claude-3.5-sonnet": [
+          27,
+          32,
+          0.4317235571696543
+        ],
+        "gpt-4o": [
+          25,
+          32,
+          0.3988053354345503
+        ],
+        "gpt-4o-mini": [
+          25,
+          32,
+          0.4041792128283358
+        ],
+        "llama-3.1-8b-instruct": [
+          18,
+          32,
+          0.2777466870193415
+        ]
+      }
+    },
+    "anchors": {
+      "llama-3.1-8b-local": {
+        "model": "llama-3.1-8b-instruct",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gpt-6-luna": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-flash-lite": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-haiku-4-5": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.8-flash": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-sonnet-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-pro": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-opus-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.25,
+        "source": "prior"
+      }
+    }
+  },
+  {
+    "prompt": "Translate 'thank you very much' into French.",
+    "context": null,
+    "profile": "balanced",
+    "tau": 0.91,
+    "fallback_margin": 0.02,
+    "lambda_energy": 0.00025,
+    "model": "gemini-3.8-flash",
+    "level": "internal",
+    "difficulty": 0.11961951698814766,
+    "difficulty_label": "easy",
+    "below_floor": false,
+    "steps": [
+      "Confidentiality: internal (no sensitive content found). 8 of 8 models are cleared.",
+      "Graph: the prompt looks like general chat 0.99, math 0.01, answering from documents 0.00; difficulty easy 0.83, medium 0.15, hard 0.01.",
+      "Graph: strongest paths to gemini-3.8-flash (via claude-3.5-sonnet): general chat/easy: solves 96%; general chat/medium: solves 76%; it solved 27 of the 32 most similar past prompts (weight 0.54).",
+      "Quality floor tau=0.91: 5 of 8 allowed models are predicted to succeed.",
+      "Chose gemini-3.8-flash: cheapest qualifying model (P=0.91, $0.00188, 0.075 Wh (estimated)). 81% cheaper than the priciest allowed model, claude-opus-5-5."
+    ],
+    "headers": {
+      "X-EcoRoute-Model": "gemini-3.8-flash",
+      "X-EcoRoute-Level": "internal",
+      "X-EcoRoute-Reason": "Chose gemini-3.8-flash: cheapest qualifying model (P=0.91, $0.00188, 0.075 Wh (estimated)). 81% cheaper than the priciest allowed model, claude-opus-5-5.",
+      "X-EcoRoute-Difficulty": "0.12 (easy)",
+      "X-EcoRoute-Time-Ms": "privacy=313.6, embed=11.3, predict=2.6, privacy_wait=0.0, decide=0.1, explain=2.4, total=330.0"
+    },
+    "candidates": [
+      {
+        "name": "llama-3.1-8b-local",
+        "p_success": 0.6815028901734103,
+        "cost_usd": 8.958333333333332e-05,
+        "energy_wh": 0.5972222222222222,
+        "score": 0.00023888888888888885,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.68 < tau 0.91"
+      },
+      {
+        "name": "gpt-6-luna",
+        "p_success": 0.8932330827067668,
+        "cost_usd": 0.0002511,
+        "energy_wh": 0.025,
+        "score": 0.00025735,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.89 < tau 0.91"
+      },
+      {
+        "name": "gemini-3.1-flash-lite",
+        "p_success": 0.8932330827067668,
+        "cost_usd": 0.00075275,
+        "energy_wh": 0.025,
+        "score": 0.0007589999999999999,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.89 < tau 0.91"
+      },
+      {
+        "name": "claude-haiku-4-5",
+        "p_success": 0.9128491620111732,
+        "cost_usd": 0.002511,
+        "energy_wh": 0.075,
+        "score": 0.0025297500000000003,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "gemini-3.8-flash",
+        "p_success": 0.9128491620111732,
+        "cost_usd": 0.00188325,
+        "energy_wh": 0.075,
+        "score": 0.001902,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "claude-sonnet-5-5",
+        "p_success": 0.9103174603174603,
+        "cost_usd": 0.005022,
+        "energy_wh": 0.2,
+        "score": 0.005072,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "gemini-3.1-pro",
+        "p_success": 0.9103174603174603,
+        "cost_usd": 0.006022,
+        "energy_wh": 0.2,
+        "score": 0.006071999999999999,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "claude-opus-5-5",
+        "p_success": 0.9287415638506077,
+        "cost_usd": 0.010044,
+        "energy_wh": 0.5,
+        "score": 0.010169000000000001,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      }
+    ],
+    "graph": {
+      "skills": [
+        [
+          "general chat",
+          0.985326886177063
+        ],
+        [
+          "math",
+          0.007711327169090509
+        ],
+        [
+          "answering from documents",
+          0.0020272645633667707
+        ],
+        [
+          "reading legal documents",
+          0.0008805713150650263
+        ],
+        [
+          "multi-step reasoning",
+          0.0007867075619287789
+        ]
+      ],
+      "levels": {
+        "easy": 0.834855854511261,
+        "medium": 0.153560072183609,
+        "hard": 0.011584144085645676
+      },
+      "beta": 0.5394450570828498,
+      "edges": {
+        "claude-3.5-sonnet": [
+          [
+            "general chat",
+            "easy",
+            0.961080548796779,
+            0.36411038497557974
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7552782983583658,
+            0.05263166327049822
+          ],
+          [
+            "math",
+            "easy",
+            0.9826341537960323,
+            0.002913492665698604
+          ]
+        ],
+        "gpt-4o": [
+          [
+            "general chat",
+            "easy",
+            0.9690851756838562,
+            0.36714297967442
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7898415769309075,
+            0.05504020968750556
+          ],
+          [
+            "math",
+            "easy",
+            0.9913738997002169,
+            0.0029394058557638426
+          ]
+        ],
+        "gpt-4o-mini": [
+          [
+            "general chat",
+            "easy",
+            0.9690071059588687,
+            0.3671134025514039
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7336342296644388,
+            0.05112339361972403
+          ],
+          [
+            "math",
+            "easy",
+            0.988383786489708,
+            0.002930540223651655
+          ]
+        ],
+        "llama-3.1-8b-instruct": [
+          [
+            "general chat",
+            "easy",
+            0.8978733291458311,
+            0.34016399972290196
+          ],
+          [
+            "general chat",
+            "medium",
+            0.4231862635835014,
+            0.02948978803447497
+          ],
+          [
+            "math",
+            "easy",
+            0.9682972388987042,
+            0.0028709839698215617
+          ]
+        ]
+      },
+      "neighbours": {
+        "claude-3.5-sonnet": [
+          27,
+          32,
+          0.4317235571696543
+        ],
+        "gpt-4o": [
+          25,
+          32,
+          0.3988053354345503
+        ],
+        "gpt-4o-mini": [
+          25,
+          32,
+          0.4041792128283358
+        ],
+        "llama-3.1-8b-instruct": [
+          18,
+          32,
+          0.2777466870193415
+        ]
+      }
+    },
+    "anchors": {
+      "llama-3.1-8b-local": {
+        "model": "llama-3.1-8b-instruct",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gpt-6-luna": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-flash-lite": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-haiku-4-5": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.8-flash": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-sonnet-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-pro": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-opus-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.25,
+        "source": "prior"
+      }
+    }
+  },
+  {
+    "prompt": "Translate 'thank you very much' into French.",
+    "context": null,
+    "profile": "eco",
+    "tau": 0.86,
+    "fallback_margin": 0.0,
+    "lambda_energy": 0.0025,
+    "model": "gpt-6-luna",
+    "level": "internal",
+    "difficulty": 0.11961951698814766,
+    "difficulty_label": "easy",
+    "below_floor": false,
+    "steps": [
+      "Confidentiality: internal (no sensitive content found). 8 of 8 models are cleared.",
+      "Graph: the prompt looks like general chat 0.99, math 0.01, answering from documents 0.00; difficulty easy 0.83, medium 0.15, hard 0.01.",
+      "Graph: strongest paths to gpt-6-luna (via gpt-4o-mini): general chat/easy: solves 97%; general chat/medium: solves 73%; it solved 25 of the 32 most similar past prompts (weight 0.54).",
+      "Quality floor tau=0.86: 7 of 8 allowed models are predicted to succeed.",
+      "Chose gpt-6-luna: cheapest qualifying model (P=0.89, $0.00025, 0.025 Wh (estimated)). 98% cheaper than the priciest allowed model, claude-opus-5-5."
+    ],
+    "headers": {
+      "X-EcoRoute-Model": "gpt-6-luna",
+      "X-EcoRoute-Level": "internal",
+      "X-EcoRoute-Reason": "Chose gpt-6-luna: cheapest qualifying model (P=0.89, $0.00025, 0.025 Wh (estimated)). 98% cheaper than the priciest allowed model, claude-opus-5-5.",
+      "X-EcoRoute-Difficulty": "0.12 (easy)",
+      "X-EcoRoute-Time-Ms": "privacy=22.0, embed=9.3, predict=2.4, privacy_wait=0.0, decide=0.1, explain=2.0, total=35.8"
+    },
+    "candidates": [
+      {
+        "name": "llama-3.1-8b-local",
+        "p_success": 0.6815028901734103,
+        "cost_usd": 8.958333333333332e-05,
+        "energy_wh": 0.5972222222222222,
+        "score": 0.0015826388888888889,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.68 < tau 0.86"
+      },
+      {
+        "name": "gpt-6-luna",
+        "p_success": 0.8932330827067668,
+        "cost_usd": 0.0002511,
+        "energy_wh": 0.025,
+        "score": 0.0003136,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "gemini-3.1-flash-lite",
+        "p_success": 0.8932330827067668,
+        "cost_usd": 0.00075275,
+        "energy_wh": 0.025,
+        "score": 0.00081525,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "claude-haiku-4-5",
+        "p_success": 0.9128491620111732,
+        "cost_usd": 0.002511,
+        "energy_wh": 0.075,
+        "score": 0.0026985000000000004,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "gemini-3.8-flash",
+        "p_success": 0.9128491620111732,
+        "cost_usd": 0.00188325,
+        "energy_wh": 0.075,
+        "score": 0.00207075,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "claude-sonnet-5-5",
+        "p_success": 0.9103174603174603,
+        "cost_usd": 0.005022,
+        "energy_wh": 0.2,
+        "score": 0.005522000000000001,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "gemini-3.1-pro",
+        "p_success": 0.9103174603174603,
+        "cost_usd": 0.006022,
+        "energy_wh": 0.2,
+        "score": 0.006522,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "claude-opus-5-5",
+        "p_success": 0.9287415638506077,
+        "cost_usd": 0.010044,
+        "energy_wh": 0.5,
+        "score": 0.011294,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      }
+    ],
+    "graph": {
+      "skills": [
+        [
+          "general chat",
+          0.985326886177063
+        ],
+        [
+          "math",
+          0.007711327169090509
+        ],
+        [
+          "answering from documents",
+          0.0020272645633667707
+        ],
+        [
+          "reading legal documents",
+          0.0008805713150650263
+        ],
+        [
+          "multi-step reasoning",
+          0.0007867075619287789
+        ]
+      ],
+      "levels": {
+        "easy": 0.834855854511261,
+        "medium": 0.153560072183609,
+        "hard": 0.011584144085645676
+      },
+      "beta": 0.5394450570828498,
+      "edges": {
+        "claude-3.5-sonnet": [
+          [
+            "general chat",
+            "easy",
+            0.961080548796779,
+            0.36411038497557974
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7552782983583658,
+            0.05263166327049822
+          ],
+          [
+            "math",
+            "easy",
+            0.9826341537960323,
+            0.002913492665698604
+          ]
+        ],
+        "gpt-4o": [
+          [
+            "general chat",
+            "easy",
+            0.9690851756838562,
+            0.36714297967442
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7898415769309075,
+            0.05504020968750556
+          ],
+          [
+            "math",
+            "easy",
+            0.9913738997002169,
+            0.0029394058557638426
+          ]
+        ],
+        "gpt-4o-mini": [
+          [
+            "general chat",
+            "easy",
+            0.9690071059588687,
+            0.3671134025514039
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7336342296644388,
+            0.05112339361972403
+          ],
+          [
+            "math",
+            "easy",
+            0.988383786489708,
+            0.002930540223651655
+          ]
+        ],
+        "llama-3.1-8b-instruct": [
+          [
+            "general chat",
+            "easy",
+            0.8978733291458311,
+            0.34016399972290196
+          ],
+          [
+            "general chat",
+            "medium",
+            0.4231862635835014,
+            0.02948978803447497
+          ],
+          [
+            "math",
+            "easy",
+            0.9682972388987042,
+            0.0028709839698215617
+          ]
+        ]
+      },
+      "neighbours": {
+        "claude-3.5-sonnet": [
+          27,
+          32,
+          0.4317235571696543
+        ],
+        "gpt-4o": [
+          25,
+          32,
+          0.3988053354345503
+        ],
+        "gpt-4o-mini": [
+          25,
+          32,
+          0.4041792128283358
+        ],
+        "llama-3.1-8b-instruct": [
+          18,
+          32,
+          0.2777466870193415
+        ]
+      }
+    },
+    "anchors": {
+      "llama-3.1-8b-local": {
+        "model": "llama-3.1-8b-instruct",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gpt-6-luna": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-flash-lite": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-haiku-4-5": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.8-flash": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-sonnet-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-pro": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-opus-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.25,
+        "source": "prior"
+      }
+    }
+  },
+  {
+    "prompt": "What is the capital of Australia?",
+    "context": null,
+    "profile": "quality",
+    "tau": 0.98,
+    "fallback_margin": 0.0,
+    "lambda_energy": 0.0,
+    "model": "claude-opus-5-5",
+    "level": "internal",
+    "difficulty": 0.03885832206560036,
+    "difficulty_label": "easy",
+    "below_floor": true,
+    "steps": [
+      "Confidentiality: internal (no sensitive content found). 8 of 8 models are cleared.",
+      "Graph: the prompt looks like general chat 0.99, answering from documents 0.01, math 0.00; difficulty easy 0.95, medium 0.05, hard 0.01.",
+      "Graph: strongest paths to claude-opus-5-5 (via gpt-4o): general chat/easy: solves 97%; general chat/medium: solves 79%; it solved 31 of the 32 most similar past prompts (weight 0.56).",
+      "Quality floor tau=0.98: 0 of 8 allowed models are predicted to succeed.",
+      "No allowed model reaches tau, so claude-opus-5-5 was chosen as the most likely to succeed (P=0.98, $0.01003)."
+    ],
+    "headers": {
+      "X-EcoRoute-Model": "claude-opus-5-5",
+      "X-EcoRoute-Level": "internal",
+      "X-EcoRoute-Reason": "No allowed model reaches tau, so claude-opus-5-5 was chosen as the most likely to succeed (P=0.98, $0.01003).",
+      "X-EcoRoute-Difficulty": "0.04 (easy)",
+      "X-EcoRoute-Time-Ms": "privacy=22.1, embed=11.1, predict=10.5, privacy_wait=0.0, decide=0.1, explain=3.5, total=47.3"
+    },
+    "candidates": [
+      {
+        "name": "llama-3.1-8b-local",
+        "p_success": 0.9067226890756305,
+        "cost_usd": 8.958333333333332e-05,
+        "energy_wh": 0.5972222222222222,
+        "score": 8.958333333333332e-05,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.91 < tau 0.98"
+      },
+      {
+        "name": "gpt-6-luna",
+        "p_success": 0.9586206896551724,
+        "cost_usd": 0.0002508,
+        "energy_wh": 0.025,
+        "score": 0.0002508,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.96 < tau 0.98"
+      },
+      {
+        "name": "gemini-3.1-flash-lite",
+        "p_success": 0.9586206896551724,
+        "cost_usd": 0.000752,
+        "energy_wh": 0.025,
+        "score": 0.000752,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.96 < tau 0.98"
+      },
+      {
+        "name": "claude-haiku-4-5",
+        "p_success": 0.9696969696969697,
+        "cost_usd": 0.002508,
+        "energy_wh": 0.075,
+        "score": 0.002508,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.97 < tau 0.98"
+      },
+      {
+        "name": "gemini-3.8-flash",
+        "p_success": 0.9696969696969697,
+        "cost_usd": 0.001881,
+        "energy_wh": 0.075,
+        "score": 0.001881,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.97 < tau 0.98"
+      },
+      {
+        "name": "claude-sonnet-5-5",
+        "p_success": 0.9733333333333335,
+        "cost_usd": 0.005016,
+        "energy_wh": 0.2,
+        "score": 0.005016,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.97 < tau 0.98"
+      },
+      {
+        "name": "gemini-3.1-pro",
+        "p_success": 0.9733333333333335,
+        "cost_usd": 0.006016,
+        "energy_wh": 0.2,
+        "score": 0.006016,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.97 < tau 0.98"
+      },
+      {
+        "name": "claude-opus-5-5",
+        "p_success": 0.9791087490286151,
+        "cost_usd": 0.010032,
+        "energy_wh": 0.5,
+        "score": 0.010032,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.98 < tau 0.98"
+      }
+    ],
+    "graph": {
+      "skills": [
+        [
+          "general chat",
+          0.9925663471221924
+        ],
+        [
+          "answering from documents",
+          0.005527282599359751
+        ],
+        [
+          "math",
+          0.0009977442678064108
+        ],
+        [
+          "code",
+          0.0003649537393357605
+        ],
+        [
+          "reading technical manuals",
+          0.00015447664191015065
+        ]
+      ],
+      "levels": {
+        "easy": 0.9491150379180908,
+        "medium": 0.04508458822965622,
+        "hard": 0.005800440441817045
+      },
+      "beta": 0.5585288385543906,
+      "edges": {
+        "claude-3.5-sonnet": [
+          [
+            "general chat",
+            "easy",
+            0.961080548796779,
+            0.3997058712860069
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7552782983583658,
+            0.014920968005930822
+          ],
+          [
+            "answering from documents",
+            "easy",
+            0.9661501533850773,
+            0.002237574430283255
+          ]
+        ],
+        "gpt-4o": [
+          [
+            "general chat",
+            "easy",
+            0.9690851756838562,
+            0.403034932901315
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7898415769309075,
+            0.015603785948511598
+          ],
+          [
+            "answering from documents",
+            "easy",
+            0.9624946744605045,
+            0.00222910845204643
+          ]
+        ],
+        "gpt-4o-mini": [
+          [
+            "general chat",
+            "easy",
+            0.9690071059588687,
+            0.403002464314279
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7336342296644388,
+            0.014493376670124932
+          ],
+          [
+            "answering from documents",
+            "easy",
+            0.9658038488597533,
+            0.0022367723995137716
+          ]
+        ],
+        "llama-3.1-8b-instruct": [
+          [
+            "general chat",
+            "easy",
+            0.8978733291458311,
+            0.37341848378890513
+          ],
+          [
+            "general chat",
+            "medium",
+            0.4231862635835014,
+            0.008360294097160447
+          ],
+          [
+            "answering from documents",
+            "easy",
+            0.9312666868475424,
+            0.002156785380578556
+          ]
+        ]
+      },
+      "neighbours": {
+        "claude-3.5-sonnet": [
+          31,
+          32,
+          0.53818279939197
+        ],
+        "gpt-4o": [
+          31,
+          32,
+          0.5355200295015322
+        ],
+        "gpt-4o-mini": [
+          30,
+          32,
+          0.5184671602984723
+        ],
+        "llama-3.1-8b-instruct": [
+          29,
+          32,
+          0.48915137362533234
+        ]
+      }
+    },
+    "anchors": {
+      "llama-3.1-8b-local": {
+        "model": "llama-3.1-8b-instruct",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gpt-6-luna": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-flash-lite": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-haiku-4-5": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.8-flash": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-sonnet-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-pro": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-opus-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.25,
+        "source": "prior"
+      }
+    }
+  },
+  {
+    "prompt": "What is the capital of Australia?",
+    "context": null,
+    "profile": "balanced",
+    "tau": 0.91,
+    "fallback_margin": 0.02,
+    "lambda_energy": 0.00025,
+    "model": "gpt-6-luna",
+    "level": "internal",
+    "difficulty": 0.03885832206560036,
+    "difficulty_label": "easy",
+    "below_floor": false,
+    "steps": [
+      "Confidentiality: internal (no sensitive content found). 8 of 8 models are cleared.",
+      "Graph: the prompt looks like general chat 0.99, answering from documents 0.01, math 0.00; difficulty easy 0.95, medium 0.05, hard 0.01.",
+      "Graph: strongest paths to gpt-6-luna (via gpt-4o-mini): general chat/easy: solves 97%; general chat/medium: solves 73%; it solved 30 of the 32 most similar past prompts (weight 0.56).",
+      "Quality floor tau=0.91: 7 of 8 allowed models are predicted to succeed.",
+      "Chose gpt-6-luna: cheapest qualifying model (P=0.96, $0.00025, 0.025 Wh (estimated)). 98% cheaper than the priciest allowed model, claude-opus-5-5."
+    ],
+    "headers": {
+      "X-EcoRoute-Model": "gpt-6-luna",
+      "X-EcoRoute-Level": "internal",
+      "X-EcoRoute-Reason": "Chose gpt-6-luna: cheapest qualifying model (P=0.96, $0.00025, 0.025 Wh (estimated)). 98% cheaper than the priciest allowed model, claude-opus-5-5.",
+      "X-EcoRoute-Difficulty": "0.04 (easy)",
+      "X-EcoRoute-Time-Ms": "privacy=152.9, embed=9.7, predict=2.5, privacy_wait=0.0, decide=0.1, explain=2.0, total=167.2"
+    },
+    "candidates": [
+      {
+        "name": "llama-3.1-8b-local",
+        "p_success": 0.9067226890756305,
+        "cost_usd": 8.958333333333332e-05,
+        "energy_wh": 0.5972222222222222,
+        "score": 0.00023888888888888885,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.91 < tau 0.91"
+      },
+      {
+        "name": "gpt-6-luna",
+        "p_success": 0.9586206896551724,
+        "cost_usd": 0.0002508,
+        "energy_wh": 0.025,
+        "score": 0.00025705000000000004,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "gemini-3.1-flash-lite",
+        "p_success": 0.9586206896551724,
+        "cost_usd": 0.000752,
+        "energy_wh": 0.025,
+        "score": 0.0007582499999999999,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "claude-haiku-4-5",
+        "p_success": 0.9696969696969697,
+        "cost_usd": 0.002508,
+        "energy_wh": 0.075,
+        "score": 0.00252675,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "gemini-3.8-flash",
+        "p_success": 0.9696969696969697,
+        "cost_usd": 0.001881,
+        "energy_wh": 0.075,
+        "score": 0.0018997500000000002,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "claude-sonnet-5-5",
+        "p_success": 0.9733333333333335,
+        "cost_usd": 0.005016,
+        "energy_wh": 0.2,
+        "score": 0.005065999999999999,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "gemini-3.1-pro",
+        "p_success": 0.9733333333333335,
+        "cost_usd": 0.006016,
+        "energy_wh": 0.2,
+        "score": 0.006065999999999999,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "claude-opus-5-5",
+        "p_success": 0.9791087490286151,
+        "cost_usd": 0.010032,
+        "energy_wh": 0.5,
+        "score": 0.010157,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      }
+    ],
+    "graph": {
+      "skills": [
+        [
+          "general chat",
+          0.9925663471221924
+        ],
+        [
+          "answering from documents",
+          0.005527282599359751
+        ],
+        [
+          "math",
+          0.0009977442678064108
+        ],
+        [
+          "code",
+          0.0003649537393357605
+        ],
+        [
+          "reading technical manuals",
+          0.00015447664191015065
+        ]
+      ],
+      "levels": {
+        "easy": 0.9491150379180908,
+        "medium": 0.04508458822965622,
+        "hard": 0.005800440441817045
+      },
+      "beta": 0.5585288385543906,
+      "edges": {
+        "claude-3.5-sonnet": [
+          [
+            "general chat",
+            "easy",
+            0.961080548796779,
+            0.3997058712860069
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7552782983583658,
+            0.014920968005930822
+          ],
+          [
+            "answering from documents",
+            "easy",
+            0.9661501533850773,
+            0.002237574430283255
+          ]
+        ],
+        "gpt-4o": [
+          [
+            "general chat",
+            "easy",
+            0.9690851756838562,
+            0.403034932901315
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7898415769309075,
+            0.015603785948511598
+          ],
+          [
+            "answering from documents",
+            "easy",
+            0.9624946744605045,
+            0.00222910845204643
+          ]
+        ],
+        "gpt-4o-mini": [
+          [
+            "general chat",
+            "easy",
+            0.9690071059588687,
+            0.403002464314279
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7336342296644388,
+            0.014493376670124932
+          ],
+          [
+            "answering from documents",
+            "easy",
+            0.9658038488597533,
+            0.0022367723995137716
+          ]
+        ],
+        "llama-3.1-8b-instruct": [
+          [
+            "general chat",
+            "easy",
+            0.8978733291458311,
+            0.37341848378890513
+          ],
+          [
+            "general chat",
+            "medium",
+            0.4231862635835014,
+            0.008360294097160447
+          ],
+          [
+            "answering from documents",
+            "easy",
+            0.9312666868475424,
+            0.002156785380578556
+          ]
+        ]
+      },
+      "neighbours": {
+        "claude-3.5-sonnet": [
+          31,
+          32,
+          0.53818279939197
+        ],
+        "gpt-4o": [
+          31,
+          32,
+          0.5355200295015322
+        ],
+        "gpt-4o-mini": [
+          30,
+          32,
+          0.5184671602984723
+        ],
+        "llama-3.1-8b-instruct": [
+          29,
+          32,
+          0.48915137362533234
+        ]
+      }
+    },
+    "anchors": {
+      "llama-3.1-8b-local": {
+        "model": "llama-3.1-8b-instruct",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gpt-6-luna": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-flash-lite": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-haiku-4-5": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.8-flash": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-sonnet-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-pro": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-opus-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.25,
+        "source": "prior"
+      }
+    }
+  },
+  {
+    "prompt": "What is the capital of Australia?",
+    "context": null,
+    "profile": "eco",
+    "tau": 0.86,
+    "fallback_margin": 0.0,
+    "lambda_energy": 0.0025,
+    "model": "gpt-6-luna",
+    "level": "internal",
+    "difficulty": 0.03885832206560036,
+    "difficulty_label": "easy",
+    "below_floor": false,
+    "steps": [
+      "Confidentiality: internal (no sensitive content found). 8 of 8 models are cleared.",
+      "Graph: the prompt looks like general chat 0.99, answering from documents 0.01, math 0.00; difficulty easy 0.95, medium 0.05, hard 0.01.",
+      "Graph: strongest paths to gpt-6-luna (via gpt-4o-mini): general chat/easy: solves 97%; general chat/medium: solves 73%; it solved 30 of the 32 most similar past prompts (weight 0.56).",
+      "Quality floor tau=0.86: 8 of 8 allowed models are predicted to succeed.",
+      "Chose gpt-6-luna: cheapest qualifying model (P=0.96, $0.00025, 0.025 Wh (estimated)). 98% cheaper than the priciest allowed model, claude-opus-5-5."
+    ],
+    "headers": {
+      "X-EcoRoute-Model": "gpt-6-luna",
+      "X-EcoRoute-Level": "internal",
+      "X-EcoRoute-Reason": "Chose gpt-6-luna: cheapest qualifying model (P=0.96, $0.00025, 0.025 Wh (estimated)). 98% cheaper than the priciest allowed model, claude-opus-5-5.",
+      "X-EcoRoute-Difficulty": "0.04 (easy)",
+      "X-EcoRoute-Time-Ms": "privacy=21.0, embed=9.5, predict=2.5, privacy_wait=0.0, decide=0.1, explain=2.1, total=35.1"
+    },
+    "candidates": [
+      {
+        "name": "llama-3.1-8b-local",
+        "p_success": 0.9067226890756305,
+        "cost_usd": 8.958333333333332e-05,
+        "energy_wh": 0.5972222222222222,
+        "score": 0.0015826388888888889,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "gpt-6-luna",
+        "p_success": 0.9586206896551724,
+        "cost_usd": 0.0002508,
+        "energy_wh": 0.025,
+        "score": 0.0003133,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "gemini-3.1-flash-lite",
+        "p_success": 0.9586206896551724,
+        "cost_usd": 0.000752,
+        "energy_wh": 0.025,
+        "score": 0.0008144999999999999,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "claude-haiku-4-5",
+        "p_success": 0.9696969696969697,
+        "cost_usd": 0.002508,
+        "energy_wh": 0.075,
+        "score": 0.0026955,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "gemini-3.8-flash",
+        "p_success": 0.9696969696969697,
+        "cost_usd": 0.001881,
+        "energy_wh": 0.075,
+        "score": 0.0020685,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "claude-sonnet-5-5",
+        "p_success": 0.9733333333333335,
+        "cost_usd": 0.005016,
+        "energy_wh": 0.2,
+        "score": 0.005516,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "gemini-3.1-pro",
+        "p_success": 0.9733333333333335,
+        "cost_usd": 0.006016,
+        "energy_wh": 0.2,
+        "score": 0.006515999999999999,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "claude-opus-5-5",
+        "p_success": 0.9791087490286151,
+        "cost_usd": 0.010032,
+        "energy_wh": 0.5,
+        "score": 0.011281999999999999,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      }
+    ],
+    "graph": {
+      "skills": [
+        [
+          "general chat",
+          0.9925663471221924
+        ],
+        [
+          "answering from documents",
+          0.005527282599359751
+        ],
+        [
+          "math",
+          0.0009977442678064108
+        ],
+        [
+          "code",
+          0.0003649537393357605
+        ],
+        [
+          "reading technical manuals",
+          0.00015447664191015065
+        ]
+      ],
+      "levels": {
+        "easy": 0.9491150379180908,
+        "medium": 0.04508458822965622,
+        "hard": 0.005800440441817045
+      },
+      "beta": 0.5585288385543906,
+      "edges": {
+        "claude-3.5-sonnet": [
+          [
+            "general chat",
+            "easy",
+            0.961080548796779,
+            0.3997058712860069
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7552782983583658,
+            0.014920968005930822
+          ],
+          [
+            "answering from documents",
+            "easy",
+            0.9661501533850773,
+            0.002237574430283255
+          ]
+        ],
+        "gpt-4o": [
+          [
+            "general chat",
+            "easy",
+            0.9690851756838562,
+            0.403034932901315
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7898415769309075,
+            0.015603785948511598
+          ],
+          [
+            "answering from documents",
+            "easy",
+            0.9624946744605045,
+            0.00222910845204643
+          ]
+        ],
+        "gpt-4o-mini": [
+          [
+            "general chat",
+            "easy",
+            0.9690071059588687,
+            0.403002464314279
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7336342296644388,
+            0.014493376670124932
+          ],
+          [
+            "answering from documents",
+            "easy",
+            0.9658038488597533,
+            0.0022367723995137716
+          ]
+        ],
+        "llama-3.1-8b-instruct": [
+          [
+            "general chat",
+            "easy",
+            0.8978733291458311,
+            0.37341848378890513
+          ],
+          [
+            "general chat",
+            "medium",
+            0.4231862635835014,
+            0.008360294097160447
+          ],
+          [
+            "answering from documents",
+            "easy",
+            0.9312666868475424,
+            0.002156785380578556
+          ]
+        ]
+      },
+      "neighbours": {
+        "claude-3.5-sonnet": [
+          31,
+          32,
+          0.53818279939197
+        ],
+        "gpt-4o": [
+          31,
+          32,
+          0.5355200295015322
+        ],
+        "gpt-4o-mini": [
+          30,
+          32,
+          0.5184671602984723
+        ],
+        "llama-3.1-8b-instruct": [
+          29,
+          32,
+          0.48915137362533234
+        ]
+      }
+    },
+    "anchors": {
+      "llama-3.1-8b-local": {
+        "model": "llama-3.1-8b-instruct",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gpt-6-luna": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-flash-lite": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-haiku-4-5": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.8-flash": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-sonnet-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-pro": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-opus-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.25,
+        "source": "prior"
+      }
+    }
+  },
+  {
+    "prompt": "Write a Python function that merges overlapping intervals, with tests.",
+    "context": null,
+    "profile": "quality",
+    "tau": 0.98,
+    "fallback_margin": 0.0,
+    "lambda_energy": 0.0,
+    "model": "claude-opus-5-5",
+    "level": "internal",
+    "difficulty": 0.3087538354698992,
+    "difficulty_label": "medium",
+    "below_floor": true,
+    "steps": [
+      "Confidentiality: internal (no sensitive content found). 8 of 8 models are cleared.",
+      "Graph: the prompt looks like general chat 0.72, code 0.25, math 0.02; difficulty easy 0.34, medium 0.35, hard 0.31.",
+      "Graph: strongest paths to claude-opus-5-5 (via gpt-4o): general chat/easy: solves 97%; general chat/medium: solves 79%; it solved 22 of the 32 most similar past prompts (weight 0.61).",
+      "Quality floor tau=0.98: 0 of 8 allowed models are predicted to succeed.",
+      "No allowed model reaches tau, so claude-opus-5-5 was chosen as the most likely to succeed (P=0.74, $0.01007)."
+    ],
+    "headers": {
+      "X-EcoRoute-Model": "claude-opus-5-5",
+      "X-EcoRoute-Level": "internal",
+      "X-EcoRoute-Reason": "No allowed model reaches tau, so claude-opus-5-5 was chosen as the most likely to succeed (P=0.74, $0.01007).",
+      "X-EcoRoute-Difficulty": "0.31 (medium)",
+      "X-EcoRoute-Time-Ms": "privacy=25.9, embed=9.8, predict=6.1, privacy_wait=0.0, decide=0.2, explain=4.0, total=46.0"
+    },
+    "candidates": [
+      {
+        "name": "llama-3.1-8b-local",
+        "p_success": 0.5677419354838712,
+        "cost_usd": 8.958333333333332e-05,
+        "energy_wh": 0.5972222222222222,
+        "score": 8.958333333333332e-05,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.57 < tau 0.98"
+      },
+      {
+        "name": "gpt-6-luna",
+        "p_success": 0.7130597014925373,
+        "cost_usd": 0.0002517,
+        "energy_wh": 0.025,
+        "score": 0.0002517,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.71 < tau 0.98"
+      },
+      {
+        "name": "gemini-3.1-flash-lite",
+        "p_success": 0.7130597014925373,
+        "cost_usd": 0.00075425,
+        "energy_wh": 0.025,
+        "score": 0.00075425,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.71 < tau 0.98"
+      },
+      {
+        "name": "claude-haiku-4-5",
+        "p_success": 0.7145454545454545,
+        "cost_usd": 0.002517,
+        "energy_wh": 0.075,
+        "score": 0.002517,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.71 < tau 0.98"
+      },
+      {
+        "name": "gemini-3.8-flash",
+        "p_success": 0.7145454545454545,
+        "cost_usd": 0.00188775,
+        "energy_wh": 0.075,
+        "score": 0.00188775,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.71 < tau 0.98"
+      },
+      {
+        "name": "claude-sonnet-5-5",
+        "p_success": 0.6852459016393443,
+        "cost_usd": 0.005034,
+        "energy_wh": 0.2,
+        "score": 0.005034,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.69 < tau 0.98"
+      },
+      {
+        "name": "gemini-3.1-pro",
+        "p_success": 0.6852459016393443,
+        "cost_usd": 0.006034,
+        "energy_wh": 0.2,
+        "score": 0.006034,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.69 < tau 0.98"
+      },
+      {
+        "name": "claude-opus-5-5",
+        "p_success": 0.7365252654022629,
+        "cost_usd": 0.010068,
+        "energy_wh": 0.5,
+        "score": 0.010068,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.74 < tau 0.98"
+      }
+    ],
+    "graph": {
+      "skills": [
+        [
+          "general chat",
+          0.7187459468841553
+        ],
+        [
+          "code",
+          0.24709448218345642
+        ],
+        [
+          "math",
+          0.018506433814764023
+        ],
+        [
+          "general knowledge",
+          0.006362648215144873
+        ],
+        [
+          "graduate science",
+          0.0041151102632284164
+        ]
+      ],
+      "levels": {
+        "easy": 0.3413330614566803,
+        "medium": 0.3506186008453369,
+        "hard": 0.3080483675003052
+      },
+      "beta": 0.6072826182236801,
+      "edges": {
+        "claude-3.5-sonnet": [
+          [
+            "general chat",
+            "easy",
+            0.961080548796779,
+            0.09259630910904632
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7552782983583658,
+            0.0747476409586823
+          ],
+          [
+            "code",
+            "easy",
+            0.9214046513386379,
+            0.030519114412275446
+          ]
+        ],
+        "gpt-4o": [
+          [
+            "general chat",
+            "easy",
+            0.9690851756838562,
+            0.09336752324553708
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7898415769309075,
+            0.07816826557176954
+          ],
+          [
+            "code",
+            "medium",
+            0.9060845670163885,
+            0.03082810692965906
+          ]
+        ],
+        "gpt-4o-mini": [
+          [
+            "general chat",
+            "easy",
+            0.9690071059588687,
+            0.09336000153635668
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7336342296644388,
+            0.07260559202236946
+          ],
+          [
+            "code",
+            "easy",
+            0.9117435864025534,
+            0.030199116954371986
+          ]
+        ],
+        "llama-3.1-8b-instruct": [
+          [
+            "general chat",
+            "easy",
+            0.8978733291458311,
+            0.08650654352587028
+          ],
+          [
+            "general chat",
+            "medium",
+            0.4231862635835014,
+            0.0418814825710469
+          ],
+          [
+            "code",
+            "easy",
+            0.8606132264222903,
+            0.02850555777392785
+          ]
+        ]
+      },
+      "neighbours": {
+        "claude-3.5-sonnet": [
+          24,
+          32,
+          0.4593451580624661
+        ],
+        "gpt-4o": [
+          22,
+          32,
+          0.4195480699436799
+        ],
+        "gpt-4o-mini": [
+          21,
+          32,
+          0.39692823857934306
+        ],
+        "llama-3.1-8b-instruct": [
+          19,
+          32,
+          0.35389894639725156
+        ]
+      }
+    },
+    "anchors": {
+      "llama-3.1-8b-local": {
+        "model": "llama-3.1-8b-instruct",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gpt-6-luna": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-flash-lite": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-haiku-4-5": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.8-flash": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-sonnet-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-pro": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-opus-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.25,
+        "source": "prior"
+      }
+    }
+  },
+  {
+    "prompt": "Write a Python function that merges overlapping intervals, with tests.",
+    "context": null,
+    "profile": "balanced",
+    "tau": 0.91,
+    "fallback_margin": 0.02,
+    "lambda_energy": 0.00025,
+    "model": "claude-opus-5-5",
+    "level": "internal",
+    "difficulty": 0.3087538354698992,
+    "difficulty_label": "medium",
+    "below_floor": true,
+    "steps": [
+      "Confidentiality: internal (no sensitive content found). 8 of 8 models are cleared.",
+      "Graph: the prompt looks like general chat 0.72, code 0.25, math 0.02; difficulty easy 0.34, medium 0.35, hard 0.31.",
+      "Graph: strongest paths to claude-opus-5-5 (via gpt-4o): general chat/easy: solves 97%; general chat/medium: solves 79%; it solved 22 of the 32 most similar past prompts (weight 0.61).",
+      "Quality floor tau=0.91: 0 of 8 allowed models are predicted to succeed.",
+      "No allowed model reaches tau, so claude-opus-5-5 was chosen as the most likely to succeed (P=0.74, $0.01007)."
+    ],
+    "headers": {
+      "X-EcoRoute-Model": "claude-opus-5-5",
+      "X-EcoRoute-Level": "internal",
+      "X-EcoRoute-Reason": "No allowed model reaches tau, so claude-opus-5-5 was chosen as the most likely to succeed (P=0.74, $0.01007).",
+      "X-EcoRoute-Difficulty": "0.31 (medium)",
+      "X-EcoRoute-Time-Ms": "privacy=359.2, embed=10.0, predict=2.5, privacy_wait=0.0, decide=0.1, explain=2.1, total=373.9"
+    },
+    "candidates": [
+      {
+        "name": "llama-3.1-8b-local",
+        "p_success": 0.5677419354838712,
+        "cost_usd": 8.958333333333332e-05,
+        "energy_wh": 0.5972222222222222,
+        "score": 0.00023888888888888885,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.57 < tau 0.91"
+      },
+      {
+        "name": "gpt-6-luna",
+        "p_success": 0.7130597014925373,
+        "cost_usd": 0.0002517,
+        "energy_wh": 0.025,
+        "score": 0.00025795,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.71 < tau 0.91"
+      },
+      {
+        "name": "gemini-3.1-flash-lite",
+        "p_success": 0.7130597014925373,
+        "cost_usd": 0.00075425,
+        "energy_wh": 0.025,
+        "score": 0.0007605,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.71 < tau 0.91"
+      },
+      {
+        "name": "claude-haiku-4-5",
+        "p_success": 0.7145454545454545,
+        "cost_usd": 0.002517,
+        "energy_wh": 0.075,
+        "score": 0.0025357500000000002,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.71 < tau 0.91"
+      },
+      {
+        "name": "gemini-3.8-flash",
+        "p_success": 0.7145454545454545,
+        "cost_usd": 0.00188775,
+        "energy_wh": 0.075,
+        "score": 0.0019065000000000002,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.71 < tau 0.91"
+      },
+      {
+        "name": "claude-sonnet-5-5",
+        "p_success": 0.6852459016393443,
+        "cost_usd": 0.005034,
+        "energy_wh": 0.2,
+        "score": 0.005084,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.69 < tau 0.91"
+      },
+      {
+        "name": "gemini-3.1-pro",
+        "p_success": 0.6852459016393443,
+        "cost_usd": 0.006034,
+        "energy_wh": 0.2,
+        "score": 0.006084,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.69 < tau 0.91"
+      },
+      {
+        "name": "claude-opus-5-5",
+        "p_success": 0.7365252654022629,
+        "cost_usd": 0.010068,
+        "energy_wh": 0.5,
+        "score": 0.010193,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.74 < tau 0.91"
+      }
+    ],
+    "graph": {
+      "skills": [
+        [
+          "general chat",
+          0.7187459468841553
+        ],
+        [
+          "code",
+          0.24709448218345642
+        ],
+        [
+          "math",
+          0.018506433814764023
+        ],
+        [
+          "general knowledge",
+          0.006362648215144873
+        ],
+        [
+          "graduate science",
+          0.0041151102632284164
+        ]
+      ],
+      "levels": {
+        "easy": 0.3413330614566803,
+        "medium": 0.3506186008453369,
+        "hard": 0.3080483675003052
+      },
+      "beta": 0.6072826182236801,
+      "edges": {
+        "claude-3.5-sonnet": [
+          [
+            "general chat",
+            "easy",
+            0.961080548796779,
+            0.09259630910904632
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7552782983583658,
+            0.0747476409586823
+          ],
+          [
+            "code",
+            "easy",
+            0.9214046513386379,
+            0.030519114412275446
+          ]
+        ],
+        "gpt-4o": [
+          [
+            "general chat",
+            "easy",
+            0.9690851756838562,
+            0.09336752324553708
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7898415769309075,
+            0.07816826557176954
+          ],
+          [
+            "code",
+            "medium",
+            0.9060845670163885,
+            0.03082810692965906
+          ]
+        ],
+        "gpt-4o-mini": [
+          [
+            "general chat",
+            "easy",
+            0.9690071059588687,
+            0.09336000153635668
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7336342296644388,
+            0.07260559202236946
+          ],
+          [
+            "code",
+            "easy",
+            0.9117435864025534,
+            0.030199116954371986
+          ]
+        ],
+        "llama-3.1-8b-instruct": [
+          [
+            "general chat",
+            "easy",
+            0.8978733291458311,
+            0.08650654352587028
+          ],
+          [
+            "general chat",
+            "medium",
+            0.4231862635835014,
+            0.0418814825710469
+          ],
+          [
+            "code",
+            "easy",
+            0.8606132264222903,
+            0.02850555777392785
+          ]
+        ]
+      },
+      "neighbours": {
+        "claude-3.5-sonnet": [
+          24,
+          32,
+          0.4593451580624661
+        ],
+        "gpt-4o": [
+          22,
+          32,
+          0.4195480699436799
+        ],
+        "gpt-4o-mini": [
+          21,
+          32,
+          0.39692823857934306
+        ],
+        "llama-3.1-8b-instruct": [
+          19,
+          32,
+          0.35389894639725156
+        ]
+      }
+    },
+    "anchors": {
+      "llama-3.1-8b-local": {
+        "model": "llama-3.1-8b-instruct",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gpt-6-luna": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-flash-lite": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-haiku-4-5": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.8-flash": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-sonnet-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-pro": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-opus-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.25,
+        "source": "prior"
+      }
+    }
+  },
+  {
+    "prompt": "Write a Python function that merges overlapping intervals, with tests.",
+    "context": null,
+    "profile": "eco",
+    "tau": 0.86,
+    "fallback_margin": 0.0,
+    "lambda_energy": 0.0025,
+    "model": "claude-opus-5-5",
+    "level": "internal",
+    "difficulty": 0.3087538354698992,
+    "difficulty_label": "medium",
+    "below_floor": true,
+    "steps": [
+      "Confidentiality: internal (no sensitive content found). 8 of 8 models are cleared.",
+      "Graph: the prompt looks like general chat 0.72, code 0.25, math 0.02; difficulty easy 0.34, medium 0.35, hard 0.31.",
+      "Graph: strongest paths to claude-opus-5-5 (via gpt-4o): general chat/easy: solves 97%; general chat/medium: solves 79%; it solved 22 of the 32 most similar past prompts (weight 0.61).",
+      "Quality floor tau=0.86: 0 of 8 allowed models are predicted to succeed.",
+      "No allowed model reaches tau, so claude-opus-5-5 was chosen as the most likely to succeed (P=0.74, $0.01007)."
+    ],
+    "headers": {
+      "X-EcoRoute-Model": "claude-opus-5-5",
+      "X-EcoRoute-Level": "internal",
+      "X-EcoRoute-Reason": "No allowed model reaches tau, so claude-opus-5-5 was chosen as the most likely to succeed (P=0.74, $0.01007).",
+      "X-EcoRoute-Difficulty": "0.31 (medium)",
+      "X-EcoRoute-Time-Ms": "privacy=22.0, embed=9.5, predict=2.4, privacy_wait=0.0, decide=0.1, explain=2.0, total=36.0"
+    },
+    "candidates": [
+      {
+        "name": "llama-3.1-8b-local",
+        "p_success": 0.5677419354838712,
+        "cost_usd": 8.958333333333332e-05,
+        "energy_wh": 0.5972222222222222,
+        "score": 0.0015826388888888889,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.57 < tau 0.86"
+      },
+      {
+        "name": "gpt-6-luna",
+        "p_success": 0.7130597014925373,
+        "cost_usd": 0.0002517,
+        "energy_wh": 0.025,
+        "score": 0.0003142,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.71 < tau 0.86"
+      },
+      {
+        "name": "gemini-3.1-flash-lite",
+        "p_success": 0.7130597014925373,
+        "cost_usd": 0.00075425,
+        "energy_wh": 0.025,
+        "score": 0.00081675,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.71 < tau 0.86"
+      },
+      {
+        "name": "claude-haiku-4-5",
+        "p_success": 0.7145454545454545,
+        "cost_usd": 0.002517,
+        "energy_wh": 0.075,
+        "score": 0.0027045000000000003,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.71 < tau 0.86"
+      },
+      {
+        "name": "gemini-3.8-flash",
+        "p_success": 0.7145454545454545,
+        "cost_usd": 0.00188775,
+        "energy_wh": 0.075,
+        "score": 0.0020752500000000003,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.71 < tau 0.86"
+      },
+      {
+        "name": "claude-sonnet-5-5",
+        "p_success": 0.6852459016393443,
+        "cost_usd": 0.005034,
+        "energy_wh": 0.2,
+        "score": 0.005534000000000001,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.69 < tau 0.86"
+      },
+      {
+        "name": "gemini-3.1-pro",
+        "p_success": 0.6852459016393443,
+        "cost_usd": 0.006034,
+        "energy_wh": 0.2,
+        "score": 0.006534,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.69 < tau 0.86"
+      },
+      {
+        "name": "claude-opus-5-5",
+        "p_success": 0.7365252654022629,
+        "cost_usd": 0.010068,
+        "energy_wh": 0.5,
+        "score": 0.011318,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.74 < tau 0.86"
+      }
+    ],
+    "graph": {
+      "skills": [
+        [
+          "general chat",
+          0.7187459468841553
+        ],
+        [
+          "code",
+          0.24709448218345642
+        ],
+        [
+          "math",
+          0.018506433814764023
+        ],
+        [
+          "general knowledge",
+          0.006362648215144873
+        ],
+        [
+          "graduate science",
+          0.0041151102632284164
+        ]
+      ],
+      "levels": {
+        "easy": 0.3413330614566803,
+        "medium": 0.3506186008453369,
+        "hard": 0.3080483675003052
+      },
+      "beta": 0.6072826182236801,
+      "edges": {
+        "claude-3.5-sonnet": [
+          [
+            "general chat",
+            "easy",
+            0.961080548796779,
+            0.09259630910904632
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7552782983583658,
+            0.0747476409586823
+          ],
+          [
+            "code",
+            "easy",
+            0.9214046513386379,
+            0.030519114412275446
+          ]
+        ],
+        "gpt-4o": [
+          [
+            "general chat",
+            "easy",
+            0.9690851756838562,
+            0.09336752324553708
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7898415769309075,
+            0.07816826557176954
+          ],
+          [
+            "code",
+            "medium",
+            0.9060845670163885,
+            0.03082810692965906
+          ]
+        ],
+        "gpt-4o-mini": [
+          [
+            "general chat",
+            "easy",
+            0.9690071059588687,
+            0.09336000153635668
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7336342296644388,
+            0.07260559202236946
+          ],
+          [
+            "code",
+            "easy",
+            0.9117435864025534,
+            0.030199116954371986
+          ]
+        ],
+        "llama-3.1-8b-instruct": [
+          [
+            "general chat",
+            "easy",
+            0.8978733291458311,
+            0.08650654352587028
+          ],
+          [
+            "general chat",
+            "medium",
+            0.4231862635835014,
+            0.0418814825710469
+          ],
+          [
+            "code",
+            "easy",
+            0.8606132264222903,
+            0.02850555777392785
+          ]
+        ]
+      },
+      "neighbours": {
+        "claude-3.5-sonnet": [
+          24,
+          32,
+          0.4593451580624661
+        ],
+        "gpt-4o": [
+          22,
+          32,
+          0.4195480699436799
+        ],
+        "gpt-4o-mini": [
+          21,
+          32,
+          0.39692823857934306
+        ],
+        "llama-3.1-8b-instruct": [
+          19,
+          32,
+          0.35389894639725156
+        ]
+      }
+    },
+    "anchors": {
+      "llama-3.1-8b-local": {
+        "model": "llama-3.1-8b-instruct",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gpt-6-luna": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-flash-lite": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-haiku-4-5": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.8-flash": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-sonnet-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-pro": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-opus-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.25,
+        "source": "prior"
+      }
+    }
+  },
+  {
+    "prompt": "Prove that there are infinitely many primes of the form 4k+3.",
+    "context": null,
+    "profile": "quality",
+    "tau": 0.98,
+    "fallback_margin": 0.0,
+    "lambda_energy": 0.0,
+    "model": "claude-opus-5-5",
+    "level": "internal",
+    "difficulty": 0.10424558050701493,
+    "difficulty_label": "easy",
+    "below_floor": true,
+    "steps": [
+      "Confidentiality: internal (no sensitive content found). 8 of 8 models are cleared.",
+      "Graph: the prompt looks like math 0.86, general chat 0.14, graduate science 0.00; difficulty easy 0.46, medium 0.37, hard 0.17.",
+      "Graph: strongest paths to claude-opus-5-5 (via gpt-4o): math/easy: solves 99%; math/medium: solves 79%; it solved 27 of the 32 most similar past prompts (weight 0.68).",
+      "Quality floor tau=0.98: 0 of 8 allowed models are predicted to succeed.",
+      "No allowed model reaches tau, so claude-opus-5-5 was chosen as the most likely to succeed (P=0.93, $0.01006)."
+    ],
+    "headers": {
+      "X-EcoRoute-Model": "claude-opus-5-5",
+      "X-EcoRoute-Level": "internal",
+      "X-EcoRoute-Reason": "No allowed model reaches tau, so claude-opus-5-5 was chosen as the most likely to succeed (P=0.93, $0.01006).",
+      "X-EcoRoute-Difficulty": "0.10 (easy)",
+      "X-EcoRoute-Time-Ms": "privacy=22.7, embed=10.7, predict=6.0, privacy_wait=0.0, decide=0.2, explain=4.1, total=43.7"
+    },
+    "candidates": [
+      {
+        "name": "llama-3.1-8b-local",
+        "p_success": 0.8044943820224721,
+        "cost_usd": 8.958333333333332e-05,
+        "energy_wh": 0.5972222222222222,
+        "score": 8.958333333333332e-05,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.80 < tau 0.98"
+      },
+      {
+        "name": "gpt-6-luna",
+        "p_success": 0.8932330827067668,
+        "cost_usd": 0.0002515,
+        "energy_wh": 0.025,
+        "score": 0.0002515,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.89 < tau 0.98"
+      },
+      {
+        "name": "gemini-3.1-flash-lite",
+        "p_success": 0.8932330827067668,
+        "cost_usd": 0.00075375,
+        "energy_wh": 0.025,
+        "score": 0.00075375,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.89 < tau 0.98"
+      },
+      {
+        "name": "claude-haiku-4-5",
+        "p_success": 0.9128491620111732,
+        "cost_usd": 0.002515,
+        "energy_wh": 0.075,
+        "score": 0.002515,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.91 < tau 0.98"
+      },
+      {
+        "name": "gemini-3.8-flash",
+        "p_success": 0.9128491620111732,
+        "cost_usd": 0.00188625,
+        "energy_wh": 0.075,
+        "score": 0.00188625,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.91 < tau 0.98"
+      },
+      {
+        "name": "claude-sonnet-5-5",
+        "p_success": 0.9103174603174603,
+        "cost_usd": 0.00503,
+        "energy_wh": 0.2,
+        "score": 0.00503,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.91 < tau 0.98"
+      },
+      {
+        "name": "gemini-3.1-pro",
+        "p_success": 0.9103174603174603,
+        "cost_usd": 0.00603,
+        "energy_wh": 0.2,
+        "score": 0.00603,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.91 < tau 0.98"
+      },
+      {
+        "name": "claude-opus-5-5",
+        "p_success": 0.9287415638506077,
+        "cost_usd": 0.01006,
+        "energy_wh": 0.5,
+        "score": 0.01006,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.93 < tau 0.98"
+      }
+    ],
+    "graph": {
+      "skills": [
+        [
+          "math",
+          0.8613815307617188
+        ],
+        [
+          "general chat",
+          0.1355942189693451
+        ],
+        [
+          "graduate science",
+          0.0013888661051169038
+        ],
+        [
+          "general knowledge",
+          0.0009624587837606668
+        ],
+        [
+          "code",
+          0.0002159536088583991
+        ]
+      ],
+      "levels": {
+        "easy": 0.46395331621170044,
+        "medium": 0.36841562390327454,
+        "hard": 0.167631134390831
+      },
+      "beta": 0.677462919484737,
+      "edges": {
+        "claude-3.5-sonnet": [
+          [
+            "math",
+            "easy",
+            0.9826341537960323,
+            0.12666054269455448
+          ],
+          [
+            "math",
+            "medium",
+            0.6982764525657476,
+            0.07147277473837563
+          ],
+          [
+            "general chat",
+            "easy",
+            0.961080548796779,
+            0.01950091078390828
+          ]
+        ],
+        "gpt-4o": [
+          [
+            "math",
+            "easy",
+            0.9913738997002169,
+            0.12778708704980626
+          ],
+          [
+            "math",
+            "medium",
+            0.7891821385264267,
+            0.08077751584948073
+          ],
+          [
+            "general chat",
+            "easy",
+            0.9690851756838562,
+            0.019663329547849336
+          ]
+        ],
+        "gpt-4o-mini": [
+          [
+            "math",
+            "easy",
+            0.988383786489708,
+            0.12740166449910606
+          ],
+          [
+            "math",
+            "medium",
+            0.782476195090554,
+            0.08009112239766189
+          ],
+          [
+            "general chat",
+            "easy",
+            0.9690071059588687,
+            0.0196617454654914
+          ]
+        ],
+        "llama-3.1-8b-instruct": [
+          [
+            "math",
+            "easy",
+            0.9682972388987042,
+            0.12481252895063352
+          ],
+          [
+            "math",
+            "medium",
+            0.5687422687509315,
+            0.058214175645283674
+          ],
+          [
+            "general chat",
+            "easy",
+            0.8978733291458311,
+            0.018218397728311454
+          ]
+        ]
+      },
+      "neighbours": {
+        "claude-3.5-sonnet": [
+          29,
+          32,
+          0.6101377241686715
+        ],
+        "gpt-4o": [
+          27,
+          32,
+          0.5702395252986981
+        ],
+        "gpt-4o-mini": [
+          29,
+          32,
+          0.6072075619165009
+        ],
+        "llama-3.1-8b-instruct": [
+          24,
+          32,
+          0.5015077752517222
+        ]
+      }
+    },
+    "anchors": {
+      "llama-3.1-8b-local": {
+        "model": "llama-3.1-8b-instruct",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gpt-6-luna": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-flash-lite": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-haiku-4-5": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.8-flash": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-sonnet-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-pro": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-opus-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.25,
+        "source": "prior"
+      }
+    }
+  },
+  {
+    "prompt": "Prove that there are infinitely many primes of the form 4k+3.",
+    "context": null,
+    "profile": "balanced",
+    "tau": 0.91,
+    "fallback_margin": 0.02,
+    "lambda_energy": 0.00025,
+    "model": "gemini-3.8-flash",
+    "level": "internal",
+    "difficulty": 0.10424558050701493,
+    "difficulty_label": "easy",
+    "below_floor": false,
+    "steps": [
+      "Confidentiality: internal (no sensitive content found). 8 of 8 models are cleared.",
+      "Graph: the prompt looks like math 0.86, general chat 0.14, graduate science 0.00; difficulty easy 0.46, medium 0.37, hard 0.17.",
+      "Graph: strongest paths to gemini-3.8-flash (via claude-3.5-sonnet): math/easy: solves 98%; math/medium: solves 70%; it solved 29 of the 32 most similar past prompts (weight 0.68).",
+      "Quality floor tau=0.91: 5 of 8 allowed models are predicted to succeed.",
+      "Chose gemini-3.8-flash: cheapest qualifying model (P=0.91, $0.00189, 0.075 Wh (estimated)). 81% cheaper than the priciest allowed model, claude-opus-5-5."
+    ],
+    "headers": {
+      "X-EcoRoute-Model": "gemini-3.8-flash",
+      "X-EcoRoute-Level": "internal",
+      "X-EcoRoute-Reason": "Chose gemini-3.8-flash: cheapest qualifying model (P=0.91, $0.00189, 0.075 Wh (estimated)). 81% cheaper than the priciest allowed model, claude-opus-5-5.",
+      "X-EcoRoute-Difficulty": "0.10 (easy)",
+      "X-EcoRoute-Time-Ms": "privacy=35.0, embed=15.6, predict=4.1, privacy_wait=0.0, decide=0.2, explain=3.5, total=58.4"
+    },
+    "candidates": [
+      {
+        "name": "llama-3.1-8b-local",
+        "p_success": 0.8044943820224721,
+        "cost_usd": 8.958333333333332e-05,
+        "energy_wh": 0.5972222222222222,
+        "score": 0.00023888888888888885,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.80 < tau 0.91"
+      },
+      {
+        "name": "gpt-6-luna",
+        "p_success": 0.8932330827067668,
+        "cost_usd": 0.0002515,
+        "energy_wh": 0.025,
+        "score": 0.00025775,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.89 < tau 0.91"
+      },
+      {
+        "name": "gemini-3.1-flash-lite",
+        "p_success": 0.8932330827067668,
+        "cost_usd": 0.00075375,
+        "energy_wh": 0.025,
+        "score": 0.0007599999999999999,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.89 < tau 0.91"
+      },
+      {
+        "name": "claude-haiku-4-5",
+        "p_success": 0.9128491620111732,
+        "cost_usd": 0.002515,
+        "energy_wh": 0.075,
+        "score": 0.00253375,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "gemini-3.8-flash",
+        "p_success": 0.9128491620111732,
+        "cost_usd": 0.00188625,
+        "energy_wh": 0.075,
+        "score": 0.001905,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "claude-sonnet-5-5",
+        "p_success": 0.9103174603174603,
+        "cost_usd": 0.00503,
+        "energy_wh": 0.2,
+        "score": 0.0050799999999999994,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "gemini-3.1-pro",
+        "p_success": 0.9103174603174603,
+        "cost_usd": 0.00603,
+        "energy_wh": 0.2,
+        "score": 0.0060799999999999995,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "claude-opus-5-5",
+        "p_success": 0.9287415638506077,
+        "cost_usd": 0.01006,
+        "energy_wh": 0.5,
+        "score": 0.010185,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      }
+    ],
+    "graph": {
+      "skills": [
+        [
+          "math",
+          0.8613815307617188
+        ],
+        [
+          "general chat",
+          0.1355942189693451
+        ],
+        [
+          "graduate science",
+          0.0013888661051169038
+        ],
+        [
+          "general knowledge",
+          0.0009624587837606668
+        ],
+        [
+          "code",
+          0.0002159536088583991
+        ]
+      ],
+      "levels": {
+        "easy": 0.46395331621170044,
+        "medium": 0.36841562390327454,
+        "hard": 0.167631134390831
+      },
+      "beta": 0.677462919484737,
+      "edges": {
+        "claude-3.5-sonnet": [
+          [
+            "math",
+            "easy",
+            0.9826341537960323,
+            0.12666054269455448
+          ],
+          [
+            "math",
+            "medium",
+            0.6982764525657476,
+            0.07147277473837563
+          ],
+          [
+            "general chat",
+            "easy",
+            0.961080548796779,
+            0.01950091078390828
+          ]
+        ],
+        "gpt-4o": [
+          [
+            "math",
+            "easy",
+            0.9913738997002169,
+            0.12778708704980626
+          ],
+          [
+            "math",
+            "medium",
+            0.7891821385264267,
+            0.08077751584948073
+          ],
+          [
+            "general chat",
+            "easy",
+            0.9690851756838562,
+            0.019663329547849336
+          ]
+        ],
+        "gpt-4o-mini": [
+          [
+            "math",
+            "easy",
+            0.988383786489708,
+            0.12740166449910606
+          ],
+          [
+            "math",
+            "medium",
+            0.782476195090554,
+            0.08009112239766189
+          ],
+          [
+            "general chat",
+            "easy",
+            0.9690071059588687,
+            0.0196617454654914
+          ]
+        ],
+        "llama-3.1-8b-instruct": [
+          [
+            "math",
+            "easy",
+            0.9682972388987042,
+            0.12481252895063352
+          ],
+          [
+            "math",
+            "medium",
+            0.5687422687509315,
+            0.058214175645283674
+          ],
+          [
+            "general chat",
+            "easy",
+            0.8978733291458311,
+            0.018218397728311454
+          ]
+        ]
+      },
+      "neighbours": {
+        "claude-3.5-sonnet": [
+          29,
+          32,
+          0.6101377241686715
+        ],
+        "gpt-4o": [
+          27,
+          32,
+          0.5702395252986981
+        ],
+        "gpt-4o-mini": [
+          29,
+          32,
+          0.6072075619165009
+        ],
+        "llama-3.1-8b-instruct": [
+          24,
+          32,
+          0.5015077752517222
+        ]
+      }
+    },
+    "anchors": {
+      "llama-3.1-8b-local": {
+        "model": "llama-3.1-8b-instruct",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gpt-6-luna": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-flash-lite": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-haiku-4-5": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.8-flash": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-sonnet-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-pro": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-opus-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.25,
+        "source": "prior"
+      }
+    }
+  },
+  {
+    "prompt": "Prove that there are infinitely many primes of the form 4k+3.",
+    "context": null,
+    "profile": "eco",
+    "tau": 0.86,
+    "fallback_margin": 0.0,
+    "lambda_energy": 0.0025,
+    "model": "gpt-6-luna",
+    "level": "internal",
+    "difficulty": 0.10424558050701493,
+    "difficulty_label": "easy",
+    "below_floor": false,
+    "steps": [
+      "Confidentiality: internal (no sensitive content found). 8 of 8 models are cleared.",
+      "Graph: the prompt looks like math 0.86, general chat 0.14, graduate science 0.00; difficulty easy 0.46, medium 0.37, hard 0.17.",
+      "Graph: strongest paths to gpt-6-luna (via gpt-4o-mini): math/easy: solves 99%; math/medium: solves 78%; it solved 29 of the 32 most similar past prompts (weight 0.68).",
+      "Quality floor tau=0.86: 7 of 8 allowed models are predicted to succeed.",
+      "Chose gpt-6-luna: cheapest qualifying model (P=0.89, $0.00025, 0.025 Wh (estimated)). 98% cheaper than the priciest allowed model, claude-opus-5-5."
+    ],
+    "headers": {
+      "X-EcoRoute-Model": "gpt-6-luna",
+      "X-EcoRoute-Level": "internal",
+      "X-EcoRoute-Reason": "Chose gpt-6-luna: cheapest qualifying model (P=0.89, $0.00025, 0.025 Wh (estimated)). 98% cheaper than the priciest allowed model, claude-opus-5-5.",
+      "X-EcoRoute-Difficulty": "0.10 (easy)",
+      "X-EcoRoute-Time-Ms": "privacy=22.3, embed=10.3, predict=2.5, privacy_wait=0.0, decide=0.1, explain=2.1, total=37.3"
+    },
+    "candidates": [
+      {
+        "name": "llama-3.1-8b-local",
+        "p_success": 0.8044943820224721,
+        "cost_usd": 8.958333333333332e-05,
+        "energy_wh": 0.5972222222222222,
+        "score": 0.0015826388888888889,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.80 < tau 0.86"
+      },
+      {
+        "name": "gpt-6-luna",
+        "p_success": 0.8932330827067668,
+        "cost_usd": 0.0002515,
+        "energy_wh": 0.025,
+        "score": 0.000314,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "gemini-3.1-flash-lite",
+        "p_success": 0.8932330827067668,
+        "cost_usd": 0.00075375,
+        "energy_wh": 0.025,
+        "score": 0.0008162499999999999,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "claude-haiku-4-5",
+        "p_success": 0.9128491620111732,
+        "cost_usd": 0.002515,
+        "energy_wh": 0.075,
+        "score": 0.0027025,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "gemini-3.8-flash",
+        "p_success": 0.9128491620111732,
+        "cost_usd": 0.00188625,
+        "energy_wh": 0.075,
+        "score": 0.00207375,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "claude-sonnet-5-5",
+        "p_success": 0.9103174603174603,
+        "cost_usd": 0.00503,
+        "energy_wh": 0.2,
+        "score": 0.00553,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "gemini-3.1-pro",
+        "p_success": 0.9103174603174603,
+        "cost_usd": 0.00603,
+        "energy_wh": 0.2,
+        "score": 0.006529999999999999,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "claude-opus-5-5",
+        "p_success": 0.9287415638506077,
+        "cost_usd": 0.01006,
+        "energy_wh": 0.5,
+        "score": 0.011309999999999999,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      }
+    ],
+    "graph": {
+      "skills": [
+        [
+          "math",
+          0.8613815307617188
+        ],
+        [
+          "general chat",
+          0.1355942189693451
+        ],
+        [
+          "graduate science",
+          0.0013888661051169038
+        ],
+        [
+          "general knowledge",
+          0.0009624587837606668
+        ],
+        [
+          "code",
+          0.0002159536088583991
+        ]
+      ],
+      "levels": {
+        "easy": 0.46395331621170044,
+        "medium": 0.36841562390327454,
+        "hard": 0.167631134390831
+      },
+      "beta": 0.677462919484737,
+      "edges": {
+        "claude-3.5-sonnet": [
+          [
+            "math",
+            "easy",
+            0.9826341537960323,
+            0.12666054269455448
+          ],
+          [
+            "math",
+            "medium",
+            0.6982764525657476,
+            0.07147277473837563
+          ],
+          [
+            "general chat",
+            "easy",
+            0.961080548796779,
+            0.01950091078390828
+          ]
+        ],
+        "gpt-4o": [
+          [
+            "math",
+            "easy",
+            0.9913738997002169,
+            0.12778708704980626
+          ],
+          [
+            "math",
+            "medium",
+            0.7891821385264267,
+            0.08077751584948073
+          ],
+          [
+            "general chat",
+            "easy",
+            0.9690851756838562,
+            0.019663329547849336
+          ]
+        ],
+        "gpt-4o-mini": [
+          [
+            "math",
+            "easy",
+            0.988383786489708,
+            0.12740166449910606
+          ],
+          [
+            "math",
+            "medium",
+            0.782476195090554,
+            0.08009112239766189
+          ],
+          [
+            "general chat",
+            "easy",
+            0.9690071059588687,
+            0.0196617454654914
+          ]
+        ],
+        "llama-3.1-8b-instruct": [
+          [
+            "math",
+            "easy",
+            0.9682972388987042,
+            0.12481252895063352
+          ],
+          [
+            "math",
+            "medium",
+            0.5687422687509315,
+            0.058214175645283674
+          ],
+          [
+            "general chat",
+            "easy",
+            0.8978733291458311,
+            0.018218397728311454
+          ]
+        ]
+      },
+      "neighbours": {
+        "claude-3.5-sonnet": [
+          29,
+          32,
+          0.6101377241686715
+        ],
+        "gpt-4o": [
+          27,
+          32,
+          0.5702395252986981
+        ],
+        "gpt-4o-mini": [
+          29,
+          32,
+          0.6072075619165009
+        ],
+        "llama-3.1-8b-instruct": [
+          24,
+          32,
+          0.5015077752517222
+        ]
+      }
+    },
+    "anchors": {
+      "llama-3.1-8b-local": {
+        "model": "llama-3.1-8b-instruct",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gpt-6-luna": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-flash-lite": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-haiku-4-5": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.8-flash": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-sonnet-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-pro": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-opus-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.25,
+        "source": "prior"
+      }
+    }
+  },
+  {
+    "prompt": "A train leaves at 3pm at 80 km/h; another at 4pm at 100 km/h. When does it catch up?",
+    "context": null,
+    "profile": "quality",
+    "tau": 0.98,
+    "fallback_margin": 0.0,
+    "lambda_energy": 0.0,
+    "model": "gpt-6-luna",
+    "level": "internal",
+    "difficulty": 0.10427952974552412,
+    "difficulty_label": "easy",
+    "below_floor": true,
+    "steps": [
+      "Confidentiality: internal (no sensitive content found). 8 of 8 models are cleared.",
+      "Graph: the prompt looks like general chat 0.92, math 0.05, reading technical manuals 0.01; difficulty easy 0.64, medium 0.30, hard 0.06.",
+      "Graph: strongest paths to gpt-6-luna (via gpt-4o-mini): general chat/easy: solves 97%; general chat/medium: solves 73%; it solved 29 of the 32 most similar past prompts (weight 0.63).",
+      "Quality floor tau=0.98: 0 of 8 allowed models are predicted to succeed.",
+      "No allowed model reaches tau, so gpt-6-luna was chosen as the most likely to succeed (P=0.93, $0.00025)."
+    ],
+    "headers": {
+      "X-EcoRoute-Model": "gpt-6-luna",
+      "X-EcoRoute-Level": "internal",
+      "X-EcoRoute-Reason": "No allowed model reaches tau, so gpt-6-luna was chosen as the most likely to succeed (P=0.93, $0.00025).",
+      "X-EcoRoute-Difficulty": "0.10 (easy)",
+      "X-EcoRoute-Time-Ms": "privacy=23.1, embed=10.2, predict=6.1, privacy_wait=0.0, decide=0.2, explain=4.1, total=43.6"
+    },
+    "candidates": [
+      {
+        "name": "llama-3.1-8b-local",
+        "p_success": 0.7204545454545456,
+        "cost_usd": 8.958333333333332e-05,
+        "energy_wh": 0.5972222222222222,
+        "score": 8.958333333333332e-05,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.72 < tau 0.98"
+      },
+      {
+        "name": "gpt-6-luna",
+        "p_success": 0.9347826086956522,
+        "cost_usd": 0.0002521,
+        "energy_wh": 0.025,
+        "score": 0.0002521,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.93 < tau 0.98"
+      },
+      {
+        "name": "gemini-3.1-flash-lite",
+        "p_success": 0.9347826086956522,
+        "cost_usd": 0.00075525,
+        "energy_wh": 0.025,
+        "score": 0.00075525,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.93 < tau 0.98"
+      },
+      {
+        "name": "claude-haiku-4-5",
+        "p_success": 0.9128491620111732,
+        "cost_usd": 0.002521,
+        "energy_wh": 0.075,
+        "score": 0.002521,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.91 < tau 0.98"
+      },
+      {
+        "name": "gemini-3.8-flash",
+        "p_success": 0.9128491620111732,
+        "cost_usd": 0.00189075,
+        "energy_wh": 0.075,
+        "score": 0.00189075,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.91 < tau 0.98"
+      },
+      {
+        "name": "claude-sonnet-5-5",
+        "p_success": 0.9105555555555553,
+        "cost_usd": 0.005042,
+        "energy_wh": 0.2,
+        "score": 0.005042,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.91 < tau 0.98"
+      },
+      {
+        "name": "gemini-3.1-pro",
+        "p_success": 0.9105555555555553,
+        "cost_usd": 0.006042,
+        "energy_wh": 0.2,
+        "score": 0.006042,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.91 < tau 0.98"
+      },
+      {
+        "name": "claude-opus-5-5",
+        "p_success": 0.9289345640564998,
+        "cost_usd": 0.010084,
+        "energy_wh": 0.5,
+        "score": 0.010084,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.93 < tau 0.98"
+      }
+    ],
+    "graph": {
+      "skills": [
+        [
+          "general chat",
+          0.9223984479904175
+        ],
+        [
+          "math",
+          0.053307440131902695
+        ],
+        [
+          "reading technical manuals",
+          0.0069248792715370655
+        ],
+        [
+          "code",
+          0.004414888098835945
+        ],
+        [
+          "answering from documents",
+          0.0031233197078108788
+        ]
+      ],
+      "levels": {
+        "easy": 0.6359322667121887,
+        "medium": 0.3014211058616638,
+        "hard": 0.06264662742614746
+      },
+      "beta": 0.6261368622860323,
+      "edges": {
+        "claude-3.5-sonnet": [
+          [
+            "general chat",
+            "easy",
+            0.961080548796779,
+            0.21076663367451692
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7552782983583658,
+            0.07850763146527948
+          ],
+          [
+            "math",
+            "easy",
+            0.9826341537960323,
+            0.012453837386255717
+          ]
+        ],
+        "gpt-4o": [
+          [
+            "general chat",
+            "easy",
+            0.9690851756838562,
+            0.21252206225427744
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7898415769309075,
+            0.0821003219242835
+          ],
+          [
+            "math",
+            "easy",
+            0.9913738997002169,
+            0.012564604322116268
+          ]
+        ],
+        "gpt-4o-mini": [
+          [
+            "general chat",
+            "easy",
+            0.9690071059588687,
+            0.21250494142798654
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7336342296644388,
+            0.07625783218980002
+          ],
+          [
+            "math",
+            "easy",
+            0.988383786489708,
+            0.012526707833839001
+          ]
+        ],
+        "llama-3.1-8b-instruct": [
+          [
+            "general chat",
+            "easy",
+            0.8978733291458311,
+            0.19690518061895934
+          ],
+          [
+            "general chat",
+            "medium",
+            0.4231862635835014,
+            0.043988224333725366
+          ],
+          [
+            "math",
+            "easy",
+            0.9682972388987042,
+            0.01227213231722046
+          ]
+        ]
+      },
+      "neighbours": {
+        "claude-3.5-sonnet": [
+          28,
+          32,
+          0.5482697724256407
+        ],
+        "gpt-4o": [
+          28,
+          32,
+          0.5464562656080321
+        ],
+        "gpt-4o-mini": [
+          29,
+          32,
+          0.5667339927809303
+        ],
+        "llama-3.1-8b-instruct": [
+          21,
+          32,
+          0.41221031830360244
+        ]
+      }
+    },
+    "anchors": {
+      "llama-3.1-8b-local": {
+        "model": "llama-3.1-8b-instruct",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gpt-6-luna": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-flash-lite": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-haiku-4-5": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.8-flash": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-sonnet-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-pro": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-opus-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.25,
+        "source": "prior"
+      }
+    }
+  },
+  {
+    "prompt": "A train leaves at 3pm at 80 km/h; another at 4pm at 100 km/h. When does it catch up?",
+    "context": null,
+    "profile": "balanced",
+    "tau": 0.91,
+    "fallback_margin": 0.02,
+    "lambda_energy": 0.00025,
+    "model": "gpt-6-luna",
+    "level": "internal",
+    "difficulty": 0.10427952974552412,
+    "difficulty_label": "easy",
+    "below_floor": false,
+    "steps": [
+      "Confidentiality: internal (no sensitive content found). 8 of 8 models are cleared.",
+      "Graph: the prompt looks like general chat 0.92, math 0.05, reading technical manuals 0.01; difficulty easy 0.64, medium 0.30, hard 0.06.",
+      "Graph: strongest paths to gpt-6-luna (via gpt-4o-mini): general chat/easy: solves 97%; general chat/medium: solves 73%; it solved 29 of the 32 most similar past prompts (weight 0.63).",
+      "Quality floor tau=0.91: 7 of 8 allowed models are predicted to succeed.",
+      "Chose gpt-6-luna: cheapest qualifying model (P=0.93, $0.00025, 0.025 Wh (estimated)). 98% cheaper than the priciest allowed model, claude-opus-5-5."
+    ],
+    "headers": {
+      "X-EcoRoute-Model": "gpt-6-luna",
+      "X-EcoRoute-Level": "internal",
+      "X-EcoRoute-Reason": "Chose gpt-6-luna: cheapest qualifying model (P=0.93, $0.00025, 0.025 Wh (estimated)). 98% cheaper than the priciest allowed model, claude-opus-5-5.",
+      "X-EcoRoute-Difficulty": "0.10 (easy)",
+      "X-EcoRoute-Time-Ms": "privacy=35.3, embed=16.6, predict=4.2, privacy_wait=0.0, decide=0.2, explain=4.2, total=60.5"
+    },
+    "candidates": [
+      {
+        "name": "llama-3.1-8b-local",
+        "p_success": 0.7204545454545456,
+        "cost_usd": 8.958333333333332e-05,
+        "energy_wh": 0.5972222222222222,
+        "score": 0.00023888888888888885,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.72 < tau 0.91"
+      },
+      {
+        "name": "gpt-6-luna",
+        "p_success": 0.9347826086956522,
+        "cost_usd": 0.0002521,
+        "energy_wh": 0.025,
+        "score": 0.00025835,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "gemini-3.1-flash-lite",
+        "p_success": 0.9347826086956522,
+        "cost_usd": 0.00075525,
+        "energy_wh": 0.025,
+        "score": 0.0007614999999999999,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "claude-haiku-4-5",
+        "p_success": 0.9128491620111732,
+        "cost_usd": 0.002521,
+        "energy_wh": 0.075,
+        "score": 0.00253975,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "gemini-3.8-flash",
+        "p_success": 0.9128491620111732,
+        "cost_usd": 0.00189075,
+        "energy_wh": 0.075,
+        "score": 0.0019095000000000002,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "claude-sonnet-5-5",
+        "p_success": 0.9105555555555553,
+        "cost_usd": 0.005042,
+        "energy_wh": 0.2,
+        "score": 0.005091999999999999,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "gemini-3.1-pro",
+        "p_success": 0.9105555555555553,
+        "cost_usd": 0.006042,
+        "energy_wh": 0.2,
+        "score": 0.006091999999999999,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "claude-opus-5-5",
+        "p_success": 0.9289345640564998,
+        "cost_usd": 0.010084,
+        "energy_wh": 0.5,
+        "score": 0.010209,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      }
+    ],
+    "graph": {
+      "skills": [
+        [
+          "general chat",
+          0.9223984479904175
+        ],
+        [
+          "math",
+          0.053307440131902695
+        ],
+        [
+          "reading technical manuals",
+          0.0069248792715370655
+        ],
+        [
+          "code",
+          0.004414888098835945
+        ],
+        [
+          "answering from documents",
+          0.0031233197078108788
+        ]
+      ],
+      "levels": {
+        "easy": 0.6359322667121887,
+        "medium": 0.3014211058616638,
+        "hard": 0.06264662742614746
+      },
+      "beta": 0.6261368622860323,
+      "edges": {
+        "claude-3.5-sonnet": [
+          [
+            "general chat",
+            "easy",
+            0.961080548796779,
+            0.21076663367451692
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7552782983583658,
+            0.07850763146527948
+          ],
+          [
+            "math",
+            "easy",
+            0.9826341537960323,
+            0.012453837386255717
+          ]
+        ],
+        "gpt-4o": [
+          [
+            "general chat",
+            "easy",
+            0.9690851756838562,
+            0.21252206225427744
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7898415769309075,
+            0.0821003219242835
+          ],
+          [
+            "math",
+            "easy",
+            0.9913738997002169,
+            0.012564604322116268
+          ]
+        ],
+        "gpt-4o-mini": [
+          [
+            "general chat",
+            "easy",
+            0.9690071059588687,
+            0.21250494142798654
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7336342296644388,
+            0.07625783218980002
+          ],
+          [
+            "math",
+            "easy",
+            0.988383786489708,
+            0.012526707833839001
+          ]
+        ],
+        "llama-3.1-8b-instruct": [
+          [
+            "general chat",
+            "easy",
+            0.8978733291458311,
+            0.19690518061895934
+          ],
+          [
+            "general chat",
+            "medium",
+            0.4231862635835014,
+            0.043988224333725366
+          ],
+          [
+            "math",
+            "easy",
+            0.9682972388987042,
+            0.01227213231722046
+          ]
+        ]
+      },
+      "neighbours": {
+        "claude-3.5-sonnet": [
+          28,
+          32,
+          0.5482697724256407
+        ],
+        "gpt-4o": [
+          28,
+          32,
+          0.5464562656080321
+        ],
+        "gpt-4o-mini": [
+          29,
+          32,
+          0.5667339927809303
+        ],
+        "llama-3.1-8b-instruct": [
+          21,
+          32,
+          0.41221031830360244
+        ]
+      }
+    },
+    "anchors": {
+      "llama-3.1-8b-local": {
+        "model": "llama-3.1-8b-instruct",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gpt-6-luna": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-flash-lite": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-haiku-4-5": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.8-flash": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-sonnet-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-pro": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-opus-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.25,
+        "source": "prior"
+      }
+    }
+  },
+  {
+    "prompt": "A train leaves at 3pm at 80 km/h; another at 4pm at 100 km/h. When does it catch up?",
+    "context": null,
+    "profile": "eco",
+    "tau": 0.86,
+    "fallback_margin": 0.0,
+    "lambda_energy": 0.0025,
+    "model": "gpt-6-luna",
+    "level": "internal",
+    "difficulty": 0.10427952974552412,
+    "difficulty_label": "easy",
+    "below_floor": false,
+    "steps": [
+      "Confidentiality: internal (no sensitive content found). 8 of 8 models are cleared.",
+      "Graph: the prompt looks like general chat 0.92, math 0.05, reading technical manuals 0.01; difficulty easy 0.64, medium 0.30, hard 0.06.",
+      "Graph: strongest paths to gpt-6-luna (via gpt-4o-mini): general chat/easy: solves 97%; general chat/medium: solves 73%; it solved 29 of the 32 most similar past prompts (weight 0.63).",
+      "Quality floor tau=0.86: 7 of 8 allowed models are predicted to succeed.",
+      "Chose gpt-6-luna: cheapest qualifying model (P=0.93, $0.00025, 0.025 Wh (estimated)). 98% cheaper than the priciest allowed model, claude-opus-5-5."
+    ],
+    "headers": {
+      "X-EcoRoute-Model": "gpt-6-luna",
+      "X-EcoRoute-Level": "internal",
+      "X-EcoRoute-Reason": "Chose gpt-6-luna: cheapest qualifying model (P=0.93, $0.00025, 0.025 Wh (estimated)). 98% cheaper than the priciest allowed model, claude-opus-5-5.",
+      "X-EcoRoute-Difficulty": "0.10 (easy)",
+      "X-EcoRoute-Time-Ms": "privacy=22.3, embed=9.4, predict=2.3, privacy_wait=0.0, decide=0.1, explain=2.0, total=36.1"
+    },
+    "candidates": [
+      {
+        "name": "llama-3.1-8b-local",
+        "p_success": 0.7204545454545456,
+        "cost_usd": 8.958333333333332e-05,
+        "energy_wh": 0.5972222222222222,
+        "score": 0.0015826388888888889,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.72 < tau 0.86"
+      },
+      {
+        "name": "gpt-6-luna",
+        "p_success": 0.9347826086956522,
+        "cost_usd": 0.0002521,
+        "energy_wh": 0.025,
+        "score": 0.0003146,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "gemini-3.1-flash-lite",
+        "p_success": 0.9347826086956522,
+        "cost_usd": 0.00075525,
+        "energy_wh": 0.025,
+        "score": 0.0008177499999999999,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "claude-haiku-4-5",
+        "p_success": 0.9128491620111732,
+        "cost_usd": 0.002521,
+        "energy_wh": 0.075,
+        "score": 0.0027085,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "gemini-3.8-flash",
+        "p_success": 0.9128491620111732,
+        "cost_usd": 0.00189075,
+        "energy_wh": 0.075,
+        "score": 0.0020782500000000002,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "claude-sonnet-5-5",
+        "p_success": 0.9105555555555553,
+        "cost_usd": 0.005042,
+        "energy_wh": 0.2,
+        "score": 0.005542,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "gemini-3.1-pro",
+        "p_success": 0.9105555555555553,
+        "cost_usd": 0.006042,
+        "energy_wh": 0.2,
+        "score": 0.006541999999999999,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "claude-opus-5-5",
+        "p_success": 0.9289345640564998,
+        "cost_usd": 0.010084,
+        "energy_wh": 0.5,
+        "score": 0.011333999999999999,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      }
+    ],
+    "graph": {
+      "skills": [
+        [
+          "general chat",
+          0.9223984479904175
+        ],
+        [
+          "math",
+          0.053307440131902695
+        ],
+        [
+          "reading technical manuals",
+          0.0069248792715370655
+        ],
+        [
+          "code",
+          0.004414888098835945
+        ],
+        [
+          "answering from documents",
+          0.0031233197078108788
+        ]
+      ],
+      "levels": {
+        "easy": 0.6359322667121887,
+        "medium": 0.3014211058616638,
+        "hard": 0.06264662742614746
+      },
+      "beta": 0.6261368622860323,
+      "edges": {
+        "claude-3.5-sonnet": [
+          [
+            "general chat",
+            "easy",
+            0.961080548796779,
+            0.21076663367451692
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7552782983583658,
+            0.07850763146527948
+          ],
+          [
+            "math",
+            "easy",
+            0.9826341537960323,
+            0.012453837386255717
+          ]
+        ],
+        "gpt-4o": [
+          [
+            "general chat",
+            "easy",
+            0.9690851756838562,
+            0.21252206225427744
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7898415769309075,
+            0.0821003219242835
+          ],
+          [
+            "math",
+            "easy",
+            0.9913738997002169,
+            0.012564604322116268
+          ]
+        ],
+        "gpt-4o-mini": [
+          [
+            "general chat",
+            "easy",
+            0.9690071059588687,
+            0.21250494142798654
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7336342296644388,
+            0.07625783218980002
+          ],
+          [
+            "math",
+            "easy",
+            0.988383786489708,
+            0.012526707833839001
+          ]
+        ],
+        "llama-3.1-8b-instruct": [
+          [
+            "general chat",
+            "easy",
+            0.8978733291458311,
+            0.19690518061895934
+          ],
+          [
+            "general chat",
+            "medium",
+            0.4231862635835014,
+            0.043988224333725366
+          ],
+          [
+            "math",
+            "easy",
+            0.9682972388987042,
+            0.01227213231722046
+          ]
+        ]
+      },
+      "neighbours": {
+        "claude-3.5-sonnet": [
+          28,
+          32,
+          0.5482697724256407
+        ],
+        "gpt-4o": [
+          28,
+          32,
+          0.5464562656080321
+        ],
+        "gpt-4o-mini": [
+          29,
+          32,
+          0.5667339927809303
+        ],
+        "llama-3.1-8b-instruct": [
+          21,
+          32,
+          0.41221031830360244
+        ]
+      }
+    },
+    "anchors": {
+      "llama-3.1-8b-local": {
+        "model": "llama-3.1-8b-instruct",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gpt-6-luna": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-flash-lite": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-haiku-4-5": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.8-flash": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-sonnet-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-pro": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-opus-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.25,
+        "source": "prior"
+      }
+    }
+  },
+  {
+    "prompt": "Explain the difference between a mutex and a semaphore, with an example.",
+    "context": null,
+    "profile": "quality",
+    "tau": 0.98,
+    "fallback_margin": 0.0,
+    "lambda_energy": 0.0,
+    "model": "claude-opus-5-5",
+    "level": "internal",
+    "difficulty": 0.1788829816278974,
+    "difficulty_label": "easy",
+    "below_floor": true,
+    "steps": [
+      "Confidentiality: internal (no sensitive content found). 8 of 8 models are cleared.",
+      "Graph: the prompt looks like general chat 0.33, general knowledge 0.27, graduate science 0.19; difficulty easy 0.52, medium 0.42, hard 0.06.",
+      "Graph: strongest paths to claude-opus-5-5 (via gpt-4o): general chat/easy: solves 97%; general knowledge/easy: solves 99%; it solved 27 of the 32 most similar past prompts (weight 0.56).",
+      "Quality floor tau=0.98: 0 of 8 allowed models are predicted to succeed.",
+      "No allowed model reaches tau, so claude-opus-5-5 was chosen as the most likely to succeed (P=0.93, $0.01007)."
+    ],
+    "headers": {
+      "X-EcoRoute-Model": "claude-opus-5-5",
+      "X-EcoRoute-Level": "internal",
+      "X-EcoRoute-Reason": "No allowed model reaches tau, so claude-opus-5-5 was chosen as the most likely to succeed (P=0.93, $0.01007).",
+      "X-EcoRoute-Difficulty": "0.18 (easy)",
+      "X-EcoRoute-Time-Ms": "privacy=22.2, embed=9.6, predict=5.9, privacy_wait=0.0, decide=0.1, explain=4.0, total=41.8"
+    },
+    "candidates": [
+      {
+        "name": "llama-3.1-8b-local",
+        "p_success": 0.5677419354838712,
+        "cost_usd": 8.958333333333332e-05,
+        "energy_wh": 0.5972222222222222,
+        "score": 8.958333333333332e-05,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.57 < tau 0.98"
+      },
+      {
+        "name": "gpt-6-luna",
+        "p_success": 0.7130597014925373,
+        "cost_usd": 0.0002518,
+        "energy_wh": 0.025,
+        "score": 0.0002518,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.71 < tau 0.98"
+      },
+      {
+        "name": "gemini-3.1-flash-lite",
+        "p_success": 0.7130597014925373,
+        "cost_usd": 0.0007545,
+        "energy_wh": 0.025,
+        "score": 0.0007545,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.71 < tau 0.98"
+      },
+      {
+        "name": "claude-haiku-4-5",
+        "p_success": 0.9128491620111732,
+        "cost_usd": 0.002518,
+        "energy_wh": 0.075,
+        "score": 0.002518,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.91 < tau 0.98"
+      },
+      {
+        "name": "gemini-3.8-flash",
+        "p_success": 0.9128491620111732,
+        "cost_usd": 0.0018885,
+        "energy_wh": 0.075,
+        "score": 0.0018885,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.91 < tau 0.98"
+      },
+      {
+        "name": "claude-sonnet-5-5",
+        "p_success": 0.9103174603174603,
+        "cost_usd": 0.005036,
+        "energy_wh": 0.2,
+        "score": 0.005036,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.91 < tau 0.98"
+      },
+      {
+        "name": "gemini-3.1-pro",
+        "p_success": 0.9103174603174603,
+        "cost_usd": 0.006036,
+        "energy_wh": 0.2,
+        "score": 0.006036,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.91 < tau 0.98"
+      },
+      {
+        "name": "claude-opus-5-5",
+        "p_success": 0.9287415638506077,
+        "cost_usd": 0.010072,
+        "energy_wh": 0.5,
+        "score": 0.010072,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.93 < tau 0.98"
+      }
+    ],
+    "graph": {
+      "skills": [
+        [
+          "general chat",
+          0.33365103602409363
+        ],
+        [
+          "general knowledge",
+          0.26989227533340454
+        ],
+        [
+          "graduate science",
+          0.19384363293647766
+        ],
+        [
+          "math",
+          0.10093289613723755
+        ],
+        [
+          "reading technical manuals",
+          0.03275464475154877
+        ]
+      ],
+      "levels": {
+        "easy": 0.5203917026519775,
+        "medium": 0.4205988645553589,
+        "hard": 0.05900939926505089
+      },
+      "beta": 0.564442749956518,
+      "edges": {
+        "claude-3.5-sonnet": [
+          [
+            "general chat",
+            "easy",
+            0.961080548796779,
+            0.07268216846350238
+          ],
+          [
+            "general knowledge",
+            "easy",
+            0.9841617352440967,
+            0.06020499721026607
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7552782983583658,
+            0.046164998626686105
+          ]
+        ],
+        "gpt-4o": [
+          [
+            "general chat",
+            "easy",
+            0.9690851756838562,
+            0.07328752213611849
+          ],
+          [
+            "general knowledge",
+            "easy",
+            0.9867340638621904,
+            0.06036235654636931
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7898415769309075,
+            0.04827761554061479
+          ]
+        ],
+        "gpt-4o-mini": [
+          [
+            "general chat",
+            "easy",
+            0.9690071059588687,
+            0.07328161807645299
+          ],
+          [
+            "general knowledge",
+            "easy",
+            0.9641154503123468,
+            0.058978688073086635
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7336342296644388,
+            0.04484204468546624
+          ]
+        ],
+        "llama-3.1-8b-instruct": [
+          [
+            "general chat",
+            "easy",
+            0.8978733291458311,
+            0.06790209275337457
+          ],
+          [
+            "general knowledge",
+            "easy",
+            0.9005410924408429,
+            0.05508959759005842
+          ],
+          [
+            "graduate science",
+            "easy",
+            0.827842778872338,
+            0.036372656062497795
+          ]
+        ]
+      },
+      "neighbours": {
+        "claude-3.5-sonnet": [
+          27,
+          32,
+          0.47130842688229446
+        ],
+        "gpt-4o": [
+          27,
+          32,
+          0.47255343032607633
+        ],
+        "gpt-4o-mini": [
+          20,
+          32,
+          0.35293838418417134
+        ],
+        "llama-3.1-8b-instruct": [
+          15,
+          32,
+          0.2760865569088727
+        ]
+      }
+    },
+    "anchors": {
+      "llama-3.1-8b-local": {
+        "model": "llama-3.1-8b-instruct",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gpt-6-luna": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-flash-lite": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-haiku-4-5": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.8-flash": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-sonnet-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-pro": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-opus-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.25,
+        "source": "prior"
+      }
+    }
+  },
+  {
+    "prompt": "Explain the difference between a mutex and a semaphore, with an example.",
+    "context": null,
+    "profile": "balanced",
+    "tau": 0.91,
+    "fallback_margin": 0.02,
+    "lambda_energy": 0.00025,
+    "model": "gemini-3.8-flash",
+    "level": "internal",
+    "difficulty": 0.1788829816278974,
+    "difficulty_label": "easy",
+    "below_floor": false,
+    "steps": [
+      "Confidentiality: internal (no sensitive content found). 8 of 8 models are cleared.",
+      "Graph: the prompt looks like general chat 0.33, general knowledge 0.27, graduate science 0.19; difficulty easy 0.52, medium 0.42, hard 0.06.",
+      "Graph: strongest paths to gemini-3.8-flash (via claude-3.5-sonnet): general chat/easy: solves 96%; general knowledge/easy: solves 98%; it solved 27 of the 32 most similar past prompts (weight 0.56).",
+      "Quality floor tau=0.91: 5 of 8 allowed models are predicted to succeed.",
+      "Chose gemini-3.8-flash: cheapest qualifying model (P=0.91, $0.00189, 0.075 Wh (estimated)). 81% cheaper than the priciest allowed model, claude-opus-5-5."
+    ],
+    "headers": {
+      "X-EcoRoute-Model": "gemini-3.8-flash",
+      "X-EcoRoute-Level": "internal",
+      "X-EcoRoute-Reason": "Chose gemini-3.8-flash: cheapest qualifying model (P=0.91, $0.00189, 0.075 Wh (estimated)). 81% cheaper than the priciest allowed model, claude-opus-5-5.",
+      "X-EcoRoute-Difficulty": "0.18 (easy)",
+      "X-EcoRoute-Time-Ms": "privacy=33.8, embed=16.2, predict=4.1, privacy_wait=0.0, decide=0.1, explain=4.1, total=58.4"
+    },
+    "candidates": [
+      {
+        "name": "llama-3.1-8b-local",
+        "p_success": 0.5677419354838712,
+        "cost_usd": 8.958333333333332e-05,
+        "energy_wh": 0.5972222222222222,
+        "score": 0.00023888888888888885,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.57 < tau 0.91"
+      },
+      {
+        "name": "gpt-6-luna",
+        "p_success": 0.7130597014925373,
+        "cost_usd": 0.0002518,
+        "energy_wh": 0.025,
+        "score": 0.00025805,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.71 < tau 0.91"
+      },
+      {
+        "name": "gemini-3.1-flash-lite",
+        "p_success": 0.7130597014925373,
+        "cost_usd": 0.0007545,
+        "energy_wh": 0.025,
+        "score": 0.0007607499999999999,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.71 < tau 0.91"
+      },
+      {
+        "name": "claude-haiku-4-5",
+        "p_success": 0.9128491620111732,
+        "cost_usd": 0.002518,
+        "energy_wh": 0.075,
+        "score": 0.00253675,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "gemini-3.8-flash",
+        "p_success": 0.9128491620111732,
+        "cost_usd": 0.0018885,
+        "energy_wh": 0.075,
+        "score": 0.00190725,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "claude-sonnet-5-5",
+        "p_success": 0.9103174603174603,
+        "cost_usd": 0.005036,
+        "energy_wh": 0.2,
+        "score": 0.005085999999999999,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "gemini-3.1-pro",
+        "p_success": 0.9103174603174603,
+        "cost_usd": 0.006036,
+        "energy_wh": 0.2,
+        "score": 0.006085999999999999,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "claude-opus-5-5",
+        "p_success": 0.9287415638506077,
+        "cost_usd": 0.010072,
+        "energy_wh": 0.5,
+        "score": 0.010197,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      }
+    ],
+    "graph": {
+      "skills": [
+        [
+          "general chat",
+          0.33365103602409363
+        ],
+        [
+          "general knowledge",
+          0.26989227533340454
+        ],
+        [
+          "graduate science",
+          0.19384363293647766
+        ],
+        [
+          "math",
+          0.10093289613723755
+        ],
+        [
+          "reading technical manuals",
+          0.03275464475154877
+        ]
+      ],
+      "levels": {
+        "easy": 0.5203917026519775,
+        "medium": 0.4205988645553589,
+        "hard": 0.05900939926505089
+      },
+      "beta": 0.564442749956518,
+      "edges": {
+        "claude-3.5-sonnet": [
+          [
+            "general chat",
+            "easy",
+            0.961080548796779,
+            0.07268216846350238
+          ],
+          [
+            "general knowledge",
+            "easy",
+            0.9841617352440967,
+            0.06020499721026607
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7552782983583658,
+            0.046164998626686105
+          ]
+        ],
+        "gpt-4o": [
+          [
+            "general chat",
+            "easy",
+            0.9690851756838562,
+            0.07328752213611849
+          ],
+          [
+            "general knowledge",
+            "easy",
+            0.9867340638621904,
+            0.06036235654636931
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7898415769309075,
+            0.04827761554061479
+          ]
+        ],
+        "gpt-4o-mini": [
+          [
+            "general chat",
+            "easy",
+            0.9690071059588687,
+            0.07328161807645299
+          ],
+          [
+            "general knowledge",
+            "easy",
+            0.9641154503123468,
+            0.058978688073086635
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7336342296644388,
+            0.04484204468546624
+          ]
+        ],
+        "llama-3.1-8b-instruct": [
+          [
+            "general chat",
+            "easy",
+            0.8978733291458311,
+            0.06790209275337457
+          ],
+          [
+            "general knowledge",
+            "easy",
+            0.9005410924408429,
+            0.05508959759005842
+          ],
+          [
+            "graduate science",
+            "easy",
+            0.827842778872338,
+            0.036372656062497795
+          ]
+        ]
+      },
+      "neighbours": {
+        "claude-3.5-sonnet": [
+          27,
+          32,
+          0.47130842688229446
+        ],
+        "gpt-4o": [
+          27,
+          32,
+          0.47255343032607633
+        ],
+        "gpt-4o-mini": [
+          20,
+          32,
+          0.35293838418417134
+        ],
+        "llama-3.1-8b-instruct": [
+          15,
+          32,
+          0.2760865569088727
+        ]
+      }
+    },
+    "anchors": {
+      "llama-3.1-8b-local": {
+        "model": "llama-3.1-8b-instruct",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gpt-6-luna": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-flash-lite": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-haiku-4-5": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.8-flash": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-sonnet-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-pro": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-opus-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.25,
+        "source": "prior"
+      }
+    }
+  },
+  {
+    "prompt": "Explain the difference between a mutex and a semaphore, with an example.",
+    "context": null,
+    "profile": "eco",
+    "tau": 0.86,
+    "fallback_margin": 0.0,
+    "lambda_energy": 0.0025,
+    "model": "gemini-3.8-flash",
+    "level": "internal",
+    "difficulty": 0.1788829816278974,
+    "difficulty_label": "easy",
+    "below_floor": false,
+    "steps": [
+      "Confidentiality: internal (no sensitive content found). 8 of 8 models are cleared.",
+      "Graph: the prompt looks like general chat 0.33, general knowledge 0.27, graduate science 0.19; difficulty easy 0.52, medium 0.42, hard 0.06.",
+      "Graph: strongest paths to gemini-3.8-flash (via claude-3.5-sonnet): general chat/easy: solves 96%; general knowledge/easy: solves 98%; it solved 27 of the 32 most similar past prompts (weight 0.56).",
+      "Quality floor tau=0.86: 5 of 8 allowed models are predicted to succeed.",
+      "Chose gemini-3.8-flash: cheapest qualifying model (P=0.91, $0.00189, 0.075 Wh (estimated)). 81% cheaper than the priciest allowed model, claude-opus-5-5."
+    ],
+    "headers": {
+      "X-EcoRoute-Model": "gemini-3.8-flash",
+      "X-EcoRoute-Level": "internal",
+      "X-EcoRoute-Reason": "Chose gemini-3.8-flash: cheapest qualifying model (P=0.91, $0.00189, 0.075 Wh (estimated)). 81% cheaper than the priciest allowed model, claude-opus-5-5.",
+      "X-EcoRoute-Difficulty": "0.18 (easy)",
+      "X-EcoRoute-Time-Ms": "privacy=21.8, embed=9.3, predict=2.3, privacy_wait=0.0, decide=0.1, explain=2.0, total=35.6"
+    },
+    "candidates": [
+      {
+        "name": "llama-3.1-8b-local",
+        "p_success": 0.5677419354838712,
+        "cost_usd": 8.958333333333332e-05,
+        "energy_wh": 0.5972222222222222,
+        "score": 0.0015826388888888889,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.57 < tau 0.86"
+      },
+      {
+        "name": "gpt-6-luna",
+        "p_success": 0.7130597014925373,
+        "cost_usd": 0.0002518,
+        "energy_wh": 0.025,
+        "score": 0.0003143,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.71 < tau 0.86"
+      },
+      {
+        "name": "gemini-3.1-flash-lite",
+        "p_success": 0.7130597014925373,
+        "cost_usd": 0.0007545,
+        "energy_wh": 0.025,
+        "score": 0.000817,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.71 < tau 0.86"
+      },
+      {
+        "name": "claude-haiku-4-5",
+        "p_success": 0.9128491620111732,
+        "cost_usd": 0.002518,
+        "energy_wh": 0.075,
+        "score": 0.0027055,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "gemini-3.8-flash",
+        "p_success": 0.9128491620111732,
+        "cost_usd": 0.0018885,
+        "energy_wh": 0.075,
+        "score": 0.002076,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "claude-sonnet-5-5",
+        "p_success": 0.9103174603174603,
+        "cost_usd": 0.005036,
+        "energy_wh": 0.2,
+        "score": 0.005535999999999999,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "gemini-3.1-pro",
+        "p_success": 0.9103174603174603,
+        "cost_usd": 0.006036,
+        "energy_wh": 0.2,
+        "score": 0.006536,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      },
+      {
+        "name": "claude-opus-5-5",
+        "p_success": 0.9287415638506077,
+        "cost_usd": 0.010072,
+        "energy_wh": 0.5,
+        "score": 0.011321999999999999,
+        "allowed": true,
+        "qualifies": true,
+        "excluded_because": null
+      }
+    ],
+    "graph": {
+      "skills": [
+        [
+          "general chat",
+          0.33365103602409363
+        ],
+        [
+          "general knowledge",
+          0.26989227533340454
+        ],
+        [
+          "graduate science",
+          0.19384363293647766
+        ],
+        [
+          "math",
+          0.10093289613723755
+        ],
+        [
+          "reading technical manuals",
+          0.03275464475154877
+        ]
+      ],
+      "levels": {
+        "easy": 0.5203917026519775,
+        "medium": 0.4205988645553589,
+        "hard": 0.05900939926505089
+      },
+      "beta": 0.564442749956518,
+      "edges": {
+        "claude-3.5-sonnet": [
+          [
+            "general chat",
+            "easy",
+            0.961080548796779,
+            0.07268216846350238
+          ],
+          [
+            "general knowledge",
+            "easy",
+            0.9841617352440967,
+            0.06020499721026607
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7552782983583658,
+            0.046164998626686105
+          ]
+        ],
+        "gpt-4o": [
+          [
+            "general chat",
+            "easy",
+            0.9690851756838562,
+            0.07328752213611849
+          ],
+          [
+            "general knowledge",
+            "easy",
+            0.9867340638621904,
+            0.06036235654636931
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7898415769309075,
+            0.04827761554061479
+          ]
+        ],
+        "gpt-4o-mini": [
+          [
+            "general chat",
+            "easy",
+            0.9690071059588687,
+            0.07328161807645299
+          ],
+          [
+            "general knowledge",
+            "easy",
+            0.9641154503123468,
+            0.058978688073086635
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7336342296644388,
+            0.04484204468546624
+          ]
+        ],
+        "llama-3.1-8b-instruct": [
+          [
+            "general chat",
+            "easy",
+            0.8978733291458311,
+            0.06790209275337457
+          ],
+          [
+            "general knowledge",
+            "easy",
+            0.9005410924408429,
+            0.05508959759005842
+          ],
+          [
+            "graduate science",
+            "easy",
+            0.827842778872338,
+            0.036372656062497795
+          ]
+        ]
+      },
+      "neighbours": {
+        "claude-3.5-sonnet": [
+          27,
+          32,
+          0.47130842688229446
+        ],
+        "gpt-4o": [
+          27,
+          32,
+          0.47255343032607633
+        ],
+        "gpt-4o-mini": [
+          20,
+          32,
+          0.35293838418417134
+        ],
+        "llama-3.1-8b-instruct": [
+          15,
+          32,
+          0.2760865569088727
+        ]
+      }
+    },
+    "anchors": {
+      "llama-3.1-8b-local": {
+        "model": "llama-3.1-8b-instruct",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gpt-6-luna": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-flash-lite": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-haiku-4-5": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.8-flash": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-sonnet-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-pro": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-opus-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.25,
+        "source": "prior"
+      }
+    }
+  },
+  {
+    "prompt": "Summarise our Q3 board deck in five bullet points.",
+    "context": {
+      "sensitivity_label": "Confidential"
+    },
+    "profile": "quality",
+    "tau": 0.98,
+    "fallback_margin": 0.0,
+    "lambda_energy": 0.0,
+    "model": "llama-3.1-8b-local",
+    "level": "confidential",
+    "difficulty": 0.19395138455237992,
+    "difficulty_label": "easy",
+    "below_floor": true,
+    "steps": [
+      "Confidentiality: confidential (caller_policy: label:Confidential (confidential)). 1 of 8 models are cleared.",
+      "Graph: the prompt looks like general chat 0.94, math 0.03, multi-step reasoning 0.01; difficulty easy 0.67, medium 0.22, hard 0.11.",
+      "Graph: strongest paths to llama-3.1-8b-local (via llama-3.1-8b-instruct): general chat/easy: solves 90%; general chat/medium: solves 42%; it solved 18 of the 32 most similar past prompts (weight 0.61).",
+      "Quality floor tau=0.98: 0 of 1 allowed models are predicted to succeed.",
+      "No allowed model reaches tau, so llama-3.1-8b-local was chosen as the most likely to succeed (P=0.60, $0.00009)."
+    ],
+    "headers": {
+      "X-EcoRoute-Model": "llama-3.1-8b-local",
+      "X-EcoRoute-Level": "confidential",
+      "X-EcoRoute-Reason": "No allowed model reaches tau, so llama-3.1-8b-local was chosen as the most likely to succeed (P=0.60, $0.00009).",
+      "X-EcoRoute-Difficulty": "0.19 (easy)",
+      "X-EcoRoute-Time-Ms": "privacy=22.3, embed=9.5, predict=6.4, privacy_wait=0.0, decide=0.2, explain=4.0, total=42.4"
+    },
+    "candidates": [
+      {
+        "name": "llama-3.1-8b-local",
+        "p_success": 0.6023121387283236,
+        "cost_usd": 8.958333333333332e-05,
+        "energy_wh": 0.5972222222222222,
+        "score": 8.958333333333332e-05,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.60 < tau 0.98"
+      },
+      {
+        "name": "gpt-6-luna",
+        "p_success": 0.8170560747663552,
+        "cost_usd": 0.0002512,
+        "energy_wh": 0.025,
+        "score": 0.0002512,
+        "allowed": false,
+        "qualifies": false,
+        "excluded_because": "clearance internal < prompt level confidential"
+      },
+      {
+        "name": "gemini-3.1-flash-lite",
+        "p_success": 0.8170560747663552,
+        "cost_usd": 0.000753,
+        "energy_wh": 0.025,
+        "score": 0.000753,
+        "allowed": false,
+        "qualifies": false,
+        "excluded_because": "clearance internal < prompt level confidential"
+      },
+      {
+        "name": "claude-haiku-4-5",
+        "p_success": 0.8732142857142857,
+        "cost_usd": 0.002512,
+        "energy_wh": 0.075,
+        "score": 0.002512,
+        "allowed": false,
+        "qualifies": false,
+        "excluded_because": "clearance internal < prompt level confidential"
+      },
+      {
+        "name": "gemini-3.8-flash",
+        "p_success": 0.8732142857142857,
+        "cost_usd": 0.001884,
+        "energy_wh": 0.075,
+        "score": 0.001884,
+        "allowed": false,
+        "qualifies": false,
+        "excluded_because": "clearance internal < prompt level confidential"
+      },
+      {
+        "name": "claude-sonnet-5-5",
+        "p_success": 0.8100000000000002,
+        "cost_usd": 0.005024,
+        "energy_wh": 0.2,
+        "score": 0.005024,
+        "allowed": false,
+        "qualifies": false,
+        "excluded_because": "clearance internal < prompt level confidential"
+      },
+      {
+        "name": "gemini-3.1-pro",
+        "p_success": 0.8100000000000002,
+        "cost_usd": 0.006024,
+        "energy_wh": 0.2,
+        "score": 0.006024,
+        "allowed": false,
+        "qualifies": false,
+        "excluded_because": "clearance internal < prompt level confidential"
+      },
+      {
+        "name": "claude-opus-5-5",
+        "p_success": 0.8455360638913546,
+        "cost_usd": 0.010048,
+        "energy_wh": 0.5,
+        "score": 0.010048,
+        "allowed": false,
+        "qualifies": false,
+        "excluded_because": "clearance internal < prompt level confidential"
+      }
+    ],
+    "graph": {
+      "skills": [
+        [
+          "general chat",
+          0.9436971545219421
+        ],
+        [
+          "math",
+          0.029254497960209846
+        ],
+        [
+          "multi-step reasoning",
+          0.010595113970339298
+        ],
+        [
+          "general knowledge",
+          0.004280874505639076
+        ],
+        [
+          "reading financial documents",
+          0.0038844698574393988
+        ]
+      ],
+      "levels": {
+        "easy": 0.6698087453842163,
+        "medium": 0.21762202680110931,
+        "hard": 0.11256919056177139
+      },
+      "beta": 0.6076412861391146,
+      "edges": {
+        "claude-3.5-sonnet": [
+          [
+            "general chat",
+            "easy",
+            0.961080548796779,
+            0.2383562527301099
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7552782983583658,
+            0.06085913911094385
+          ],
+          [
+            "general chat",
+            "hard",
+            0.22497565500249586,
+            0.009377153299327392
+          ]
+        ],
+        "gpt-4o": [
+          [
+            "general chat",
+            "easy",
+            0.9690851756838562,
+            0.24034146913230958
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7898415769309075,
+            0.06364419381640628
+          ],
+          [
+            "general chat",
+            "hard",
+            0.23050149670363518,
+            0.009607474507810259
+          ]
+        ],
+        "gpt-4o-mini": [
+          [
+            "general chat",
+            "easy",
+            0.9690071059588687,
+            0.24032210716819222
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7336342296644388,
+            0.05911509404777494
+          ],
+          [
+            "general chat",
+            "hard",
+            0.1844781724280341,
+            0.007689187984443189
+          ]
+        ],
+        "llama-3.1-8b-instruct": [
+          [
+            "general chat",
+            "easy",
+            0.8978733291458311,
+            0.22268031792906695
+          ],
+          [
+            "general chat",
+            "medium",
+            0.4231862635835014,
+            0.03409968450205451
+          ],
+          [
+            "math",
+            "easy",
+            0.9682972388987042,
+            0.007444498708017913
+          ]
+        ]
+      },
+      "neighbours": {
+        "claude-3.5-sonnet": [
+          26,
+          32,
+          0.4928397265300791
+        ],
+        "gpt-4o": [
+          26,
+          32,
+          0.47848453277006453
+        ],
+        "gpt-4o-mini": [
+          24,
+          32,
+          0.44852489054433003
+        ],
+        "llama-3.1-8b-instruct": [
+          18,
+          32,
+          0.3458149780207846
+        ]
+      }
+    },
+    "anchors": {
+      "llama-3.1-8b-local": {
+        "model": "llama-3.1-8b-instruct",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gpt-6-luna": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-flash-lite": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-haiku-4-5": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.8-flash": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-sonnet-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-pro": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-opus-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.25,
+        "source": "prior"
+      }
+    }
+  },
+  {
+    "prompt": "Summarise our Q3 board deck in five bullet points.",
+    "context": {
+      "sensitivity_label": "Confidential"
+    },
+    "profile": "balanced",
+    "tau": 0.91,
+    "fallback_margin": 0.02,
+    "lambda_energy": 0.00025,
+    "model": "llama-3.1-8b-local",
+    "level": "confidential",
+    "difficulty": 0.19395138455237992,
+    "difficulty_label": "easy",
+    "below_floor": true,
+    "steps": [
+      "Confidentiality: confidential (caller_policy: label:Confidential (confidential)). 1 of 8 models are cleared.",
+      "Graph: the prompt looks like general chat 0.94, math 0.03, multi-step reasoning 0.01; difficulty easy 0.67, medium 0.22, hard 0.11.",
+      "Graph: strongest paths to llama-3.1-8b-local (via llama-3.1-8b-instruct): general chat/easy: solves 90%; general chat/medium: solves 42%; it solved 18 of the 32 most similar past prompts (weight 0.61).",
+      "Quality floor tau=0.91: 0 of 1 allowed models are predicted to succeed.",
+      "No allowed model reaches tau, so llama-3.1-8b-local was chosen as the most likely to succeed (P=0.60, $0.00009)."
+    ],
+    "headers": {
+      "X-EcoRoute-Model": "llama-3.1-8b-local",
+      "X-EcoRoute-Level": "confidential",
+      "X-EcoRoute-Reason": "No allowed model reaches tau, so llama-3.1-8b-local was chosen as the most likely to succeed (P=0.60, $0.00009).",
+      "X-EcoRoute-Difficulty": "0.19 (easy)",
+      "X-EcoRoute-Time-Ms": "privacy=34.6, embed=16.5, predict=4.2, privacy_wait=0.0, decide=0.2, explain=4.2, total=59.6"
+    },
+    "candidates": [
+      {
+        "name": "llama-3.1-8b-local",
+        "p_success": 0.6023121387283236,
+        "cost_usd": 8.958333333333332e-05,
+        "energy_wh": 0.5972222222222222,
+        "score": 0.00023888888888888885,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.60 < tau 0.91"
+      },
+      {
+        "name": "gpt-6-luna",
+        "p_success": 0.8170560747663552,
+        "cost_usd": 0.0002512,
+        "energy_wh": 0.025,
+        "score": 0.00025745,
+        "allowed": false,
+        "qualifies": false,
+        "excluded_because": "clearance internal < prompt level confidential"
+      },
+      {
+        "name": "gemini-3.1-flash-lite",
+        "p_success": 0.8170560747663552,
+        "cost_usd": 0.000753,
+        "energy_wh": 0.025,
+        "score": 0.0007592499999999999,
+        "allowed": false,
+        "qualifies": false,
+        "excluded_because": "clearance internal < prompt level confidential"
+      },
+      {
+        "name": "claude-haiku-4-5",
+        "p_success": 0.8732142857142857,
+        "cost_usd": 0.002512,
+        "energy_wh": 0.075,
+        "score": 0.00253075,
+        "allowed": false,
+        "qualifies": false,
+        "excluded_because": "clearance internal < prompt level confidential"
+      },
+      {
+        "name": "gemini-3.8-flash",
+        "p_success": 0.8732142857142857,
+        "cost_usd": 0.001884,
+        "energy_wh": 0.075,
+        "score": 0.0019027500000000001,
+        "allowed": false,
+        "qualifies": false,
+        "excluded_because": "clearance internal < prompt level confidential"
+      },
+      {
+        "name": "claude-sonnet-5-5",
+        "p_success": 0.8100000000000002,
+        "cost_usd": 0.005024,
+        "energy_wh": 0.2,
+        "score": 0.0050739999999999995,
+        "allowed": false,
+        "qualifies": false,
+        "excluded_because": "clearance internal < prompt level confidential"
+      },
+      {
+        "name": "gemini-3.1-pro",
+        "p_success": 0.8100000000000002,
+        "cost_usd": 0.006024,
+        "energy_wh": 0.2,
+        "score": 0.0060739999999999995,
+        "allowed": false,
+        "qualifies": false,
+        "excluded_because": "clearance internal < prompt level confidential"
+      },
+      {
+        "name": "claude-opus-5-5",
+        "p_success": 0.8455360638913546,
+        "cost_usd": 0.010048,
+        "energy_wh": 0.5,
+        "score": 0.010173,
+        "allowed": false,
+        "qualifies": false,
+        "excluded_because": "clearance internal < prompt level confidential"
+      }
+    ],
+    "graph": {
+      "skills": [
+        [
+          "general chat",
+          0.9436971545219421
+        ],
+        [
+          "math",
+          0.029254497960209846
+        ],
+        [
+          "multi-step reasoning",
+          0.010595113970339298
+        ],
+        [
+          "general knowledge",
+          0.004280874505639076
+        ],
+        [
+          "reading financial documents",
+          0.0038844698574393988
+        ]
+      ],
+      "levels": {
+        "easy": 0.6698087453842163,
+        "medium": 0.21762202680110931,
+        "hard": 0.11256919056177139
+      },
+      "beta": 0.6076412861391146,
+      "edges": {
+        "claude-3.5-sonnet": [
+          [
+            "general chat",
+            "easy",
+            0.961080548796779,
+            0.2383562527301099
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7552782983583658,
+            0.06085913911094385
+          ],
+          [
+            "general chat",
+            "hard",
+            0.22497565500249586,
+            0.009377153299327392
+          ]
+        ],
+        "gpt-4o": [
+          [
+            "general chat",
+            "easy",
+            0.9690851756838562,
+            0.24034146913230958
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7898415769309075,
+            0.06364419381640628
+          ],
+          [
+            "general chat",
+            "hard",
+            0.23050149670363518,
+            0.009607474507810259
+          ]
+        ],
+        "gpt-4o-mini": [
+          [
+            "general chat",
+            "easy",
+            0.9690071059588687,
+            0.24032210716819222
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7336342296644388,
+            0.05911509404777494
+          ],
+          [
+            "general chat",
+            "hard",
+            0.1844781724280341,
+            0.007689187984443189
+          ]
+        ],
+        "llama-3.1-8b-instruct": [
+          [
+            "general chat",
+            "easy",
+            0.8978733291458311,
+            0.22268031792906695
+          ],
+          [
+            "general chat",
+            "medium",
+            0.4231862635835014,
+            0.03409968450205451
+          ],
+          [
+            "math",
+            "easy",
+            0.9682972388987042,
+            0.007444498708017913
+          ]
+        ]
+      },
+      "neighbours": {
+        "claude-3.5-sonnet": [
+          26,
+          32,
+          0.4928397265300791
+        ],
+        "gpt-4o": [
+          26,
+          32,
+          0.47848453277006453
+        ],
+        "gpt-4o-mini": [
+          24,
+          32,
+          0.44852489054433003
+        ],
+        "llama-3.1-8b-instruct": [
+          18,
+          32,
+          0.3458149780207846
+        ]
+      }
+    },
+    "anchors": {
+      "llama-3.1-8b-local": {
+        "model": "llama-3.1-8b-instruct",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gpt-6-luna": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-flash-lite": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-haiku-4-5": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.8-flash": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-sonnet-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-pro": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-opus-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.25,
+        "source": "prior"
+      }
+    }
+  },
+  {
+    "prompt": "Summarise our Q3 board deck in five bullet points.",
+    "context": {
+      "sensitivity_label": "Confidential"
+    },
+    "profile": "eco",
+    "tau": 0.86,
+    "fallback_margin": 0.0,
+    "lambda_energy": 0.0025,
+    "model": "llama-3.1-8b-local",
+    "level": "confidential",
+    "difficulty": 0.19395138455237992,
+    "difficulty_label": "easy",
+    "below_floor": true,
+    "steps": [
+      "Confidentiality: confidential (caller_policy: label:Confidential (confidential)). 1 of 8 models are cleared.",
+      "Graph: the prompt looks like general chat 0.94, math 0.03, multi-step reasoning 0.01; difficulty easy 0.67, medium 0.22, hard 0.11.",
+      "Graph: strongest paths to llama-3.1-8b-local (via llama-3.1-8b-instruct): general chat/easy: solves 90%; general chat/medium: solves 42%; it solved 18 of the 32 most similar past prompts (weight 0.61).",
+      "Quality floor tau=0.86: 0 of 1 allowed models are predicted to succeed.",
+      "No allowed model reaches tau, so llama-3.1-8b-local was chosen as the most likely to succeed (P=0.60, $0.00009)."
+    ],
+    "headers": {
+      "X-EcoRoute-Model": "llama-3.1-8b-local",
+      "X-EcoRoute-Level": "confidential",
+      "X-EcoRoute-Reason": "No allowed model reaches tau, so llama-3.1-8b-local was chosen as the most likely to succeed (P=0.60, $0.00009).",
+      "X-EcoRoute-Difficulty": "0.19 (easy)",
+      "X-EcoRoute-Time-Ms": "privacy=22.8, embed=9.8, predict=2.5, privacy_wait=0.0, decide=0.1, explain=2.1, total=37.3"
+    },
+    "candidates": [
+      {
+        "name": "llama-3.1-8b-local",
+        "p_success": 0.6023121387283236,
+        "cost_usd": 8.958333333333332e-05,
+        "energy_wh": 0.5972222222222222,
+        "score": 0.0015826388888888889,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.60 < tau 0.86"
+      },
+      {
+        "name": "gpt-6-luna",
+        "p_success": 0.8170560747663552,
+        "cost_usd": 0.0002512,
+        "energy_wh": 0.025,
+        "score": 0.0003137,
+        "allowed": false,
+        "qualifies": false,
+        "excluded_because": "clearance internal < prompt level confidential"
+      },
+      {
+        "name": "gemini-3.1-flash-lite",
+        "p_success": 0.8170560747663552,
+        "cost_usd": 0.000753,
+        "energy_wh": 0.025,
+        "score": 0.0008155,
+        "allowed": false,
+        "qualifies": false,
+        "excluded_because": "clearance internal < prompt level confidential"
+      },
+      {
+        "name": "claude-haiku-4-5",
+        "p_success": 0.8732142857142857,
+        "cost_usd": 0.002512,
+        "energy_wh": 0.075,
+        "score": 0.0026995,
+        "allowed": false,
+        "qualifies": false,
+        "excluded_because": "clearance internal < prompt level confidential"
+      },
+      {
+        "name": "gemini-3.8-flash",
+        "p_success": 0.8732142857142857,
+        "cost_usd": 0.001884,
+        "energy_wh": 0.075,
+        "score": 0.0020715,
+        "allowed": false,
+        "qualifies": false,
+        "excluded_because": "clearance internal < prompt level confidential"
+      },
+      {
+        "name": "claude-sonnet-5-5",
+        "p_success": 0.8100000000000002,
+        "cost_usd": 0.005024,
+        "energy_wh": 0.2,
+        "score": 0.005523999999999999,
+        "allowed": false,
+        "qualifies": false,
+        "excluded_because": "clearance internal < prompt level confidential"
+      },
+      {
+        "name": "gemini-3.1-pro",
+        "p_success": 0.8100000000000002,
+        "cost_usd": 0.006024,
+        "energy_wh": 0.2,
+        "score": 0.006524,
+        "allowed": false,
+        "qualifies": false,
+        "excluded_because": "clearance internal < prompt level confidential"
+      },
+      {
+        "name": "claude-opus-5-5",
+        "p_success": 0.8455360638913546,
+        "cost_usd": 0.010048,
+        "energy_wh": 0.5,
+        "score": 0.011297999999999999,
+        "allowed": false,
+        "qualifies": false,
+        "excluded_because": "clearance internal < prompt level confidential"
+      }
+    ],
+    "graph": {
+      "skills": [
+        [
+          "general chat",
+          0.9436971545219421
+        ],
+        [
+          "math",
+          0.029254497960209846
+        ],
+        [
+          "multi-step reasoning",
+          0.010595113970339298
+        ],
+        [
+          "general knowledge",
+          0.004280874505639076
+        ],
+        [
+          "reading financial documents",
+          0.0038844698574393988
+        ]
+      ],
+      "levels": {
+        "easy": 0.6698087453842163,
+        "medium": 0.21762202680110931,
+        "hard": 0.11256919056177139
+      },
+      "beta": 0.6076412861391146,
+      "edges": {
+        "claude-3.5-sonnet": [
+          [
+            "general chat",
+            "easy",
+            0.961080548796779,
+            0.2383562527301099
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7552782983583658,
+            0.06085913911094385
+          ],
+          [
+            "general chat",
+            "hard",
+            0.22497565500249586,
+            0.009377153299327392
+          ]
+        ],
+        "gpt-4o": [
+          [
+            "general chat",
+            "easy",
+            0.9690851756838562,
+            0.24034146913230958
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7898415769309075,
+            0.06364419381640628
+          ],
+          [
+            "general chat",
+            "hard",
+            0.23050149670363518,
+            0.009607474507810259
+          ]
+        ],
+        "gpt-4o-mini": [
+          [
+            "general chat",
+            "easy",
+            0.9690071059588687,
+            0.24032210716819222
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7336342296644388,
+            0.05911509404777494
+          ],
+          [
+            "general chat",
+            "hard",
+            0.1844781724280341,
+            0.007689187984443189
+          ]
+        ],
+        "llama-3.1-8b-instruct": [
+          [
+            "general chat",
+            "easy",
+            0.8978733291458311,
+            0.22268031792906695
+          ],
+          [
+            "general chat",
+            "medium",
+            0.4231862635835014,
+            0.03409968450205451
+          ],
+          [
+            "math",
+            "easy",
+            0.9682972388987042,
+            0.007444498708017913
+          ]
+        ]
+      },
+      "neighbours": {
+        "claude-3.5-sonnet": [
+          26,
+          32,
+          0.4928397265300791
+        ],
+        "gpt-4o": [
+          26,
+          32,
+          0.47848453277006453
+        ],
+        "gpt-4o-mini": [
+          24,
+          32,
+          0.44852489054433003
+        ],
+        "llama-3.1-8b-instruct": [
+          18,
+          32,
+          0.3458149780207846
+        ]
+      }
+    },
+    "anchors": {
+      "llama-3.1-8b-local": {
+        "model": "llama-3.1-8b-instruct",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gpt-6-luna": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-flash-lite": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-haiku-4-5": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.8-flash": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-sonnet-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-pro": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-opus-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.25,
+        "source": "prior"
+      }
+    }
+  },
+  {
+    "prompt": "Email jane.doe@example.com a reminder about Friday's meeting.",
+    "context": null,
+    "profile": "quality",
+    "tau": 0.98,
+    "fallback_margin": 0.0,
+    "lambda_energy": 0.0,
+    "model": "llama-3.1-8b-local",
+    "level": "confidential",
+    "difficulty": 0.14415285790380095,
+    "difficulty_label": "easy",
+    "below_floor": true,
+    "steps": [
+      "Confidentiality: confidential (rules: email (confidential)). 1 of 8 models are cleared.",
+      "Graph: the prompt looks like general chat 1.00, reading technical manuals 0.00, reading legal documents 0.00; difficulty easy 0.79, medium 0.16, hard 0.06.",
+      "Graph: strongest paths to llama-3.1-8b-local (via llama-3.1-8b-instruct): general chat/easy: solves 90%; general chat/medium: solves 42%; it solved 19 of the 32 most similar past prompts (weight 0.53).",
+      "Quality floor tau=0.98: 0 of 1 allowed models are predicted to succeed.",
+      "No allowed model reaches tau, so llama-3.1-8b-local was chosen as the most likely to succeed (P=0.68, $0.00009)."
+    ],
+    "headers": {
+      "X-EcoRoute-Model": "llama-3.1-8b-local",
+      "X-EcoRoute-Level": "confidential",
+      "X-EcoRoute-Reason": "No allowed model reaches tau, so llama-3.1-8b-local was chosen as the most likely to succeed (P=0.68, $0.00009).",
+      "X-EcoRoute-Difficulty": "0.14 (easy)",
+      "X-EcoRoute-Time-Ms": "privacy=22.8, embed=10.0, predict=6.1, privacy_wait=0.0, decide=0.2, explain=4.1, total=43.1"
+    },
+    "candidates": [
+      {
+        "name": "llama-3.1-8b-local",
+        "p_success": 0.6815028901734103,
+        "cost_usd": 8.958333333333332e-05,
+        "energy_wh": 0.5972222222222222,
+        "score": 8.958333333333332e-05,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.68 < tau 0.98"
+      },
+      {
+        "name": "gpt-6-luna",
+        "p_success": 0.8344,
+        "cost_usd": 0.0002515,
+        "energy_wh": 0.025,
+        "score": 0.0002515,
+        "allowed": false,
+        "qualifies": false,
+        "excluded_because": "clearance internal < prompt level confidential"
+      },
+      {
+        "name": "gemini-3.1-flash-lite",
+        "p_success": 0.8344,
+        "cost_usd": 0.00075375,
+        "energy_wh": 0.025,
+        "score": 0.00075375,
+        "allowed": false,
+        "qualifies": false,
+        "excluded_because": "clearance internal < prompt level confidential"
+      },
+      {
+        "name": "claude-haiku-4-5",
+        "p_success": 0.8732142857142857,
+        "cost_usd": 0.002515,
+        "energy_wh": 0.075,
+        "score": 0.002515,
+        "allowed": false,
+        "qualifies": false,
+        "excluded_because": "clearance internal < prompt level confidential"
+      },
+      {
+        "name": "gemini-3.8-flash",
+        "p_success": 0.8732142857142857,
+        "cost_usd": 0.00188625,
+        "energy_wh": 0.075,
+        "score": 0.00188625,
+        "allowed": false,
+        "qualifies": false,
+        "excluded_because": "clearance internal < prompt level confidential"
+      },
+      {
+        "name": "claude-sonnet-5-5",
+        "p_success": 0.9105555555555553,
+        "cost_usd": 0.00503,
+        "energy_wh": 0.2,
+        "score": 0.00503,
+        "allowed": false,
+        "qualifies": false,
+        "excluded_because": "clearance internal < prompt level confidential"
+      },
+      {
+        "name": "gemini-3.1-pro",
+        "p_success": 0.9105555555555553,
+        "cost_usd": 0.00603,
+        "energy_wh": 0.2,
+        "score": 0.00603,
+        "allowed": false,
+        "qualifies": false,
+        "excluded_because": "clearance internal < prompt level confidential"
+      },
+      {
+        "name": "claude-opus-5-5",
+        "p_success": 0.9289345640564998,
+        "cost_usd": 0.01006,
+        "energy_wh": 0.5,
+        "score": 0.01006,
+        "allowed": false,
+        "qualifies": false,
+        "excluded_because": "clearance internal < prompt level confidential"
+      }
+    ],
+    "graph": {
+      "skills": [
+        [
+          "general chat",
+          0.9989031553268433
+        ],
+        [
+          "reading technical manuals",
+          0.00026869337307289243
+        ],
+        [
+          "reading legal documents",
+          0.00023803027579560876
+        ],
+        [
+          "math",
+          0.00017179145652335137
+        ],
+        [
+          "answering from documents",
+          0.00012427009642124176
+        ]
+      ],
+      "levels": {
+        "easy": 0.7857770323753357,
+        "medium": 0.15614177286624908,
+        "hard": 0.058081191033124924
+      },
+      "beta": 0.5251262249229234,
+      "edges": {
+        "claude-3.5-sonnet": [
+          [
+            "general chat",
+            "easy",
+            0.961080548796779,
+            0.35822895781127734
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7552782983583658,
+            0.05594067257331441
+          ],
+          [
+            "general chat",
+            "hard",
+            0.22497565500249586,
+            0.006198300247687048
+          ]
+        ],
+        "gpt-4o": [
+          [
+            "general chat",
+            "easy",
+            0.9690851756838562,
+            0.36121256740676416
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7898415769309075,
+            0.05850064689521582
+          ],
+          [
+            "general chat",
+            "hard",
+            0.23050149670363518,
+            0.0063505426135753535
+          ]
+        ],
+        "gpt-4o-mini": [
+          [
+            "general chat",
+            "easy",
+            0.9690071059588687,
+            0.3611834680391265
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7336342296644388,
+            0.05433757638665978
+          ],
+          [
+            "general chat",
+            "hard",
+            0.1844781724280341,
+            0.0050825548295030075
+          ]
+        ],
+        "llama-3.1-8b-instruct": [
+          [
+            "general chat",
+            "easy",
+            0.8978733291458311,
+            0.33466937537039354
+          ],
+          [
+            "general chat",
+            "medium",
+            0.4231862635835014,
+            0.0313438427399597
+          ],
+          [
+            "general chat",
+            "hard",
+            0.11042438040415403,
+            0.003042300129772546
+          ]
+        ]
+      },
+      "neighbours": {
+        "claude-3.5-sonnet": [
+          26,
+          32,
+          0.40061582278157737
+        ],
+        "gpt-4o": [
+          27,
+          32,
+          0.4228065368441055
+        ],
+        "gpt-4o-mini": [
+          24,
+          32,
+          0.3777758359898252
+        ],
+        "llama-3.1-8b-instruct": [
+          19,
+          32,
+          0.296981466166104
+        ]
+      }
+    },
+    "anchors": {
+      "llama-3.1-8b-local": {
+        "model": "llama-3.1-8b-instruct",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gpt-6-luna": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-flash-lite": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-haiku-4-5": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.8-flash": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-sonnet-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-pro": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-opus-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.25,
+        "source": "prior"
+      }
+    }
+  },
+  {
+    "prompt": "Email jane.doe@example.com a reminder about Friday's meeting.",
+    "context": null,
+    "profile": "balanced",
+    "tau": 0.91,
+    "fallback_margin": 0.02,
+    "lambda_energy": 0.00025,
+    "model": "llama-3.1-8b-local",
+    "level": "confidential",
+    "difficulty": 0.14415285790380095,
+    "difficulty_label": "easy",
+    "below_floor": true,
+    "steps": [
+      "Confidentiality: confidential (rules: email (confidential)). 1 of 8 models are cleared.",
+      "Graph: the prompt looks like general chat 1.00, reading technical manuals 0.00, reading legal documents 0.00; difficulty easy 0.79, medium 0.16, hard 0.06.",
+      "Graph: strongest paths to llama-3.1-8b-local (via llama-3.1-8b-instruct): general chat/easy: solves 90%; general chat/medium: solves 42%; it solved 19 of the 32 most similar past prompts (weight 0.53).",
+      "Quality floor tau=0.91: 0 of 1 allowed models are predicted to succeed.",
+      "No allowed model reaches tau, so llama-3.1-8b-local was chosen as the most likely to succeed (P=0.68, $0.00009)."
+    ],
+    "headers": {
+      "X-EcoRoute-Model": "llama-3.1-8b-local",
+      "X-EcoRoute-Level": "confidential",
+      "X-EcoRoute-Reason": "No allowed model reaches tau, so llama-3.1-8b-local was chosen as the most likely to succeed (P=0.68, $0.00009).",
+      "X-EcoRoute-Difficulty": "0.14 (easy)",
+      "X-EcoRoute-Time-Ms": "privacy=34.8, embed=16.5, predict=4.2, privacy_wait=0.0, decide=0.2, explain=4.0, total=59.6"
+    },
+    "candidates": [
+      {
+        "name": "llama-3.1-8b-local",
+        "p_success": 0.6815028901734103,
+        "cost_usd": 8.958333333333332e-05,
+        "energy_wh": 0.5972222222222222,
+        "score": 0.00023888888888888885,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.68 < tau 0.91"
+      },
+      {
+        "name": "gpt-6-luna",
+        "p_success": 0.8344,
+        "cost_usd": 0.0002515,
+        "energy_wh": 0.025,
+        "score": 0.00025775,
+        "allowed": false,
+        "qualifies": false,
+        "excluded_because": "clearance internal < prompt level confidential"
+      },
+      {
+        "name": "gemini-3.1-flash-lite",
+        "p_success": 0.8344,
+        "cost_usd": 0.00075375,
+        "energy_wh": 0.025,
+        "score": 0.0007599999999999999,
+        "allowed": false,
+        "qualifies": false,
+        "excluded_because": "clearance internal < prompt level confidential"
+      },
+      {
+        "name": "claude-haiku-4-5",
+        "p_success": 0.8732142857142857,
+        "cost_usd": 0.002515,
+        "energy_wh": 0.075,
+        "score": 0.00253375,
+        "allowed": false,
+        "qualifies": false,
+        "excluded_because": "clearance internal < prompt level confidential"
+      },
+      {
+        "name": "gemini-3.8-flash",
+        "p_success": 0.8732142857142857,
+        "cost_usd": 0.00188625,
+        "energy_wh": 0.075,
+        "score": 0.001905,
+        "allowed": false,
+        "qualifies": false,
+        "excluded_because": "clearance internal < prompt level confidential"
+      },
+      {
+        "name": "claude-sonnet-5-5",
+        "p_success": 0.9105555555555553,
+        "cost_usd": 0.00503,
+        "energy_wh": 0.2,
+        "score": 0.0050799999999999994,
+        "allowed": false,
+        "qualifies": false,
+        "excluded_because": "clearance internal < prompt level confidential"
+      },
+      {
+        "name": "gemini-3.1-pro",
+        "p_success": 0.9105555555555553,
+        "cost_usd": 0.00603,
+        "energy_wh": 0.2,
+        "score": 0.0060799999999999995,
+        "allowed": false,
+        "qualifies": false,
+        "excluded_because": "clearance internal < prompt level confidential"
+      },
+      {
+        "name": "claude-opus-5-5",
+        "p_success": 0.9289345640564998,
+        "cost_usd": 0.01006,
+        "energy_wh": 0.5,
+        "score": 0.010185,
+        "allowed": false,
+        "qualifies": false,
+        "excluded_because": "clearance internal < prompt level confidential"
+      }
+    ],
+    "graph": {
+      "skills": [
+        [
+          "general chat",
+          0.9989031553268433
+        ],
+        [
+          "reading technical manuals",
+          0.00026869337307289243
+        ],
+        [
+          "reading legal documents",
+          0.00023803027579560876
+        ],
+        [
+          "math",
+          0.00017179145652335137
+        ],
+        [
+          "answering from documents",
+          0.00012427009642124176
+        ]
+      ],
+      "levels": {
+        "easy": 0.7857770323753357,
+        "medium": 0.15614177286624908,
+        "hard": 0.058081191033124924
+      },
+      "beta": 0.5251262249229234,
+      "edges": {
+        "claude-3.5-sonnet": [
+          [
+            "general chat",
+            "easy",
+            0.961080548796779,
+            0.35822895781127734
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7552782983583658,
+            0.05594067257331441
+          ],
+          [
+            "general chat",
+            "hard",
+            0.22497565500249586,
+            0.006198300247687048
+          ]
+        ],
+        "gpt-4o": [
+          [
+            "general chat",
+            "easy",
+            0.9690851756838562,
+            0.36121256740676416
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7898415769309075,
+            0.05850064689521582
+          ],
+          [
+            "general chat",
+            "hard",
+            0.23050149670363518,
+            0.0063505426135753535
+          ]
+        ],
+        "gpt-4o-mini": [
+          [
+            "general chat",
+            "easy",
+            0.9690071059588687,
+            0.3611834680391265
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7336342296644388,
+            0.05433757638665978
+          ],
+          [
+            "general chat",
+            "hard",
+            0.1844781724280341,
+            0.0050825548295030075
+          ]
+        ],
+        "llama-3.1-8b-instruct": [
+          [
+            "general chat",
+            "easy",
+            0.8978733291458311,
+            0.33466937537039354
+          ],
+          [
+            "general chat",
+            "medium",
+            0.4231862635835014,
+            0.0313438427399597
+          ],
+          [
+            "general chat",
+            "hard",
+            0.11042438040415403,
+            0.003042300129772546
+          ]
+        ]
+      },
+      "neighbours": {
+        "claude-3.5-sonnet": [
+          26,
+          32,
+          0.40061582278157737
+        ],
+        "gpt-4o": [
+          27,
+          32,
+          0.4228065368441055
+        ],
+        "gpt-4o-mini": [
+          24,
+          32,
+          0.3777758359898252
+        ],
+        "llama-3.1-8b-instruct": [
+          19,
+          32,
+          0.296981466166104
+        ]
+      }
+    },
+    "anchors": {
+      "llama-3.1-8b-local": {
+        "model": "llama-3.1-8b-instruct",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gpt-6-luna": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-flash-lite": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-haiku-4-5": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.8-flash": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-sonnet-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-pro": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-opus-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.25,
+        "source": "prior"
+      }
+    }
+  },
+  {
+    "prompt": "Email jane.doe@example.com a reminder about Friday's meeting.",
+    "context": null,
+    "profile": "eco",
+    "tau": 0.86,
+    "fallback_margin": 0.0,
+    "lambda_energy": 0.0025,
+    "model": "llama-3.1-8b-local",
+    "level": "confidential",
+    "difficulty": 0.14415285790380095,
+    "difficulty_label": "easy",
+    "below_floor": true,
+    "steps": [
+      "Confidentiality: confidential (rules: email (confidential)). 1 of 8 models are cleared.",
+      "Graph: the prompt looks like general chat 1.00, reading technical manuals 0.00, reading legal documents 0.00; difficulty easy 0.79, medium 0.16, hard 0.06.",
+      "Graph: strongest paths to llama-3.1-8b-local (via llama-3.1-8b-instruct): general chat/easy: solves 90%; general chat/medium: solves 42%; it solved 19 of the 32 most similar past prompts (weight 0.53).",
+      "Quality floor tau=0.86: 0 of 1 allowed models are predicted to succeed.",
+      "No allowed model reaches tau, so llama-3.1-8b-local was chosen as the most likely to succeed (P=0.68, $0.00009)."
+    ],
+    "headers": {
+      "X-EcoRoute-Model": "llama-3.1-8b-local",
+      "X-EcoRoute-Level": "confidential",
+      "X-EcoRoute-Reason": "No allowed model reaches tau, so llama-3.1-8b-local was chosen as the most likely to succeed (P=0.68, $0.00009).",
+      "X-EcoRoute-Difficulty": "0.14 (easy)",
+      "X-EcoRoute-Time-Ms": "privacy=22.0, embed=9.2, predict=2.3, privacy_wait=0.0, decide=0.1, explain=2.0, total=35.6"
+    },
+    "candidates": [
+      {
+        "name": "llama-3.1-8b-local",
+        "p_success": 0.6815028901734103,
+        "cost_usd": 8.958333333333332e-05,
+        "energy_wh": 0.5972222222222222,
+        "score": 0.0015826388888888889,
+        "allowed": true,
+        "qualifies": false,
+        "excluded_because": "P(correct) 0.68 < tau 0.86"
+      },
+      {
+        "name": "gpt-6-luna",
+        "p_success": 0.8344,
+        "cost_usd": 0.0002515,
+        "energy_wh": 0.025,
+        "score": 0.000314,
+        "allowed": false,
+        "qualifies": false,
+        "excluded_because": "clearance internal < prompt level confidential"
+      },
+      {
+        "name": "gemini-3.1-flash-lite",
+        "p_success": 0.8344,
+        "cost_usd": 0.00075375,
+        "energy_wh": 0.025,
+        "score": 0.0008162499999999999,
+        "allowed": false,
+        "qualifies": false,
+        "excluded_because": "clearance internal < prompt level confidential"
+      },
+      {
+        "name": "claude-haiku-4-5",
+        "p_success": 0.8732142857142857,
+        "cost_usd": 0.002515,
+        "energy_wh": 0.075,
+        "score": 0.0027025,
+        "allowed": false,
+        "qualifies": false,
+        "excluded_because": "clearance internal < prompt level confidential"
+      },
+      {
+        "name": "gemini-3.8-flash",
+        "p_success": 0.8732142857142857,
+        "cost_usd": 0.00188625,
+        "energy_wh": 0.075,
+        "score": 0.00207375,
+        "allowed": false,
+        "qualifies": false,
+        "excluded_because": "clearance internal < prompt level confidential"
+      },
+      {
+        "name": "claude-sonnet-5-5",
+        "p_success": 0.9105555555555553,
+        "cost_usd": 0.00503,
+        "energy_wh": 0.2,
+        "score": 0.00553,
+        "allowed": false,
+        "qualifies": false,
+        "excluded_because": "clearance internal < prompt level confidential"
+      },
+      {
+        "name": "gemini-3.1-pro",
+        "p_success": 0.9105555555555553,
+        "cost_usd": 0.00603,
+        "energy_wh": 0.2,
+        "score": 0.006529999999999999,
+        "allowed": false,
+        "qualifies": false,
+        "excluded_because": "clearance internal < prompt level confidential"
+      },
+      {
+        "name": "claude-opus-5-5",
+        "p_success": 0.9289345640564998,
+        "cost_usd": 0.01006,
+        "energy_wh": 0.5,
+        "score": 0.011309999999999999,
+        "allowed": false,
+        "qualifies": false,
+        "excluded_because": "clearance internal < prompt level confidential"
+      }
+    ],
+    "graph": {
+      "skills": [
+        [
+          "general chat",
+          0.9989031553268433
+        ],
+        [
+          "reading technical manuals",
+          0.00026869337307289243
+        ],
+        [
+          "reading legal documents",
+          0.00023803027579560876
+        ],
+        [
+          "math",
+          0.00017179145652335137
+        ],
+        [
+          "answering from documents",
+          0.00012427009642124176
+        ]
+      ],
+      "levels": {
+        "easy": 0.7857770323753357,
+        "medium": 0.15614177286624908,
+        "hard": 0.058081191033124924
+      },
+      "beta": 0.5251262249229234,
+      "edges": {
+        "claude-3.5-sonnet": [
+          [
+            "general chat",
+            "easy",
+            0.961080548796779,
+            0.35822895781127734
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7552782983583658,
+            0.05594067257331441
+          ],
+          [
+            "general chat",
+            "hard",
+            0.22497565500249586,
+            0.006198300247687048
+          ]
+        ],
+        "gpt-4o": [
+          [
+            "general chat",
+            "easy",
+            0.9690851756838562,
+            0.36121256740676416
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7898415769309075,
+            0.05850064689521582
+          ],
+          [
+            "general chat",
+            "hard",
+            0.23050149670363518,
+            0.0063505426135753535
+          ]
+        ],
+        "gpt-4o-mini": [
+          [
+            "general chat",
+            "easy",
+            0.9690071059588687,
+            0.3611834680391265
+          ],
+          [
+            "general chat",
+            "medium",
+            0.7336342296644388,
+            0.05433757638665978
+          ],
+          [
+            "general chat",
+            "hard",
+            0.1844781724280341,
+            0.0050825548295030075
+          ]
+        ],
+        "llama-3.1-8b-instruct": [
+          [
+            "general chat",
+            "easy",
+            0.8978733291458311,
+            0.33466937537039354
+          ],
+          [
+            "general chat",
+            "medium",
+            0.4231862635835014,
+            0.0313438427399597
+          ],
+          [
+            "general chat",
+            "hard",
+            0.11042438040415403,
+            0.003042300129772546
+          ]
+        ]
+      },
+      "neighbours": {
+        "claude-3.5-sonnet": [
+          26,
+          32,
+          0.40061582278157737
+        ],
+        "gpt-4o": [
+          27,
+          32,
+          0.4228065368441055
+        ],
+        "gpt-4o-mini": [
+          24,
+          32,
+          0.3777758359898252
+        ],
+        "llama-3.1-8b-instruct": [
+          19,
+          32,
+          0.296981466166104
+        ]
+      }
+    },
+    "anchors": {
+      "llama-3.1-8b-local": {
+        "model": "llama-3.1-8b-instruct",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gpt-6-luna": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-flash-lite": {
+        "model": "gpt-4o-mini",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-haiku-4-5": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.8-flash": {
+        "model": "claude-3.5-sonnet",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-sonnet-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "gemini-3.1-pro": {
+        "model": "gpt-4o",
+        "shift": 0.0,
+        "source": "prior"
+      },
+      "claude-opus-5-5": {
+        "model": "gpt-4o",
+        "shift": 0.25,
+        "source": "prior"
+      }
+    }
+  }
+]

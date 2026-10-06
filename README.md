@@ -30,6 +30,26 @@ to +0.43). The [Results](#results) section gives the full results and their scop
 
 ![Cost saved vs always using GPT-4o, per profile](docs/img/savings.svg)
 
+### One request, step by step
+
+The figure below is one real routing decision by router v14. The prompt is a short
+number-theory proof:
+
+1. The privacy check finds nothing sensitive, so all 8 models stay in.
+2. The graph reads the prompt as math (0.86) and mostly easy or medium.
+3. Through those paths and the 32 most similar past prompts, it predicts each model's
+   chance of a correct answer.
+4. Under the default `balanced` profile, the cheapest model at or above the 0.91
+   threshold wins: gemini-3.8-flash, 81% cheaper than claude-opus-5-5.
+
+The same prompt goes to claude-opus-5-5 under `quality` and to gpt-6-luna under `eco`.
+
+![One routing decision: prompt to skills to difficulty to models, with the threshold and the chosen model](docs/img/decision-example.svg)
+
+All numbers come from `scripts/decision_example.py` (eight prompts under each profile,
+saved in [`reports/decisions_v14.json`](reports/decisions_v14.json)). The figure is
+drawn from that file by `scripts/draw_decision.py`.
+
 ## How it works
 
 ```mermaid

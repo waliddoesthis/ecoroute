@@ -1,6 +1,6 @@
 """Route example prompts and save each decision, with its graph paths, as JSON.
 
-    python scripts/decision_example.py --router artifacts/router.pt --out reports/decisions.json
+    python scripts/decision_example.py --router artifacts/router.pt --out reports/decisions_v14.json
 
 The file feeds scripts/draw_decision.py, which draws the README's worked example, so every
 number in that figure comes from a real route() call.
@@ -62,17 +62,21 @@ def decision_record(eco: EcoRoute, prompt: str, context, profile: str) -> dict:
     if graph is not None:
         x = eco.embed([prompt])[0]
         g = graph.explain(x)
+        anchors = eco.predictor.anchors
+        used = {a.model for a in anchors.values()}
         rec["graph"] = {
-            "skills": g.skills,
+            "skills": g.skills[:5],
             "levels": g.levels,
             "beta": g.beta,
-            # Path weights per benchmark model: skill, level, solve rate, weight.
-            "edges": {m: sorted(e, key=lambda t: -t[3])[:6] for m, e in g.edges.items()},
-            "neighbours": g.neighbours,
+            # Strongest paths per anchor model: skill, level, solve rate, path weight.
+            "edges": {
+                m: sorted(e, key=lambda t: -t[3])[:3] for m, e in g.edges.items() if m in used
+            },
+            "neighbours": {m: n for m, n in g.neighbours.items() if m in used},
         }
         rec["anchors"] = {
             name: {"model": a.model, "shift": a.shift, "source": a.source}
-            for name, a in eco.predictor.anchors.items()
+            for name, a in anchors.items()
         }
     return rec
 

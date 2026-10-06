@@ -15,3 +15,4 @@ artifacts/
 
 # Saved evaluation reports behind the published numbers are kept.
 !reports/eval_*.json
+!reports/decisions_*.json
