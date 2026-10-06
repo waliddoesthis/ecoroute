@@ -6,6 +6,11 @@ Uses the RouterArena prompts (labelled easy / medium / hard, no outcomes, never 
 training). Reports, per label: the predicted difficulty, and which catalog tier the router
 picks under each policy profile. A useful router shows difficulty rising from easy to hard
 and the tier mix shifting up with it.
+
+It also reports, per profile, the mean price and energy per request of the chosen catalog
+models against sending every prompt to the most capable catalog model. Prices are list
+prices and energy mostly tier priors (see configs/models.yaml), so these are estimates;
+docs/impact.md scales them to company volumes.
 """
 
 from __future__ import annotations
@@ -61,16 +66,38 @@ def main() -> None:
         .round(3)
         .T
     )
+    # The reference: the highest-tier catalog model (the priciest one on a tie).
+    top = max(eco.catalog, key=lambda m: (m["tier"], m.get("price_out_per_mtok") or 0))["name"]
+    usage = []
     for name in PROFILES:
-        picks = [
-            eco.router.decide(t, dict(zip(eco.predictor.names, p)), policy=name).model
+        decisions = [
+            eco.router.decide(t, dict(zip(eco.predictor.names, p)), policy=name)
             for t, p in zip(prompts.prompt, P)
         ]
+        picks = [d.model for d in decisions]
         mix = pd.crosstab(
             prompts.difficulty.values, np.array([tier[m] for m in picks]), normalize="index"
         )
         print(f"\npolicy {name}: share of prompts per chosen tier")
         print(mix.round(3))
+        ref = [next(c for c in d.candidates if c.name == top) for d in decisions]
+        cost = np.mean([d.chosen.cost_usd for d in decisions])
+        energy = np.mean([d.chosen.energy_wh for d in decisions])
+        ref_cost = np.mean([c.cost_usd for c in ref])
+        ref_energy = np.mean([c.energy_wh for c in ref])
+        usage.append(
+            {"policy": name, "usd_per_request": cost, "wh_per_request": energy,
+             f"usd_always_{top}": ref_cost, f"wh_always_{top}": ref_energy,
+             "cost_saved_pct": 100 * (1 - cost / ref_cost),
+             "energy_saved_pct": 100 * (1 - energy / ref_energy),
+             "local_share": float(np.mean([tier[m] == 0 for m in picks]))}
+        )  # fmt: skip
+        shares = pd.Series(picks).value_counts(normalize=True).round(3)
+        print(
+            f"policy {name}: share per model: " + ", ".join(f"{k} {v}" for k, v in shares.items())
+        )
+    print(f"\nper request, against always using {top} (estimates: list prices, energy priors):")
+    print(pd.DataFrame(usage).to_string(index=False, float_format="{:.5g}".format))
 
 
 if __name__ == "__main__":
