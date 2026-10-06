@@ -180,3 +180,14 @@ def test_held_out_saving_closest_falls_back_to_most_accurate_tau(data):
     got = held_out_saving(*args, tolerance=-1.0, taus=grid, closest=True)
     assert got["matched"] and got["tau"] in grid
     assert not got["within_tolerance"]
+
+
+def test_margin_makes_tau_choice_more_cautious(data):
+    (X_tr, Y_tr, _, _), (X_te, Y_te, C_te, _) = data
+    X_va, Y_va, C_va, _ = make_data(800, seed=2, missing=0.0)
+    knn = KNNPredictor(k=32).fit(X_tr, Y_tr, MODELS)
+    args = (knn.predict_proba(X_va), Y_va, C_va, knn.predict_proba(X_te), Y_te, C_te, MODELS)
+    grid = np.round(np.arange(0.50, 1.0, 0.01), 2)
+    loose = held_out_saving(*args, tolerance=0.02, taus=grid, closest=True)
+    safe = held_out_saving(*args, tolerance=0.02, taus=grid, closest=True, z=2.0)
+    assert safe["tau"] >= loose["tau"]

@@ -118,10 +118,12 @@ def main() -> None:
     print(f"\nprofile taus for {args.predictor}:")
     grid = np.round(np.arange(0.50, 1.0, 0.01), 2)  # finer and higher than the 0.05 grid
     for profile, tol in PROFILE_TOLERANCE.items():
-        # quality takes the most accurate tau when nothing fully matches the best model.
+        # quality takes the closest tau when nothing fully matches the best model; z=1 keeps
+        # one standard error of margin so the pick survives on new prompts.
         h = held_out_saving(
-            P_va, Y_va, C_va, P_te, Y_te, C_te, models, tol, grid, closest=profile == "quality"
-        )
+            P_va, Y_va, C_va, P_te, Y_te, C_te, models, tol, grid,
+            closest=profile == "quality", z=1.0,
+        )  # fmt: skip
         if not h["matched"]:
             print(f"  {profile}: nothing within {100 * tol:.0f} points, keeping the default")
             continue

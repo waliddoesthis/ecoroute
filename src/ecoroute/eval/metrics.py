@@ -187,6 +187,21 @@ def evaluate_at_tau(P: np.ndarray, Y: np.ndarray, C: np.ndarray, tau: float) -> 
     return {"accuracy": float(Y[idx, pick].mean()), "cost": float(C[idx, pick].mean())}
 
 
+def gap_upper_bound(
+    P: np.ndarray, Y: np.ndarray, C: np.ndarray, ref: int, taus, z: float = 0.0
+) -> np.ndarray:
+    """Accuracy lost against model `ref` at each tau, plus z paired standard errors."""
+    full = ~np.isnan(Y).any(axis=1) & ~np.isnan(C).any(axis=1)
+    P, Y, C = P[full], Y[full], C[full]
+    idx = np.arange(len(Y))
+    out = []
+    for tau in taus:
+        d = Y[:, ref] - Y[idx, route_cheapest_above(P, C, tau)]
+        se = d.std(ddof=1) / np.sqrt(len(d)) if len(d) > 1 else 0.0
+        out.append(d.mean() + z * se)
+    return np.array(out)
+
+
 def held_out_saving(
     P_val: np.ndarray,
     Y_val: np.ndarray,
@@ -198,11 +213,15 @@ def held_out_saving(
     tolerance: float = 0.01,
     taus: np.ndarray | None = None,
     closest: bool = False,
+    z: float = 0.0,
 ) -> dict[str, float | str | bool]:
     """Pick tau on validation, then measure it on test.
 
     taus is the grid searched (routing_curve's default if None). With closest=True and no
-    tau within tolerance, the most accurate tau on validation is taken instead.
+    tau within tolerance, the tau with the smallest gap on validation is taken instead.
+    z > 0 adds a safety margin: a tau qualifies only if the gap plus z standard errors of
+    the paired per-prompt difference stays within tolerance. Without it, a fine grid
+    picks whichever tau got lucky on validation (run 17 missed every target that way).
 
     Choosing tau on the test set (as savings_at_quality does) is optimistic, because the
     best of 19 thresholds is picked after seeing the answers. This is the honest number.
@@ -210,15 +229,18 @@ def held_out_saving(
     val_curve = routing_curve(P_val, Y_val, C_val, models, taus)
     singles = val_curve[val_curve.policy.str.startswith("always")]
     reference = singles.loc[singles.accuracy.idxmax()].policy
-    chosen = savings_at_quality(val_curve, reference, tolerance)
-    if chosen["matched"]:
-        policy = chosen["router_policy"]
+    routers = val_curve[val_curve.policy.str.startswith("router")].copy()
+    routers["tau"] = routers.policy.str.split("=").str[1].astype(float)
+    routers["gap"] = gap_upper_bound(
+        P_val, Y_val, C_val, models.index(reference.removeprefix("always ")), routers.tau, z
+    )
+    ok = routers[routers.gap <= tolerance]
+    if not ok.empty:
+        tau = float(ok.loc[ok.cost.idxmin()].tau)
     elif closest:
-        routers = val_curve[val_curve.policy.str.startswith("router")]
-        policy = routers.loc[routers.accuracy.idxmax()].policy
+        tau = float(routers.loc[routers.gap.idxmin()].tau)
     else:
         return {"reference": reference, "matched": False}
-    tau = float(policy.split("=")[1])
     test_curve = routing_curve(P_test, Y_test, C_test, models)
     ref = test_curve.loc[test_curve.policy == reference].iloc[0]
     got = evaluate_at_tau(P_test, Y_test, C_test, tau)
