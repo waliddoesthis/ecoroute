@@ -25,7 +25,8 @@ python scripts/lightning_run.py --teamspace <your-teamspace> --machine T4
 
 It refuses to start below `--min-credits` (default 3) and stops the Studio after
 `--max-hours` (default 2). A full run on a T4 takes about 11 minutes and about 0.2 credits.
-Add `--skip-build` to reuse the data already in the Studio.
+Add `--skip-build` to reuse the data already in the Studio, `--pytest` to run the tests first,
+and `--train-args "--seeds 3"` to pass options through to `train_baselines.py`.
 
 ## Build the training data (Lightning AI Studio)
 

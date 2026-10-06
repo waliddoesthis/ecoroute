@@ -51,11 +51,22 @@ def ship_code(studio: Studio, chunk: int = 8000) -> None:
     )
 
 
-def pipeline(sources: list[str], skip_build: bool) -> str:
-    steps = ["pip install -q -e .", "nvidia-smi -L || true"]
+def pipeline(sources: list[str], skip_build: bool, pytest: bool, train_args: str) -> str:
+    steps = [
+        f"pip install -q -e '.{'[dev]' if pytest else ''}'",
+        "{ nvidia-smi -L || true; }",
+        "rm -rf reports && mkdir -p reports",
+    ]
+    if pytest:
+        steps.append("python -m pytest -q")
     if not skip_build:
         steps.append("python scripts/build_dataset.py --out data/processed")
-    steps += [f"python scripts/train_baselines.py --source {s}" for s in sources]
+    for s in sources:
+        out = f"reports/train_{s}.txt"
+        steps.append(
+            f"{{ python scripts/train_baselines.py --source {s} {train_args} > {out} 2>&1; "
+            f"rc=$?; cat {out}; [ $rc -eq 0 ]; }}"
+        )
     body = " && ".join(steps)
     return f"cd ~/{REMOTE_DIR} && rm -f ~/{DONE} && ( {body} ) > ~/{LOG} 2>&1; echo $? > ~/{DONE}"
 
@@ -70,6 +81,8 @@ def main() -> None:
     parser.add_argument(
         "--skip-build", action="store_true", help="reuse data/processed in the Studio"
     )
+    parser.add_argument("--pytest", action="store_true", help="run the test suite first")
+    parser.add_argument("--train-args", default="", help="extra train_baselines.py arguments")
     parser.add_argument("--max-hours", type=float, default=2.0)
     parser.add_argument("--min-credits", type=float, default=3.0)
     parser.add_argument("--out", type=Path, default=Path("reports/lightning"))
@@ -92,7 +105,9 @@ def main() -> None:
 
         ship_code(studio)
 
-        studio.run_and_detach(pipeline(args.sources, args.skip_build), timeout=5)
+        studio.run_and_detach(
+            pipeline(args.sources, args.skip_build, args.pytest, args.train_args), timeout=5
+        )
         shown = 0
         exit_code = None
         while exit_code is None:
@@ -117,6 +132,8 @@ def main() -> None:
                 (args.out / f"baselines_{source}.json").write_text(report)
             else:
                 print(f"no report for {source}")
+            printed = studio.run(f"cat ~/{REMOTE_DIR}/reports/train_{source}.txt 2>/dev/null")
+            (args.out / f"train_{source}.txt").write_text(printed)
         print(f"pipeline exit code: {exit_code}")
     finally:
         print("stopping Studio")
