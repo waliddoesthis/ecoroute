@@ -261,4 +261,5 @@ def test_kind_min_drops_low_scored_weak_kinds_only():
     text = "Amira has AB123456"
     kinds = {f.kind for f in NERLayer(tagger, kind_min={"GIVENNAME": 0.85}).scan(text)}
     assert kinds == {"socialnum"}
-    assert {f.kind for f in NERLayer(tagger).scan(text)} == {"givenname", "socialnum"}
+    assert {f.kind for f in NERLayer(tagger, kind_min={}).scan(text)} == {"givenname", "socialnum"}
+    assert {f.kind for f in NERLayer(tagger).scan(text)} == {"socialnum"}  # default floors

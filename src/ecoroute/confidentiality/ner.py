@@ -46,6 +46,10 @@ LABEL_LEVELS: dict[str, Level] = {
 # by default every finding counts (recall first).
 WEAK_KINDS = frozenset({"givenname", "surname", "city", "zipcode", "buildingnum", "username"})
 
+# Default per-kind floors (run 23, 2000 ai4privacy texts and 2000 benchmark prompts):
+# false alarms 12.2% -> 7.6%, PII recall 0.975 -> 0.951, restricted recall 0.896 -> 0.894.
+DEFAULT_KIND_MIN = {**dict.fromkeys(WEAK_KINDS, 0.85), "password": 0.9}
+
 # A callable with the Hugging Face pipeline output shape:
 # text -> [{"entity_group": str, "score": float, "start": int, "end": int}, ...]
 Tagger = Callable[[str], list[Mapping]]
@@ -110,7 +114,10 @@ class NERLayer:
         # Per-kind floor (lowercase kind -> score): below it a finding of that kind is
         # dropped outright, without the grey zone. For kinds the model over-reports on
         # ordinary prompts, such as first names and cities (see eval_confidentiality.py).
-        self.kind_min = {k.lower(): v for k, v in (kind_min or {}).items()}
+        # Pass {} to count every kind from `grey` up.
+        if kind_min is None:
+            kind_min = DEFAULT_KIND_MIN
+        self.kind_min = {k.lower(): v for k, v in kind_min.items()}
 
     @property
     def tagger(self) -> Tagger:

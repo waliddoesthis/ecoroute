@@ -99,7 +99,7 @@ def main() -> None:
     torch.set_grad_enabled(False)
     rules = RulesLayer()
     tagger = hf_tagger(args.model, device=args.device, fp16=args.fp16)
-    ner = NERLayer(tagger, threshold=0.0, grey=0.0)  # keep every score
+    ner = NERLayer(tagger, threshold=0.0, grey=0.0, kind_min={})  # keep every score
     # Latency as the gateway sees it: one request at a time, timed per prompt.
     ner.scan("warm up the model")
     latencies = []

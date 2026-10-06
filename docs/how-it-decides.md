@@ -64,5 +64,10 @@ profile's tau chosen on validation with one standard error of margin:
 | eco      | 0.85 | -2.7 points        | 77.4%      |
 
 - Telling hard from easy on unseen RouterArena prompts: AUC 0.76-0.80 across versions.
-- The privacy check (rules + PII model) finds 97% of prompts with personal data and 90%
-  of restricted ones, with 12% false alarms; about 26 ms per request on a T4 GPU.
+- The privacy check (rules + PII model) finds 95% of prompts with personal data and 89%
+  of restricted ones, with 7.6% false alarms on ordinary prompts (run 23). First names,
+  cities, building numbers and similar weak kinds need PII-model confidence 0.85,
+  passwords 0.9. About 26 ms per request on a T4 GPU.
+- A whole routing decision (privacy check, embedding, prediction, explanation) takes
+  about 72 ms per request on a T4 GPU; each response carries the breakdown in the
+  X-EcoRoute-Time-Ms header.
