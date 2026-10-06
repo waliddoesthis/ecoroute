@@ -212,11 +212,16 @@ def held_out_saving(
     test_curve = routing_curve(P_test, Y_test, C_test, models)
     ref = test_curve.loc[test_curve.policy == reference].iloc[0]
     got = evaluate_at_tau(P_test, Y_test, C_test, tau)
+    gap = float(ref.accuracy) - got["accuracy"]
     return {
         "reference": reference,
+        # matched: a tau within tolerance was found on validation. Whether it still holds
+        # on test is within_tolerance; the gap can widen because tau was not tuned on test.
         "matched": True,
         "tau": tau,
         "router_accuracy": got["accuracy"],
         "reference_accuracy": float(ref.accuracy),
+        "acc_gap": gap,
+        "within_tolerance": gap <= tolerance,
         "cost_saving_pct": float(100 * (1 - got["cost"] / ref.cost)) if ref.cost > 0 else 0.0,
     }

@@ -69,10 +69,15 @@ def main() -> None:
 
     P_te = predictor.predict_proba(X_te)
     print("test quality:", {k: round(v, 4) for k, v in quality_report(P_te, Y_te).items()})
-    print(
-        "held-out saving:",
-        held_out_saving(predictor.predict_proba(X_va), Y_va, C_va, P_te, Y_te, C_te, models),
-    )
+    h = held_out_saving(predictor.predict_proba(X_va), Y_va, C_va, P_te, Y_te, C_te, models)
+    print("held-out saving:", h)
+    if h["matched"]:
+        verdict = "within" if h["within_tolerance"] else "OUTSIDE"
+        print(
+            f"tau {h['tau']:.2f} chosen on validation: test accuracy {h['router_accuracy']:.4f} "
+            f"vs {h['reference_accuracy']:.4f} ({verdict} the 1-point tolerance), "
+            f"saving {h['cost_saving_pct']:.1f}%"
+        )
 
     catalog = yaml.safe_load(args.catalog.read_text())["models"]
     eco = EcoRoute(predictor, args.encoder, catalog)  # fails here if an anchor is missing

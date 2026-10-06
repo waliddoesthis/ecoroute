@@ -165,4 +165,5 @@ def test_held_out_saving_picks_tau_on_validation(data):
     assert got["reference"] == "always large"
     if got["matched"]:
         assert 0.05 <= got["tau"] <= 0.95
+        assert got["within_tolerance"] == (got["acc_gap"] <= 0.01)
         assert got["cost_saving_pct"] <= 100
