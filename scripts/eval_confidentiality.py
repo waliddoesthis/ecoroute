@@ -24,6 +24,7 @@ import time
 from collections import Counter
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import torch
 
@@ -84,15 +85,27 @@ def main() -> None:
     rules = RulesLayer()
     tagger = hf_tagger(args.model, device=args.device, fp16=args.fp16)
     ner = NERLayer(tagger, threshold=0.0, grey=0.0)  # keep every score
+    # Latency as the gateway sees it: one request at a time, timed per prompt.
+    ner.scan("warm up the model")
+    latencies = []
+    for t in benign[: min(300, len(benign))]:
+        t0 = time.perf_counter()
+        rules.scan(t) + ner.scan(t)
+        latencies.append(1000 * (time.perf_counter() - t0))
+    p50, p95 = np.percentile(latencies, [50, 95])
+    # Throughput when prompts arrive together and are scanned as one batch.
     t0 = time.perf_counter()
-    scanned_pii = [rules.scan(t) + ner.scan(t) for t in texts]
-    scanned_benign = [rules.scan(t) + ner.scan(t) for t in benign]
-    ms = 1000 * (time.perf_counter() - t0) / (len(texts) + len(benign))
+    scanned_pii = [r + n for r, n in zip(map(rules.scan, texts), ner.scan_many(texts))]
+    scanned_benign = [r + n for r, n in zip(map(rules.scan, benign), ner.scan_many(benign))]
+    batched = 1000 * (time.perf_counter() - t0) / (len(texts) + len(benign))
     lengths = sorted(len(t) for t in benign)
+    where = f"device={'cpu' if args.device is None else args.device}, fp16={args.fp16}"
     print(
-        f"scan time: {ms:.1f} ms per prompt (rules + PII model, device={args.device if args.device is not None else 'cpu'}, fp16={args.fp16}); "
+        f"scan time ({where}): one at a time p50 {p50:.1f} ms, p95 {p95:.1f} ms; "
+        f"batched {batched:.1f} ms per prompt; "
         f"benchmark prompt length median {lengths[len(lengths) // 2]} chars"
     )
+    ms = float(p50)
 
     def score(settings, use_ner=True):
         min_score, weak = settings
@@ -140,7 +153,17 @@ def main() -> None:
     print("\nrecommended:", json.dumps(best, indent=2, default=str))
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(
-        json.dumps({"ms_per_prompt": ms, "rows": rows, "recommended": best}, indent=2, default=str)
+        json.dumps(
+            {
+                "ms_per_prompt": ms,
+                "p95_ms": float(p95),
+                "batched_ms": batched,
+                "rows": rows,
+                "recommended": best,
+            },
+            indent=2,
+            default=str,
+        )
     )
 
 

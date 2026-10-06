@@ -226,3 +226,29 @@ def test_slow_layers_are_skipped_once_restricted():
     assert calls == ["hello"]
     Detector([RulesLayer(), Slow()], stop_at_restricted=False).classify(f"key {AWS}")
     assert len(calls) == 2
+
+
+def test_scan_many_matches_scan_and_batches_pipeline_calls():
+    from ecoroute.confidentiality import NERLayer
+
+    calls = []
+
+    class Pipe:
+        tokenizer = object()  # looks like a Hugging Face pipeline
+
+        def __call__(self, chunks, batch_size=1):
+            calls.append(len(chunks) if isinstance(chunks, list) else 1)
+            one = lambda c: [  # noqa: E731
+                {"entity_group": "EMAIL", "score": 0.9, "start": i, "end": i + 5}
+                for i in [c.find("a@b.c")]
+                if i >= 0
+            ]
+            return [one(c) for c in chunks] if isinstance(chunks, list) else one(chunks)
+
+    layer = NERLayer(Pipe(), window=100, overlap=10)
+    texts = ["mail a@b.c now", "", "x" * 250 + " a@b.c"]
+    many = layer.scan_many(texts)
+    assert calls == [1 + 3]  # one call for every window of every non-empty text
+    assert many[1] == []
+    assert [f.start for f in many[2]] == [251]
+    assert many == [layer.scan(t) for t in texts]

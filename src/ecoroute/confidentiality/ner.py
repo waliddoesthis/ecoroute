@@ -68,7 +68,12 @@ def hf_tagger(
             raise ValueError("fp16 needs a GPU device")
         import torch
 
-        kw["torch_dtype"] = torch.float16
+        import transformers
+        from packaging.version import Version
+
+        # transformers 4.56 renamed torch_dtype to dtype and warns on the old name.
+        new = Version(transformers.__version__) >= Version("4.56")
+        kw["dtype" if new else "torch_dtype"] = torch.float16
     return pipeline(
         "token-classification", model=model, aggregation_strategy="simple", device=device, **kw
     )
@@ -85,6 +90,7 @@ class NERLayer:
         label_levels: Mapping[str, Level] = LABEL_LEVELS,
         window: int = 1500,
         overlap: int = 200,
+        batch_size: int = 16,
     ) -> None:
         self._tagger = tagger
         self.threshold = threshold
@@ -97,6 +103,9 @@ class NERLayer:
             raise ValueError("overlap must be smaller than window")
         self.window = window
         self.overlap = overlap
+        # Windows (and, in scan_many, prompts) go to a Hugging Face pipeline in batches:
+        # on a GPU the per-call overhead costs more than the model itself.
+        self.batch_size = batch_size
 
     @property
     def tagger(self) -> Tagger:
@@ -109,12 +118,33 @@ class NERLayer:
         step = self.window - self.overlap
         return list(range(0, max(1, len(text) - self.overlap), step))
 
+    def _tag(self, chunks: list[str]) -> list[list[Mapping]]:
+        tagger = self.tagger
+        if len(chunks) > 1 and self.batch_size > 1 and hasattr(tagger, "tokenizer"):
+            return list(tagger(chunks, batch_size=self.batch_size))
+        return [tagger(c) for c in chunks]
+
     def scan(self, text: str, context: Mapping | None = None) -> list[Finding]:
-        if not text.strip():
-            return []
+        return self.scan_many([text])[0]
+
+    def scan_many(self, texts: list[str]) -> list[list[Finding]]:
+        """Scan several texts with one batched pass over all their windows."""
+        jobs = [
+            (i, offset)
+            for i, text in enumerate(texts)
+            if text.strip()
+            for offset in self.windows(text)
+        ]
+        tagged = self._tag([texts[i][o : o + self.window] for i, o in jobs]) if jobs else []
+        per_text: list[list[tuple[int, list[Mapping]]]] = [[] for _ in texts]
+        for (i, offset), ents in zip(jobs, tagged, strict=True):
+            per_text[i].append((offset, ents))
+        return [self._findings(windows) for windows in per_text]
+
+    def _findings(self, windows: list[tuple[int, list[Mapping]]]) -> list[Finding]:
         found: dict[tuple[str, int, int], Finding] = {}
-        for offset in self.windows(text):
-            for ent in self.tagger(text[offset : offset + self.window]):
+        for offset, ents in windows:
+            for ent in ents:
                 label = str(ent.get("entity_group") or ent.get("entity", "")).upper()
                 label = label.removeprefix("B-").removeprefix("I-")
                 level = self.label_levels.get(label)
