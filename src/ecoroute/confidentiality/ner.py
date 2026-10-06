@@ -51,24 +51,16 @@ WEAK_KINDS = frozenset({"givenname", "surname", "city", "zipcode", "buildingnum"
 Tagger = Callable[[str], list[Mapping]]
 
 
-def hf_tagger(
-    model: str = DEFAULT_MODEL, device: int | str | None = None, quantize: bool = False
-) -> Tagger:
-    """quantize=True stores the model's linear layers as 8-bit integers (CPU only), which
-    usually makes it 2-3x faster for a small accuracy cost; measure it with
-    scripts/eval_confidentiality.py --quantize."""
+def hf_tagger(model: str = DEFAULT_MODEL, device: int | str | None = None) -> Tagger:
+    """device: None for CPU, or a GPU index such as 0.
+
+    8-bit dynamic quantization was tried (run 11) and broke this DeBERTa model's
+    predictions without making it faster, so it is not offered."""
     from transformers import pipeline
 
-    pipe = pipeline(
+    return pipeline(
         "token-classification", model=model, aggregation_strategy="simple", device=device
     )
-    if quantize:
-        import torch
-
-        pipe.model = torch.quantization.quantize_dynamic(
-            pipe.model, {torch.nn.Linear}, dtype=torch.qint8
-        )
-    return pipe
 
 
 class NERLayer:
