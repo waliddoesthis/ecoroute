@@ -55,13 +55,20 @@ class Detector:
         layers: Iterable[Layer] | None = None,
         floor: Level | str = Level.INTERNAL,
         weak_kinds: Iterable[str] = (),
+        stop_at_restricted: bool = True,
     ) -> None:
         self.layers = list(layers) if layers is not None else [CallerPolicyLayer(), RulesLayer()]
         self.floor = Level.parse(floor)
         self.weak_kinds = frozenset(weak_kinds)
+        # Layers run cheapest first (policy, rules, then models); once a prompt is
+        # restricted nothing can raise it further, so the slower layers are skipped.
+        # Set False when every finding is needed, e.g. to redact all of them.
+        self.stop_at_restricted = stop_at_restricted
 
     def classify(self, text: str, context: Mapping | None = None) -> Classification:
         findings: list[Finding] = []
         for layer in self.layers:
             findings.extend(layer.scan(text, context))
+            if self.stop_at_restricted and any(f.level == Level.RESTRICTED for f in findings):
+                break
         return Classification(combined_level(findings, self.floor, self.weak_kinds), findings)

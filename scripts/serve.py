@@ -16,7 +16,10 @@ from pathlib import Path
 import uvicorn
 import yaml
 
+from ecoroute.confidentiality import CallerPolicyLayer, Detector, NERLayer, RulesLayer
+from ecoroute.confidentiality.ner import hf_tagger
 from ecoroute.gateway import OpenAICompatibleBackend, create_app, deployable
+from ecoroute.routing import Router
 from ecoroute.service import EcoRoute
 
 
@@ -26,6 +29,8 @@ def main() -> None:
     parser.add_argument("--catalog", type=Path, default=Path("configs/models.yaml"))
     parser.add_argument("--providers", type=Path, default=Path("configs/providers.yaml"))
     parser.add_argument("--policy", default="balanced")
+    parser.add_argument("--no-pii-model", action="store_true", help="rules only, no PII model")
+    parser.add_argument("--quantize-pii", action="store_true", help="8-bit PII model on CPU")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8080)
     args = parser.parse_args()
@@ -36,7 +41,11 @@ def main() -> None:
     live = deployable(full.catalog, providers)
     if not live:
         raise SystemExit("no deployable models: set api_id in models.yaml and the API key env vars")
-    eco = EcoRoute(full.predictor.base, full.encoder_name, live, policy=args.policy)
+    layers = [CallerPolicyLayer(), RulesLayer()]
+    if not args.no_pii_model:
+        layers.append(NERLayer(hf_tagger(quantize=args.quantize_pii)))
+    router = Router(live, detector=Detector(layers), policy=args.policy)
+    eco = EcoRoute(full.predictor.base, full.encoder_name, live, router=router)
     print("routing to:", ", ".join(m["name"] for m in live))
     uvicorn.run(create_app(eco, OpenAICompatibleBackend(providers)), host=args.host, port=args.port)
 

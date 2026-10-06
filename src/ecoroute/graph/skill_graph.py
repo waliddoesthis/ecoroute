@@ -11,21 +11,28 @@ Every edge is a number someone can read:
   model answered correctly, shrunk toward the model's overall accuracy when the cell has
   few examples.
 
+A second family of edges links the prompt to its most similar past prompts, and each of
+those to the models that answered it correctly (Graph B in the design doc). They catch
+what three difficulty levels per skill are too coarse to see.
+
 A model's score is the weight of all paths reaching it:
-    P(model correct | prompt) = sum over skill, level of
-                                P(skill | prompt) * P(level | prompt) * acc[skill, level, model]
-and the heaviest paths are the explanation. The graph is a Predictor, so the catalog
+    P(model correct | prompt) = (1 - beta) * sum over skill, level of
+                                    P(skill | prompt) * P(level | prompt) * acc[skill, level, model]
+                              + beta * (similarity-weighted share of similar past prompts
+                                        the model answered correctly)
+beta is chosen on validation data (tune_beta). The heaviest paths are the explanation. The graph is a Predictor, so the catalog
 anchors, calibration and the router use it like any other.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import numpy as np
 from sklearn.linear_model import LogisticRegression
 
 from ecoroute.predictors.base import Predictor
+from ecoroute.predictors.knn import KNNPredictor
 
 LEVELS = ("easy", "medium", "hard")
 
@@ -40,9 +47,11 @@ def level_of(share_correct: np.ndarray) -> np.ndarray:
 class GraphExplanation:
     skills: list[tuple[str, float]]  # heaviest prompt -> skill edges
     levels: dict[str, float]  # prompt -> difficulty edges
-    edges: dict[
-        str, list[tuple[str, str, float, float]]
-    ]  # model -> [(skill, level, acc, path weight)]
+    # model -> [(skill, level, acc, path weight)], weights already scaled by (1 - beta)
+    edges: dict[str, list[tuple[str, str, float, float]]]
+    beta: float = 0.0
+    # model -> (similar past prompts it solved, similar past prompts it answered, weight)
+    neighbours: dict[str, tuple[int, int, float]] = field(default_factory=dict)
 
     def lines(self, model: str | None = None, top: int = 3) -> list[str]:
         skills = ", ".join(f"{s} {w:.2f}" for s, w in self.skills[:top])
@@ -51,18 +60,31 @@ class GraphExplanation:
         if model is not None and model in self.edges:
             paths = sorted(self.edges[model], key=lambda e: -e[3])[:2]
             via = "; ".join(f"{s}/{lv}: solves {a:.0%}" for s, lv, a, _ in paths)
-            out.append(f"Graph: strongest paths to {model}: {via}.")
+            line = f"Graph: strongest paths to {model}: {via}"
+            if self.beta > 0 and model in self.neighbours:
+                solved, answered, _ = self.neighbours[model]
+                line += f"; it solved {solved} of the {answered} most similar past prompts"
+            out.append(line + ".")
         return out
 
 
 class SkillGraph(Predictor):
     name = "skill_graph"
 
-    def __init__(self, shrink: float = 20.0, C: float = 1.0, min_skill_prompts: int = 50) -> None:
+    def __init__(
+        self,
+        shrink: float = 20.0,
+        C: float = 1.0,
+        min_skill_prompts: int = 50,
+        k: int = 32,
+        beta: float = 0.0,
+    ) -> None:
         super().__init__()
         self.shrink = shrink  # pseudo-count pulling small cells toward the model's mean
         self.C = C
         self.min_skill_prompts = min_skill_prompts
+        self.k = k  # similar past prompts per prompt
+        self.beta = beta  # weight of the similar-prompt edges; set by tune_beta()
 
     def fit(self, X, Y, models, skills=None, level_extra=None):
         """skills: task label per training prompt. level_extra: optional (X2, levels) of
@@ -100,7 +122,17 @@ class SkillGraph(Predictor):
                 total = np.nansum(Y[sel], axis=0)
                 self.acc_[i, b] = (total + self.shrink * overall) / (n + self.shrink)
                 self.count_[i, b] = n
+        self.knn_ = KNNPredictor(k=self.k).fit(X, Y, self.models)
         return self
+
+    def tune_beta(self, X_val, Y_val, grid=np.linspace(0, 1, 11)) -> float:
+        """Pick the weight of the similar-prompt edges that minimises Brier score on
+        validation data."""
+        paths, near = self._paths(X_val), self.knn_.predict_proba(X_val)
+        seen = ~np.isnan(Y_val)
+        scores = [np.mean((((1 - b) * paths + b * near) - Y_val)[seen] ** 2) for b in grid]
+        self.beta = float(grid[int(np.argmin(scores))])
+        return self.beta
 
     def _edges(self, X):
         ps = self.skill_clf_.predict_proba(X)  # (n, skills)
@@ -108,20 +140,38 @@ class SkillGraph(Predictor):
         pl[:, self.level_clf_.classes_] = self.level_clf_.predict_proba(X)
         return ps, pl
 
-    def predict_proba(self, X):
+    def _paths(self, X):
         ps, pl = self._edges(X)
         return np.einsum("ns,nb,sbm->nm", ps, pl, self.acc_)
+
+    def predict_proba(self, X):
+        paths = self._paths(X)
+        if self.beta == 0:
+            return paths
+        return (1 - self.beta) * paths + self.beta * self.knn_.predict_proba(X)
 
     def explain(self, x: np.ndarray) -> GraphExplanation:
         ps, pl = self._edges(np.asarray(x, dtype=np.float32).reshape(1, -1))
         ps, pl = ps[0], pl[0]
         order = np.argsort(-ps)
         skills = [(str(self.skill_clf_.classes_[i]), float(ps[i])) for i in order]
+        scale = 1 - self.beta
         edges = {}
         for j, model in enumerate(self.models):
             edges[model] = [
                 (str(self.skill_clf_.classes_[i]), LEVELS[b], float(self.acc_[i, b, j]),
-                 float(ps[i] * pl[b] * self.acc_[i, b, j]))
+                 float(scale * ps[i] * pl[b] * self.acc_[i, b, j]))
                 for i in range(len(ps)) for b in range(len(LEVELS))
             ]  # fmt: skip
-        return GraphExplanation(skills, dict(zip(LEVELS, map(float, pl))), edges)
+        neighbours = {}
+        if self.beta > 0:
+            x2 = np.asarray(x, dtype=np.float32).reshape(1, -1)
+            near = self.knn_.predict_proba(x2)[0]
+            _, idx = self.knn_.neighbours(x2)
+            y = self.knn_.Y_[idx[0]]
+            for j, model in enumerate(self.models):
+                col = y[:, j][~np.isnan(y[:, j])]
+                neighbours[model] = (int((col >= 0.5).sum()), len(col), float(self.beta * near[j]))
+        return GraphExplanation(
+            skills, dict(zip(LEVELS, map(float, pl))), edges, self.beta, neighbours
+        )

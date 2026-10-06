@@ -51,12 +51,24 @@ WEAK_KINDS = frozenset({"givenname", "surname", "city", "zipcode", "buildingnum"
 Tagger = Callable[[str], list[Mapping]]
 
 
-def hf_tagger(model: str = DEFAULT_MODEL, device: int | str | None = None) -> Tagger:
+def hf_tagger(
+    model: str = DEFAULT_MODEL, device: int | str | None = None, quantize: bool = False
+) -> Tagger:
+    """quantize=True stores the model's linear layers as 8-bit integers (CPU only), which
+    usually makes it 2-3x faster for a small accuracy cost; measure it with
+    scripts/eval_confidentiality.py --quantize."""
     from transformers import pipeline
 
-    return pipeline(
+    pipe = pipeline(
         "token-classification", model=model, aggregation_strategy="simple", device=device
     )
+    if quantize:
+        import torch
+
+        pipe.model = torch.quantization.quantize_dynamic(
+            pipe.model, {torch.nn.Linear}, dtype=torch.qint8
+        )
+    return pipe
 
 
 class NERLayer:

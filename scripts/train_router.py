@@ -76,6 +76,9 @@ def main() -> None:
         print(f"difficulty edge: adding {len(lab):,} labelled RouterArena train prompts")
     graph = SkillGraph().fit(X_tr, Y_tr, models, skills=skills["train"], level_extra=level_extra)
     print(f"graph skills: {graph.skills_}")
+    # Half of validation sets the similar-prompt edge weight, the other half calibrates.
+    half = len(X_va) // 2
+    print(f"similar-prompt edge weight beta = {graph.tune_beta(X_va[:half], Y_va[:half]):.1f}")
     members = [
         KNNPredictor(k=32),
         MatrixFactorizationPredictor(epochs=args.epochs),
@@ -85,7 +88,7 @@ def main() -> None:
     for m in members:
         m.fit(X_tr, Y_tr, models)
     candidates = {
-        "graph": CalibratedPredictor.wrap(graph).calibrate(X_va, Y_va),
+        "graph": CalibratedPredictor.wrap(graph).calibrate(X_va[half:], Y_va[half:]),
         "ensemble": CalibratedPredictor.wrap(EnsemblePredictor.of_fitted(members)).calibrate(
             X_va, Y_va
         ),

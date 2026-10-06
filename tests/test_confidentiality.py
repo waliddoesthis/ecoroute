@@ -207,3 +207,22 @@ def test_lone_first_name_is_not_confidential_but_a_full_identity_is():
     got = d.classify("Tom has 3 apples", {"sensitivity_label": "internal"})
     assert got.level == Level.INTERNAL
     assert Detector([ner]).classify("Tom has 3 apples").level == Level.CONFIDENTIAL  # default
+
+
+def test_slow_layers_are_skipped_once_restricted():
+    calls = []
+
+    class Slow:
+        name = "slow"
+
+        def scan(self, text, context=None):
+            calls.append(text)
+            return []
+
+    d = Detector([CallerPolicyLayer(), RulesLayer(), Slow()])
+    d.classify(f"key {AWS}")
+    assert calls == []  # rules already said restricted
+    d.classify("hello")
+    assert calls == ["hello"]
+    Detector([RulesLayer(), Slow()], stop_at_restricted=False).classify(f"key {AWS}")
+    assert len(calls) == 2

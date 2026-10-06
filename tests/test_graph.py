@@ -88,3 +88,20 @@ def test_labelled_prompts_feed_only_the_difficulty_edge():
     assert g.explain(probe[0]).levels["hard"] > 0.5
     plain = SkillGraph(min_skill_prompts=10).fit(X, Y, MODELS, skills=s)
     assert np.allclose(g.acc_, plain.acc_)  # model edges come from outcomes only
+
+
+def test_similar_prompt_edges_and_beta():
+    X, Y, s = make(1500, 7)
+    g = SkillGraph(min_skill_prompts=10, k=16).fit(X, Y, MODELS, skills=s)
+    Xv, Yv, _ = make(400, 8)
+    beta = g.tune_beta(Xv, Yv)
+    assert 0.0 <= beta <= 1.0
+    x = Xv[0]
+    exp = g.explain(x)
+    paths = sum(e[3] for e in exp.edges["big"])
+    near = exp.neighbours.get("big", (0, 0, 0.0))[2]
+    assert abs(paths + near - g.predict_proba(x[None])[0, 1]) < 1e-6  # all edges sum to the score
+    if beta > 0:
+        solved, answered, _ = exp.neighbours["big"]
+        assert 0 <= solved <= answered <= 16
+        assert "most similar past prompts" in exp.lines("big")[1]
