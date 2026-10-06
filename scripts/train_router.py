@@ -91,14 +91,19 @@ def main() -> None:
         m.fit(X_tr, Y_tr, models)
     candidates = {
         "graph": CalibratedPredictor.wrap(graph).calibrate(X_va[half:], Y_va[half:]),
+        # Same protocol for both: calibrate on the second half of validation, choose
+        # taus on the first, measure on test.
         "ensemble": CalibratedPredictor.wrap(EnsemblePredictor.of_fitted(members)).calibrate(
-            X_va, Y_va
+            X_va[half:], Y_va[half:]
         ),
     }
     for name, pred in candidates.items():
         P_te = pred.predict_proba(X_te)
         q = {k: round(v, 4) for k, v in quality_report(P_te, Y_te).items()}
-        h = held_out_saving(pred.predict_proba(X_va), Y_va, C_va, P_te, Y_te, C_te, models)
+        h = held_out_saving(
+            pred.predict_proba(X_va[:half]), Y_va[:half], C_va[:half], P_te, Y_te, C_te,
+            models, 0.01, np.round(np.arange(0.50, 1.0, 0.01), 2), z=1.645,
+        )  # fmt: skip
         print(f"\n[{name}] test quality: {q}")
         if h["matched"]:
             verdict = "within" if h["within_tolerance"] else "OUTSIDE"
@@ -117,7 +122,7 @@ def main() -> None:
     # Taus are chosen on the half of validation the calibrator never saw: on the half it
     # was fitted to, the predictions look better than they are, and the chosen taus
     # missed their targets on test by more than chance would explain (runs 28 and 29).
-    tune = slice(0, half) if args.predictor == "graph" else slice(None)
+    tune = slice(0, half)
     P_va, P_te = predictor.predict_proba(X_va[tune]), predictor.predict_proba(X_te)
     Y_tune, C_tune = Y_va[tune], C_va[tune]
     z = 1.645
