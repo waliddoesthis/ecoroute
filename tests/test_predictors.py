@@ -8,6 +8,7 @@ from scipy.stats import spearmanr
 
 from ecoroute.eval.metrics import (
     breakdown_by_difficulty,
+    held_out_saving,
     quality_report,
     route_cheapest_above,
     routing_curve,
@@ -149,3 +150,16 @@ def test_breakdown_puts_most_of_the_gap_in_hard_prompts(data):
     assert set(table.bucket) == {"easy", "medium", "hard"}
     assert abs(table.share.sum() - 1) < 1e-9
     assert (table.gap >= -1e-9).all()  # the oracle is never worse
+
+
+def test_held_out_saving_picks_tau_on_validation(data):
+    (X_tr, Y_tr, _, _), (X_te, Y_te, C_te, _) = data
+    X_va, Y_va, C_va, _ = make_data(800, seed=2, missing=0.0)
+    knn = KNNPredictor(k=32).fit(X_tr, Y_tr, MODELS)
+    got = held_out_saving(
+        knn.predict_proba(X_va), Y_va, C_va, knn.predict_proba(X_te), Y_te, C_te, MODELS
+    )
+    assert got["reference"] == "always large"
+    if got["matched"]:
+        assert 0.05 <= got["tau"] <= 0.95
+        assert got["cost_saving_pct"] <= 100

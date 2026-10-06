@@ -2,8 +2,10 @@
 
     python scripts/train_baselines.py --data data/processed --source routerbench
 
-Each source is evaluated on its own, because the sources share few models. Writes
-reports/baselines_<source>.json and prints a comparison table.
+Each source is evaluated on its own, because the sources share few models. The neural
+predictors are trained once per seed (--seeds), and savings are reported as mean and
+spread over seeds, with the routing threshold chosen on validation and measured on test.
+Writes reports/baselines_<source>.json and prints a comparison table.
 """
 
 from __future__ import annotations
@@ -18,6 +20,7 @@ import pandas as pd
 from ecoroute.data.prices import fill_missing_costs
 from ecoroute.eval.metrics import (
     breakdown_by_difficulty,
+    held_out_saving,
     quality_report,
     routing_curve,
     savings_at_quality,
@@ -47,6 +50,7 @@ def main() -> None:
     parser.add_argument("--encoder", default=DEFAULT_ENCODER)
     parser.add_argument("--epochs", type=int, default=20)
     parser.add_argument("--out", type=Path, default=Path("reports"))
+    parser.add_argument("--seeds", type=int, default=3, help="repeat neural training per seed")
     args = parser.parse_args()
 
     outcomes = pd.read_parquet(args.data / "outcomes.parquet")
@@ -61,66 +65,112 @@ def main() -> None:
         X = cached_embeddings(ids, texts, cache, encoder=args.encoder)
         data[split] = (X, outcome_matrix(outcomes, ids, models), cost_matrix(outcomes, ids, models))
     X_tr, Y_tr, _ = data["train"]
-    X_va, Y_va, _ = data["val"]
+    X_va, Y_va, C_va = data["val"]
     X_te, Y_te, C_te = data["test"]
     print(
         f"{args.source}: {len(models)} models, {len(X_tr):,} train / {len(X_va):,} val / {len(X_te):,} test prompts"
     )
 
-    predictors = [
-        ModelMeanPredictor(),
-        KNNPredictor(k=32),
-        MatrixFactorizationPredictor(epochs=args.epochs),
-        IRTPredictor(epochs=args.epochs),
-    ]
-    results = []
+    def run_once(seed: int) -> list[dict]:
+        predictors = [
+            ModelMeanPredictor(),
+            KNNPredictor(k=32),
+            MatrixFactorizationPredictor(epochs=args.epochs, seed=seed),
+            IRTPredictor(epochs=args.epochs, seed=seed),
+        ]
+        results = []
 
-    def evaluate(pred, seconds: float) -> None:
-        P = pred.predict_proba(X_te)
-        row = {"predictor": pred.name, **quality_report(P, Y_te), "train_s": seconds}
-        curve = routing_curve(P, Y_te, C_te, models)
-        if curve.attrs["n_prompts"] > 0:
-            singles = curve[curve.policy.str.startswith("always")]
-            best_single = singles.loc[singles.accuracy.idxmax()].policy
-            saving = savings_at_quality(curve, best_single)
-            row["savings_vs_best_model"] = saving
-            row["curve"] = curve.to_dict("records")
-            if saving["matched"]:
-                tau = float(saving["router_policy"].split("=")[1])
-                row["by_difficulty"] = breakdown_by_difficulty(P, Y_te, C_te, tau).to_dict(
-                    "records"
+        def evaluate(pred, seconds: float) -> None:
+            P = pred.predict_proba(X_te)
+            row = {"predictor": pred.name, "seed": seed, **quality_report(P, Y_te)}
+            row["train_s"] = seconds
+            curve = routing_curve(P, Y_te, C_te, models)
+            if curve.attrs["n_prompts"] > 0:
+                singles = curve[curve.policy.str.startswith("always")]
+                best_single = singles.loc[singles.accuracy.idxmax()].policy
+                # Optimistic: tau picked on test. Kept for comparison with earlier runs.
+                row["saving_tau_on_test"] = savings_at_quality(curve, best_single)
+                # Honest: tau picked on validation, measured on test.
+                honest = held_out_saving(
+                    pred.predict_proba(X_va), Y_va, C_va, P, Y_te, C_te, models
                 )
-        results.append(row)
+                row["saving_held_out"] = honest
+                row["curve"] = curve.to_dict("records")
+                if honest["matched"]:
+                    row["by_difficulty"] = breakdown_by_difficulty(
+                        P, Y_te, C_te, honest["tau"]
+                    ).to_dict("records")
+            results.append(row)
 
-    for pred in predictors:
-        t0 = time.time()
-        pred.fit(X_tr, Y_tr, models)
-        evaluate(pred, time.time() - t0)
-        if not isinstance(pred, ModelMeanPredictor):
+        for pred in predictors:
             t0 = time.time()
-            evaluate(CalibratedPredictor.wrap(pred).calibrate(X_va, Y_va), time.time() - t0)
+            pred.fit(X_tr, Y_tr, models)
+            evaluate(pred, time.time() - t0)
+            if not isinstance(pred, ModelMeanPredictor):
+                t0 = time.time()
+                evaluate(CalibratedPredictor.wrap(pred).calibrate(X_va, Y_va), time.time() - t0)
 
-    learned = [p for p in predictors if not isinstance(p, ModelMeanPredictor)]
-    ensemble = EnsemblePredictor.of_fitted(learned)
-    evaluate(ensemble, 0.0)
-    evaluate(CalibratedPredictor.wrap(ensemble).calibrate(X_va, Y_va), 0.0)
+        learned = [p for p in predictors if not isinstance(p, ModelMeanPredictor)]
+        ensemble = EnsemblePredictor.of_fitted(learned)
+        evaluate(ensemble, 0.0)
+        evaluate(CalibratedPredictor.wrap(ensemble).calibrate(X_va, Y_va), 0.0)
+        return results
 
-    table = pd.DataFrame(results)[["predictor", "brier", "ece", "auc", "train_s"]]
-    print(table.to_string(index=False, float_format=lambda v: f"{v:.4f}"))
+    results = [r for seed in range(args.seeds) for r in run_once(seed)]
+    summary = summarise(results)
+    print(summary.to_string(index=False, float_format=lambda v: f"{v:.4f}"))
+    # Best = largest saving among predictors that kept test accuracy within 1 point.
+    ok = summary[summary.acc_gap <= 0.01]
+    best = ok.sort_values("saving_mean", ascending=False).iloc[0].predictor if len(ok) else None
+    print(f"\nbest within 1 point of the reference accuracy: {best}")
     for r in results:
-        if "savings_vs_best_model" in r:
-            print(r["predictor"], r["savings_vs_best_model"])
-        if "by_difficulty" in r:
+        if r["predictor"] == best and r["seed"] == 0 and "by_difficulty" in r:
+            print(f"\n{best}, seed 0, by difficulty (tau chosen on validation):")
             print(
                 pd.DataFrame(r["by_difficulty"]).to_string(
                     index=False, float_format="{:.4f}".format
                 )
             )
     args.out.mkdir(parents=True, exist_ok=True)
-    report = {"source": args.source, "encoder": args.encoder, "models": models, "results": results}
+    report = {
+        "source": args.source,
+        "encoder": args.encoder,
+        "models": models,
+        "seeds": args.seeds,
+        "summary": summary.to_dict("records"),
+        "results": results,
+    }
     (args.out / f"baselines_{args.source}.json").write_text(
         json.dumps(report, indent=2, default=float)
     )
+
+
+def summarise(results: list[dict]) -> pd.DataFrame:
+    """Mean and spread over seeds of quality and held-out saving, per predictor."""
+    rows = []
+    for r in results:
+        h = r.get("saving_held_out", {})
+        rows.append(
+            {
+                "predictor": r["predictor"],
+                "brier": r["brier"],
+                "ece": r["ece"],
+                "auc": r["auc"],
+                "saving": h.get("cost_saving_pct", float("nan"))
+                if h.get("matched")
+                else float("nan"),
+                "acc_gap": (h["reference_accuracy"] - h["router_accuracy"])
+                if h.get("matched")
+                else float("nan"),
+            }
+        )
+    df = pd.DataFrame(rows)
+    g = df.groupby("predictor", sort=False)
+    out = g[["brier", "ece", "auc", "acc_gap"]].mean()
+    out["saving_mean"] = g.saving.mean()
+    out["saving_std"] = g.saving.std()
+    out["matched_runs"] = g.saving.count()
+    return out.reset_index()
 
 
 if __name__ == "__main__":

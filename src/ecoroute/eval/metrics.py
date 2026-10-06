@@ -172,3 +172,47 @@ def breakdown_by_difficulty(
     out = pd.DataFrame(rows)
     out["gap"] = out.oracle_accuracy - out.router_accuracy
     return out
+
+
+def evaluate_at_tau(P: np.ndarray, Y: np.ndarray, C: np.ndarray, tau: float) -> dict[str, float]:
+    """Accuracy and mean cost of the router at a fixed tau, on prompts with full rows."""
+    full = ~np.isnan(Y).any(axis=1) & ~np.isnan(C).any(axis=1)
+    P, Y, C = P[full], Y[full], C[full]
+    pick = route_cheapest_above(P, C, tau)
+    idx = np.arange(len(Y))
+    return {"accuracy": float(Y[idx, pick].mean()), "cost": float(C[idx, pick].mean())}
+
+
+def held_out_saving(
+    P_val: np.ndarray,
+    Y_val: np.ndarray,
+    C_val: np.ndarray,
+    P_test: np.ndarray,
+    Y_test: np.ndarray,
+    C_test: np.ndarray,
+    models: list[str],
+    tolerance: float = 0.01,
+) -> dict[str, float | str | bool]:
+    """Pick tau on validation, then measure it on test.
+
+    Choosing tau on the test set (as savings_at_quality does) is optimistic, because the
+    best of 19 thresholds is picked after seeing the answers. This is the honest number.
+    """
+    val_curve = routing_curve(P_val, Y_val, C_val, models)
+    singles = val_curve[val_curve.policy.str.startswith("always")]
+    reference = singles.loc[singles.accuracy.idxmax()].policy
+    chosen = savings_at_quality(val_curve, reference, tolerance)
+    if not chosen["matched"]:
+        return {"reference": reference, "matched": False}
+    tau = float(chosen["router_policy"].split("=")[1])
+    test_curve = routing_curve(P_test, Y_test, C_test, models)
+    ref = test_curve.loc[test_curve.policy == reference].iloc[0]
+    got = evaluate_at_tau(P_test, Y_test, C_test, tau)
+    return {
+        "reference": reference,
+        "matched": True,
+        "tau": tau,
+        "router_accuracy": got["accuracy"],
+        "reference_accuracy": float(ref.accuracy),
+        "cost_saving_pct": float(100 * (1 - got["cost"] / ref.cost)) if ref.cost > 0 else 0.0,
+    }
