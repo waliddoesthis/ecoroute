@@ -137,4 +137,4 @@ def test_far_away_prompts_lean_on_skill_paths():
     far = (near * -1.0).astype(np.float32)
     far[0, 2:] = 0.0
     assert g.beta_for(near)[0] >= g.beta_for(far)[0]
-    assert g.beta_for(Xv).max() <= 0.8 + 1e-9
+    assert g.beta_for(Xv).max() <= 0.8 + 1e-6  # float32 similarities
