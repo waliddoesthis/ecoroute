@@ -1,0 +1,228 @@
+"""The routing decision and its explanation (Graph A in the design doc).
+
+The decision is a short path through fixed steps, and each step's outcome is kept so the
+explanation is the decision itself, not a story told afterwards:
+
+1. Confidentiality: classify the prompt; drop models without enough clearance (hard rule).
+2. Quality floor: keep allowed models whose predicted P(correct) >= tau.
+3. Cost and energy: among those, take the lowest cost + lambda_energy * energy.
+   If none reaches tau, take the allowed model most likely to succeed.
+
+P(correct) per model comes from a predictor; this module does not care which one.
+"""
+
+from __future__ import annotations
+
+from collections.abc import Mapping
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any
+
+import yaml
+
+from ecoroute.confidentiality import Classification, Detector, Level
+
+
+class NoAllowedModel(RuntimeError):
+    """No model in the catalog is cleared for this prompt; the request must not be sent."""
+
+
+@dataclass(frozen=True)
+class Policy:
+    tau: float  # quality floor on predicted P(correct)
+    lambda_energy: float  # USD charged per Wh when ranking, to favour efficient models
+
+    @classmethod
+    def parse(cls, value: str | Policy) -> Policy:
+        if isinstance(value, Policy):
+            return value
+        try:
+            return PROFILES[value]
+        except KeyError:
+            raise ValueError(f"unknown policy profile {value!r}; use {sorted(PROFILES)}") from None
+
+
+PROFILES = {
+    "eco": Policy(tau=0.6, lambda_energy=0.01),
+    "balanced": Policy(tau=0.7, lambda_energy=0.002),
+    "quality": Policy(tau=0.85, lambda_energy=0.0),
+}
+
+
+@dataclass
+class Candidate:
+    name: str
+    p_success: float | None
+    cost_usd: float
+    energy_wh: float
+    energy_estimated: bool
+    allowed: bool
+    qualifies: bool = False
+    excluded_because: str | None = None
+
+    def score(self, policy: Policy) -> float:
+        return self.cost_usd + policy.lambda_energy * self.energy_wh
+
+
+@dataclass
+class Decision:
+    model: str
+    level: Level
+    difficulty: float | None
+    policy: Policy
+    candidates: list[Candidate]
+    confidentiality: Classification
+    steps: list[str] = field(default_factory=list)
+    below_floor: bool = False
+
+    @property
+    def chosen(self) -> Candidate:
+        return next(c for c in self.candidates if c.name == self.model)
+
+    def explain(self) -> str:
+        return "\n".join(f"{i}. {s}" for i, s in enumerate(self.steps, 1))
+
+    def headers(self) -> dict[str, str]:
+        """Response headers the gateway attaches (see docs, section 2c)."""
+        h = {
+            "X-EcoRoute-Model": self.model,
+            "X-EcoRoute-Level": str(self.level),
+            "X-EcoRoute-Reason": self.steps[-1] if self.steps else "",
+        }
+        if self.difficulty is not None:
+            h["X-EcoRoute-Difficulty"] = (
+                f"{self.difficulty:.2f} ({difficulty_label(self.difficulty)})"
+            )
+        return h
+
+
+def difficulty_label(d: float) -> str:
+    return "easy" if d < 0.3 else "hard" if d > 0.6 else "medium"
+
+
+class Router:
+    def __init__(
+        self,
+        catalog: list[Mapping[str, Any]],
+        detector: Detector | None = None,
+        policy: str | Policy = "balanced",
+        default_wh_per_1k_out: float = 0.3,
+    ) -> None:
+        self.catalog = list(catalog)
+        self.detector = detector or Detector()
+        self.policy = Policy.parse(policy)
+        # Used when a model's energy is not known yet; such numbers are flagged as estimates.
+        self.default_wh_per_1k_out = default_wh_per_1k_out
+
+    @classmethod
+    def from_yaml(cls, path: str | Path, **kw) -> Router:
+        return cls(yaml.safe_load(Path(path).read_text())["models"], **kw)
+
+    def decide(
+        self,
+        prompt: str,
+        p_success: Mapping[str, float],
+        context: Mapping | None = None,
+        in_tokens: int | None = None,
+        out_tokens: int = 500,
+        policy: str | Policy | None = None,
+    ) -> Decision:
+        """Choose a model for `prompt` given predicted P(correct) per catalog model.
+
+        Models missing from p_success can still be chosen as a last resort but never
+        qualify on quality. Raises NoAllowedModel when nothing is cleared for the prompt.
+        """
+        pol = Policy.parse(policy) if policy is not None else self.policy
+        if in_tokens is None:
+            in_tokens = max(1, len(prompt) // 4)  # rough: about 4 characters per token
+        conf = self.detector.classify(prompt, context)
+        cands = [
+            self._candidate(m, conf.level, p_success, in_tokens, out_tokens) for m in self.catalog
+        ]
+        allowed = [c for c in cands if c.allowed]
+        steps = [_confidentiality_step(conf, len(allowed), len(cands))]
+        if not allowed:
+            raise NoAllowedModel(steps[0])
+
+        for c in allowed:
+            c.qualifies = c.p_success is not None and c.p_success >= pol.tau
+            if not c.qualifies:
+                c.excluded_because = (
+                    "no quality prediction"
+                    if c.p_success is None
+                    else f"P(correct) {c.p_success:.2f} < tau {pol.tau:.2f}"
+                )
+        qualified = [c for c in allowed if c.qualifies]
+        steps.append(
+            f"Quality floor tau={pol.tau:.2f}: {len(qualified)} of {len(allowed)} allowed "
+            f"models are predicted to succeed."
+        )
+
+        if qualified:
+            best = min(qualified, key=lambda c: (c.score(pol), -(c.p_success or 0)))
+            steps.append(_choice_step(best, allowed))
+        else:
+            best = max(allowed, key=lambda c: (c.p_success or -1, -c.score(pol)))
+            steps.append(
+                f"No allowed model reaches tau, so {best.name} was chosen as the most likely "
+                f"to succeed (P={_fmt_p(best.p_success)}, {_fmt_cost(best.cost_usd)})."
+            )
+
+        known = [p for p in p_success.values() if p is not None]
+        difficulty = 1 - sum(known) / len(known) if known else None
+        return Decision(
+            model=best.name,
+            level=conf.level,
+            difficulty=difficulty,
+            policy=pol,
+            candidates=cands,
+            confidentiality=conf,
+            steps=steps,
+            below_floor=not qualified,
+        )
+
+    def _candidate(self, m, level, p_success, in_tokens, out_tokens) -> Candidate:
+        cost = (
+            in_tokens * m.get("price_in_per_mtok", 0.0)
+            + out_tokens * m.get("price_out_per_mtok", 0.0)
+        ) / 1e6
+        wh = (m.get("energy") or {}).get("wh_per_1k_out")
+        estimated = wh is None or (m.get("energy") or {}).get("source") != "measured"
+        energy = (wh if wh is not None else self.default_wh_per_1k_out) * out_tokens / 1000
+        clearance = Level.parse(m.get("clearance", "public"))
+        allowed = clearance >= level
+        return Candidate(
+            name=m["name"],
+            p_success=p_success.get(m["name"]),
+            cost_usd=cost,
+            energy_wh=energy,
+            energy_estimated=estimated,
+            allowed=allowed,
+            excluded_because=None if allowed else f"clearance {clearance} < prompt level {level}",
+        )
+
+
+def _fmt_p(p: float | None) -> str:
+    return "unknown" if p is None else f"{p:.2f}"
+
+
+def _fmt_cost(usd: float) -> str:
+    return f"${usd:.5f}"
+
+
+def _confidentiality_step(conf: Classification, n_allowed: int, n_total: int) -> str:
+    why = "; ".join(conf.reasons()[:3]) or "no sensitive content found"
+    return f"Confidentiality: {conf.level} ({why}). {n_allowed} of {n_total} models are cleared."
+
+
+def _choice_step(best: Candidate, allowed: list[Candidate]) -> str:
+    est = " (estimated)" if best.energy_estimated else ""
+    text = (
+        f"Chose {best.name}: cheapest qualifying model "
+        f"(P={_fmt_p(best.p_success)}, {_fmt_cost(best.cost_usd)}, {best.energy_wh:.3f} Wh{est})."
+    )
+    priciest = max(allowed, key=lambda c: c.cost_usd)
+    if priciest is not best and priciest.cost_usd > 0:
+        saved = 100 * (1 - best.cost_usd / priciest.cost_usd)
+        text += f" {saved:.0f}% cheaper than the priciest allowed model, {priciest.name}."
+    return text
