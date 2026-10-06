@@ -54,5 +54,15 @@ to succeed.
 
 ## What it achieves (SPROUT test set, held-out threshold)
 
-- Graph router (run 9): 60% cheaper than always using GPT-4o, accuracy within 1 point.
-- Telling hard from easy on unseen RouterArena prompts: AUC 0.80.
+Graph router v7 (run 19), against always using GPT-4o (test accuracy 0.845), with each
+profile's tau chosen on validation with one standard error of margin:
+
+| Profile  | tau  | Accuracy vs GPT-4o | Cost saved |
+|----------|------|--------------------|------------|
+| quality  | 0.91 | +0.3 points        | 64.9%      |
+| balanced | 0.89 | -1.0 point         | 71.7%      |
+| eco      | 0.85 | -2.7 points        | 77.4%      |
+
+- Telling hard from easy on unseen RouterArena prompts: AUC 0.76-0.80 across versions.
+- The privacy check (rules + PII model) finds 97% of prompts with personal data and 90%
+  of restricted ones, with 12% false alarms; about 26 ms per request on a T4 GPU.
