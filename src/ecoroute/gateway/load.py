@@ -45,4 +45,5 @@ def load_gateway_router(
     return EcoRoute(
         full.predictor.base, full.encoder_name, live, router=gate,
         taus=full.taus, margins=full.margins, parallel_privacy=parallel_privacy,
+        local=full.local, shifts=full.shifts,
     )  # fmt: skip

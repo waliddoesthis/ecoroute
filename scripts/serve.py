@@ -32,6 +32,7 @@ from ecoroute.gateway import (
     create_app,
 )
 from ecoroute.gateway.load import load_gateway_router
+from ecoroute.gateway.logs import DecisionLog
 
 
 def main() -> None:
@@ -69,6 +70,11 @@ def main() -> None:
         action="store_true",
         help="/v1/messages: run the PII model over tool results too (slow on CPU, noisy on code)",
     )
+    parser.add_argument(
+        "--log-dir",
+        type=Path,
+        help="log decisions (with prompt text) and accept POST /feedback, for retraining",
+    )
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO)
 
@@ -92,6 +98,7 @@ def main() -> None:
         providers=providers,
         redact=not args.no_redact,
         pii_on_tools=args.pii_on_tools,
+        decision_log=DecisionLog(args.log_dir) if args.log_dir else None,
     )
     uvicorn.run(app, host=args.host, port=args.port)
 

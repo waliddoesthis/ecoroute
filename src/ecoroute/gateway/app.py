@@ -27,6 +27,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 
 from ecoroute.gateway.anthropic import register_messages
 from ecoroute.gateway.backends import Backend
+from ecoroute.gateway.logs import DecisionLog
 from ecoroute.routing import NoAllowedModel
 
 log = logging.getLogger("ecoroute.gateway")
@@ -66,6 +67,7 @@ def create_app(
     providers: Mapping[str, Mapping[str, Any]] | None = None,
     redact: bool = True,
     pii_on_tools: bool = False,
+    decision_log: DecisionLog | None = None,
 ) -> FastAPI:
     """eco: an EcoRoute (or anything with .route(), .router and .catalog) whose catalog is
     already limited to deployable models. With messages_backend (and providers), the
@@ -82,11 +84,23 @@ def create_app(
             _context,
             redact=redact,
             pii_on_tools=pii_on_tools,
+            decision_log=decision_log,
         )
 
     @app.get("/health")
     def health():
         return {"status": "ok", "models": len(by_name)}
+
+    @app.post("/feedback")
+    async def feedback(request: Request):
+        """How a routed answer went, for retraining (gateway/logs.py)."""
+        if decision_log is None:
+            raise HTTPException(404, "feedback needs the gateway started with --log-dir")
+        try:
+            decision_log.feedback(await request.json())
+        except (ValueError, AttributeError) as e:
+            raise HTTPException(400, str(e)) from e
+        return {"ok": True}
 
     def decide(body: dict, request: Request):
         messages = body.get("messages") or [{"role": "user", "content": body.get("prompt", "")}]
@@ -150,6 +164,9 @@ def create_app(
         body = await request.json()
         d = decide(body, request)
         headers = d.headers()
+        if decision_log is not None:
+            prompt = split_messages(body.get("messages") or [])[0] or body.get("prompt", "")
+            headers["X-EcoRoute-Request-Id"] = decision_log.decision(prompt, d, "chat")
         target = body.get("model", AUTO)
         if target not in (AUTO, None, ""):
             if target not in by_name:

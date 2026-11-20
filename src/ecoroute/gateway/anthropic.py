@@ -173,6 +173,16 @@ def match_requested(requested: str, models: list[Mapping[str, Any]]) -> Mapping[
     return None
 
 
+def _is_tool_turn(body: Mapping[str, Any]) -> bool:
+    """True when the newest user message carries only tool results (an agent's follow-up
+    step, not a new prompt): such turns are not logged again."""
+    msgs = body.get("messages") or []
+    if not msgs or msgs[-1].get("role") != "user":
+        return False
+    blocks = _blocks(msgs[-1].get("content"))
+    return bool(blocks) and all(b.get("type") == "tool_result" for b in blocks)
+
+
 def _price(m: Mapping[str, Any]) -> float:
     return float(m.get("price_out_per_mtok") or 0.0)
 
@@ -310,6 +320,7 @@ def register_messages(
     redact: bool = True,
     include_system: bool = False,
     pii_on_tools: bool = False,
+    decision_log=None,
 ):
     """Add /v1/messages and /v1/messages/count_tokens to the gateway app.
 
@@ -380,15 +391,17 @@ def register_messages(
             decisions.move_to_end(key)
         allowed = {c.name for c in d.candidates if c.allowed}
         asked = asked if asked is not None and asked["name"] in allowed else None
-        return d, asked, body, mapping, kinds
+        return d, asked, body, mapping, kinds, prompt
 
     @app.post("/v1/messages")
     async def messages(request: Request):
         body = await request.json()
         incoming = {k.lower(): v for k, v in request.headers.items()}
-        d, asked, body, mapping, kinds = await run_in_threadpool(choose, body, request)
+        d, asked, body, mapping, kinds, prompt = await run_in_threadpool(choose, body, request)
         chosen = by_name[d.model]
         headers = d.headers()
+        if decision_log is not None and not _is_tool_turn(body):
+            headers["X-EcoRoute-Request-Id"] = decision_log.decision(prompt, d, "messages")
         if kinds:
             headers["X-EcoRoute-Redacted"] = ", ".join(f"{k} x{n}" for k, n in kinds.items())
         attempts = [(chosen, body, False)]
