@@ -5,8 +5,8 @@ sensitivity.
 
 **Status: research prototype.** The routing method and its evaluation are complete and
 reproducible. The gateway has been tested end to end with a dry-run backend, but not
-operated in production. It has no built-in authentication or rate limiting, so run it
-behind an existing API gateway.
+operated in production. It has access keys for hosted use but no rate limiting, so run it
+behind an existing API gateway for a large deployment.
 
 EcoRoute combines model selection with sensitivity-based routing. For each request it
 takes three steps:
@@ -49,6 +49,30 @@ The same prompt goes to claude-opus-5-5 under `quality` and to gpt-6-luna under 
 All numbers come from `scripts/decision_example.py` (eight prompts under each profile,
 saved in [`reports/decisions_v14.json`](reports/decisions_v14.json)). The figure is
 drawn from that file by `scripts/draw_decision.py`.
+
+## Use it where you work
+
+- **Claude Code.** Claude Code sends every request through the gateway, and a hook shows
+  the model chosen for each prompt. Secrets in the files the agent reads are redacted
+  before they leave and restored in the answer. Inside Claude Code the choice is among
+  Claude models. See [docs/claude-code.md](docs/claude-code.md).
+- **Any OpenAI- or Anthropic-format app.** The OpenAI SDK, Anthropic SDK, LangChain, or
+  any tool with a custom base URL: set the base URL to the gateway and use
+  `model="ecoroute/auto"`.
+- **A shared, hosted API.** One person runs the gateway in Docker. Everyone else runs one
+  command and pays with their own provider keys. See [docs/deploy.md](docs/deploy.md).
+- **Your own work.** Grade some answers on your own prompts, or tell the gateway's
+  `/feedback` endpoint whether an answer was good, then run `scripts/retrain.py`. The
+  router fits itself to your work and checks the result on held-out prompts first
+  ([Retrain on your data](#retrain-on-your-own-data)).
+
+```bash
+# Use a hosted EcoRoute API from Claude Code
+curl -fsSL https://raw.githubusercontent.com/waliddoesthis/ecoroute/main/install.sh \
+  | bash -s -- --url https://YOUR-ECOROUTE-HOST --key YOUR_ACCESS_KEY
+# Or run your own gateway and point Claude Code at it
+curl -fsSL https://raw.githubusercontent.com/waliddoesthis/ecoroute/main/install.sh | bash
+```
 
 ## How it works
 
@@ -152,8 +176,8 @@ assumptions. See [docs/impact.md](docs/impact.md) for assumptions and projection
 ### Requirements
 
 - **Python** 3.10 or later.
-- **A trained router file.** No pretrained checkpoint is published yet, so you train one
-  first (next section).
+- **A trained router file.** `install.sh` and the Docker image download router v14 from
+  the latest GitHub release (`router.pt`). You can also train your own (next section).
 - **For training:**
   - an NVIDIA GPU is recommended (the published runs used one 16 GB T4);
   - about 2 GB of disk for the data;
@@ -226,8 +250,12 @@ r.headers["X-EcoRoute-Model"], r.headers["X-EcoRoute-Reason"]
 | Endpoint | Notes |
 |---|---|
 | `POST /v1/chat/completions` | OpenAI Chat Completions format, including `stream: true` |
+| `POST /v1/messages` | Anthropic Messages format, for Claude Code ([details](docs/claude-code.md)) |
+| `POST /v1/messages/count_tokens` | Forwarded to the provider |
 | `GET /v1/models` | `ecoroute/auto` plus the models that can be routed to |
 | `POST /route` | The decision and its explanation, without calling any model |
+| `POST /feedback` | How a routed answer went, for retraining (needs `--log-dir`) |
+| `GET /health` | Liveness check |
 
 Other OpenAI endpoints (legacy Completions, Embeddings, Responses) are not implemented.
 
@@ -259,6 +287,39 @@ Response headers: `X-EcoRoute-Model`, `-Level`, `-Difficulty`, `-Reason` and `-T
   gateway retries once, on the most likely other model cleared for the same level.
   Streaming requests are not retried.
 
+### Retrain on your own data
+
+The published router learned from public benchmarks. To fit it to your own work, give it
+graded answers: for some of your prompts, whether a model's answer was good enough.
+
+```bash
+# my_outcomes.jsonl: {"prompt": "...", "model": "claude-haiku-4-5", "success": true}
+python scripts/retrain.py --data my_outcomes.jsonl --out artifacts/router_mine.pt
+# or from the gateway's own log: serve.py --log-dir logs/, then POST /feedback
+python scripts/retrain.py --log-dir logs/ --out artifacts/router_mine.pt
+python scripts/serve.py --router artifacts/router_mine.pt
+```
+
+It refits each model's strength on your data, and lets your most similar graded prompts
+pull each new prediction toward what happened on them. The decision's explanation says
+so ("Your data: claude-haiku-4-5 handled 90% of the 16 most similar prompts you graded").
+It holds out 20% of your prompts and reports whether predictions got better there before
+you deploy. It runs on a CPU.
+
+Measured on public data (`scripts/eval_adapt.py`): the "user's work" is held-out test
+prompts, and both deployed models have wrong anchors. Results are the mean of 3 seeds,
+checked on 600 held-out prompts.
+
+| Domain | Graded prompts per model | Prediction error (Brier) | Sent to the small model | Accuracy |
+|---|---|---|---|---|
+| MATH | 25 | 0.132 → 0.090 | 5% → 33% | 76.8% → 80.2% |
+| MATH | 400 | 0.132 → 0.086 | 5% → 34% | 76.8% → 79.8% |
+| MMLU-Pro | 400 | 0.231 → 0.194 | 0% → 3% | 77.1% → 77.1% |
+
+On MATH the anchors had the models backwards, and a few graded prompts were enough to
+fix it. On MMLU-Pro the small model really is weaker, so it stays mostly unused. Full
+output: `reports/run41_adapt_*.txt`.
+
 ### Running without the PII model
 
 `--no-pii-model` disables the PII model. Sensitivity detection then relies on caller
@@ -280,14 +341,17 @@ labels and deterministic rules.
   fit the deployed models on internally graded answers
   ([integration guide](docs/enterprise-integration.md#6-rollout)).
 - **Deployed models.** The newer models in the catalog are scored through benchmark
-  anchors, not graded directly.
+  anchors, not graded directly, until you [retrain on your own
+  data](#retrain-on-your-own-data).
+- **Claude Code.** Inside Claude Code, the choice is among Claude models only (tool calls
+  are not translated to other providers).
 - **Coding prompts.** Predicting which model solves a coding task is weak (AUC 0.65).
 - **Energy.** Energy figures for API models are order-of-magnitude priors, because
   providers don't publish per-model numbers.
 - **Detection.** Sensitivity detection is statistical (see above). The clearance rule is
   only as good as the level it receives.
-- **No production features.** There is no built-in authentication, rate limiting or
-  persistent audit log.
+- **Few production features.** There are access keys and an opt-in decision log, but no
+  rate limiting or per-user billing.
 
 ## Documentation
 
@@ -298,6 +362,8 @@ labels and deterministic rules.
 | [Reproducing](docs/reproducing.md) | Commands, data, hardware and all measurement scripts |
 | [Integration guide](docs/enterprise-integration.md) | Where it fits in a company's stack, compliance support, rollout |
 | [Impact estimates](docs/impact.md) | Cost, energy and CO2 projections, with their assumptions |
+| [Claude Code](docs/claude-code.md) | Setup, what happens to each request, redaction, limits |
+| [Deploying](docs/deploy.md) | Installer, Docker, hosting the API for others |
 
 ## Repository layout
 
@@ -308,10 +374,13 @@ src/ecoroute/
   graph/            the decision graph (skills, difficulty, similar prompts)
   predictors/       baselines, calibration, catalog anchoring
   routing/          profiles and the decision with its explanation
-  gateway/          OpenAI-compatible FastAPI app and provider backends
+  gateway/          FastAPI app: OpenAI and Anthropic formats, backends, redaction, logs
+  adapt.py          retraining on your own graded prompts
   data/, eval/      dataset loaders and routing metrics
   service.py        EcoRoute: embed, predict, decide (save/load the router file)
-scripts/      build, train, evaluate, serve
+scripts/      build, train, evaluate, serve, retrain, setup_claude_code
+integrations/ claude-code/ecoroute_hook.py (shows each decision in Claude Code)
+install.sh, Dockerfile, docker-compose.yml   one-command install and hosting
 docs/         report, design, reproducing, integration, impact
 reports/      saved evaluation reports behind the published numbers
 ```

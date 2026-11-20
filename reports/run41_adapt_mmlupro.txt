@@ -1,0 +1,7 @@
+1064 TIGER-Lab/MMLU-Pro test prompts with outcomes for both true models
+balanced tau 0.91; held-out 600 prompts; mean of 3 seeds
+     brier_before  brier_after  small_before  small_after  acc_before  acc_after  acc_always_big  acc_always_small
+n                                                                                                                 
+25          0.231        0.199           0.0        0.006       0.771      0.771           0.771              0.72
+100         0.231        0.194           0.0        0.026       0.771      0.771           0.771              0.72
+400         0.231        0.194           0.0        0.034       0.771      0.771           0.771              0.72

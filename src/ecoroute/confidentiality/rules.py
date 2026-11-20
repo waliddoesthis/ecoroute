@@ -172,6 +172,17 @@ RULES: list[Rule] = [
 _TOKEN = re.compile(r"[A-Za-z0-9+/_\-=]{32,}")
 
 
+_PATH_PART = re.compile(r"[A-Z]?[a-z0-9_.\-]*")
+
+
+def looks_like_path(tok: str) -> bool:
+    """A file path or URL path (/home/me/project/model_v2), not a key: at least two
+    segments, each a lowercase word or a Capitalised one. Random base64 that contains a
+    slash has mixed case inside its segments."""
+    parts = [p for p in tok.split("/") if p]
+    return len(parts) >= 2 and all(_PATH_PART.fullmatch(p) for p in parts)
+
+
 class RulesLayer:
     """Regex + validator rules, high-entropy strings, and a company dictionary.
 
@@ -205,7 +216,11 @@ class RulesLayer:
         for m in _TOKEN.finditer(text):
             tok = m.group()
             mixed = any(c.isdigit() for c in tok) and any(c.isalpha() for c in tok)
-            if mixed and shannon_entropy(tok) >= self.entropy_threshold:
+            if (
+                mixed
+                and not looks_like_path(tok)
+                and shannon_entropy(tok) >= self.entropy_threshold
+            ):
                 found.append(Finding("high_entropy_string", Level.RESTRICTED, m.start(), m.end()))
         for term, level, pat in self.dictionary:
             for m in pat.finditer(text):
