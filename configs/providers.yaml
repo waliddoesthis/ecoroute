@@ -1,5 +1,7 @@
 # Where the gateway sends requests, per `provider` in models.yaml. Every entry speaks the
-# OpenAI Chat Completions API. API keys are read from the named environment variable and
+# OpenAI Chat Completions API at base_url. Providers that also accept Anthropic Messages
+# requests declare anthropic_base_url: only their models can be chosen for Claude Code
+# (/v1/messages), because its tool calls pass through them unchanged. API keys are read from the named environment variable and
 # never stored here. Check each base_url against the provider's docs before production.
 
 providers:
@@ -17,4 +19,5 @@ providers:
     api_key_env: GEMINI_API_KEY
   anthropic:
     base_url: https://api.anthropic.com/v1
+    anthropic_base_url: https://api.anthropic.com
     api_key_env: ANTHROPIC_API_KEY

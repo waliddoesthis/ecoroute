@@ -22,11 +22,17 @@ def load_gateway_router(
     pii_fp16: bool = False,
     dry_run: bool = False,
     parallel_privacy: bool = False,
+    caller_keys: bool = False,
 ) -> EcoRoute:
     """The trained router limited to the models the gateway can call (all enabled catalog
-    models on a dry run), with the full privacy check in front."""
+    models on a dry run; with caller_keys, every model with a provider and api_id, since
+    callers bring their own keys), with the full privacy check in front."""
     full = EcoRoute.load(router, catalog=catalog)
-    live = full.catalog if dry_run else deployable(full.catalog, providers)
+    live = (
+        full.catalog
+        if dry_run
+        else deployable(full.catalog, providers, require_key=not caller_keys)
+    )
     if not live:
         raise SystemExit("no deployable models: set api_id in models.yaml and the API key env vars")
     layers = [CallerPolicyLayer(), RulesLayer()]

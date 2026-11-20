@@ -14,7 +14,7 @@ P(correct) per model comes from a predictor; this module does not care which one
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Collection, Mapping
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any
@@ -171,8 +171,13 @@ class Router:
         policy: str | Policy | None = None,
         scan_text: str | None = None,
         classification: Classification | None = None,
+        models: Collection[str] | None = None,
+        models_reason: str | None = None,
     ) -> Decision:
         """Choose a model for `prompt` given predicted P(correct) per catalog model.
+
+        models limits the choice to those catalog names (for example the models an API
+        format can reach); models_reason says why, for the explanation.
 
         scan_text is what the confidentiality check reads when it differs from the prompt
         (for a chat, the whole conversation rather than the last question). Models missing
@@ -185,11 +190,16 @@ class Router:
             in_tokens = max(1, len(text) // 4)  # rough: about 4 characters per token
         # A caller may pass a classification it computed alongside the prediction.
         conf = classification or self.detector.classify(text, context)
-        cands = [
-            self._candidate(m, conf.level, p_success, in_tokens, out_tokens) for m in self.catalog
-        ]
+        pool = self.catalog
+        steps = []
+        if models is not None:
+            keep = set(models)
+            pool = [m for m in self.catalog if m["name"] in keep]
+            if models_reason:
+                steps.append(f"Choice limited to {len(pool)} models: {models_reason}.")
+        cands = [self._candidate(m, conf.level, p_success, in_tokens, out_tokens) for m in pool]
         allowed = [c for c in cands if c.allowed]
-        steps = [_confidentiality_step(conf, len(allowed), len(cands))]
+        steps.insert(0, _confidentiality_step(conf, len(allowed), len(cands)))
         if not allowed:
             raise NoAllowedModel(steps[0])
 

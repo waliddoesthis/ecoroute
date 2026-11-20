@@ -1,13 +1,16 @@
 """OpenAI-compatible gateway: apps change base_url and use model="ecoroute/auto".
 
     POST /v1/chat/completions  route, then forward to the chosen provider (streaming works)
+    POST /v1/messages          the same in Anthropic's format, for Claude Code (anthropic.py)
     POST /route                decision and explanation only, no model is called
     GET  /v1/models            the models this gateway can route to
+    GET  /health               liveness check
 
 Request headers the caller may set:
     X-EcoRoute-Sensitivity   the data's sensitivity label (e.g. "Confidential")
     X-EcoRoute-Min-Level     public / internal / confidential / restricted
     X-EcoRoute-Policy        eco / balanced / quality
+    X-EcoRoute-Api           "messages": /route picks only among models /v1/messages can reach
 
 Asking for a specific model instead of ecoroute/auto skips the quality ranking but never
 the confidentiality check: an uncleared model is refused with 403.
@@ -22,6 +25,7 @@ from typing import Any
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 
+from ecoroute.gateway.anthropic import register_messages
 from ecoroute.gateway.backends import Backend
 from ecoroute.routing import NoAllowedModel
 
@@ -55,15 +59,44 @@ def _context(request: Request) -> dict:
     return ctx
 
 
-def create_app(eco, backend: Backend) -> FastAPI:
+def create_app(
+    eco,
+    backend: Backend,
+    messages_backend=None,
+    providers: Mapping[str, Mapping[str, Any]] | None = None,
+    redact: bool = True,
+    pii_on_tools: bool = False,
+) -> FastAPI:
     """eco: an EcoRoute (or anything with .route(), .router and .catalog) whose catalog is
-    already limited to deployable models."""
+    already limited to deployable models. With messages_backend (and providers), the
+    Anthropic Messages endpoints are added too."""
     app = FastAPI(title="EcoRoute gateway")
     by_name = {m["name"]: m for m in eco.catalog}
+    messages_pool = None
+    if messages_backend is not None:
+        messages_pool = register_messages(
+            app,
+            eco,
+            messages_backend,
+            providers or {},
+            _context,
+            redact=redact,
+            pii_on_tools=pii_on_tools,
+        )
+
+    @app.get("/health")
+    def health():
+        return {"status": "ok", "models": len(by_name)}
 
     def decide(body: dict, request: Request):
         messages = body.get("messages") or [{"role": "user", "content": body.get("prompt", "")}]
         prompt, conversation = split_messages(messages)
+        extra = {}
+        if request.headers.get("x-ecoroute-api") == "messages" and messages_pool is not None:
+            extra = {
+                "models": [m["name"] for m in messages_pool],
+                "models_reason": "the models Claude Code's format can reach",
+            }
         try:
             return eco.route(
                 prompt,
@@ -71,6 +104,7 @@ def create_app(eco, backend: Backend) -> FastAPI:
                 policy=request.headers.get("x-ecoroute-policy"),
                 out_tokens=int(body.get("max_tokens") or body.get("max_completion_tokens") or 500),
                 scan_text=conversation,
+                **extra,
             )
         except NoAllowedModel as e:
             raise HTTPException(403, f"no deployed model is cleared for this prompt: {e}") from e

@@ -20,9 +20,11 @@ def deployable(
     catalog: list[Mapping[str, Any]],
     providers: Mapping[str, Mapping[str, Any]],
     env: Mapping[str, str] | None = None,
+    require_key: bool = True,
 ) -> list[Mapping[str, Any]]:
     """Catalog models the gateway can actually call: a known provider, a confirmed
-    api_id, and the provider's API key present in the environment."""
+    api_id, and the provider's API key present in the environment (unless require_key is
+    False, for a hosted gateway where every caller sends their own key)."""
     env = os.environ if env is None else env
     out = []
     for m in catalog:
@@ -30,7 +32,7 @@ def deployable(
         if not p or not m.get("api_id"):
             continue
         key_env = p.get("api_key_env")
-        if key_env and not env.get(key_env):
+        if require_key and key_env and not env.get(key_env):
             continue
         out.append(m)
     return out

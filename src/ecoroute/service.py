@@ -9,7 +9,7 @@ The gateway and the Python SDK both sit on top of this.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Collection, Mapping
 from concurrent.futures import ThreadPoolExecutor
 import time
 from pathlib import Path
@@ -18,6 +18,7 @@ import numpy as np
 import torch
 import yaml
 
+from ecoroute.confidentiality import Classification
 from ecoroute.predictors import CatalogPredictor, Predictor
 from ecoroute.routing import Decision, Policy, Router, tuned_profiles
 
@@ -105,10 +106,17 @@ class EcoRoute:
         out_tokens: int = 500,
         policy: str | Policy | None = None,
         scan_text: str | None = None,
+        classification: Classification | None = None,
+        models: Collection[str] | None = None,
+        models_reason: str | None = None,
     ) -> Decision:
+        """classification: a privacy result the caller already computed (the check is
+        skipped). models / models_reason: see Router.decide."""
         text = prompt if scan_text is None else scan_text
         t0 = time.perf_counter()
-        if self.parallel_privacy:
+        if classification is not None:
+            conf = _Done((classification, 0.0))
+        elif self.parallel_privacy:
             conf = self._pool().submit(_timed, self.router.detector.classify, text, context)
         else:
             conf = _Done(_timed(self.router.detector.classify, text, context))
@@ -127,6 +135,8 @@ class EcoRoute:
             policy=policy,
             scan_text=scan_text,
             classification=classification,
+            models=models,
+            models_reason=models_reason,
         )
         t_decide = time.perf_counter()
         graph = self.graph()
