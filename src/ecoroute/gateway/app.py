@@ -18,8 +18,9 @@ the confidentiality check: an uncleared model is refused with 403.
 
 from __future__ import annotations
 
+import hmac
 import logging
-from collections.abc import Mapping
+from collections.abc import Collection, Mapping
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request
@@ -68,11 +69,55 @@ def create_app(
     redact: bool = True,
     pii_on_tools: bool = False,
     decision_log: DecisionLog | None = None,
+    caller_keys: bool = False,
+    access_keys: Collection[str] = (),
 ) -> FastAPI:
     """eco: an EcoRoute (or anything with .route(), .router and .catalog) whose catalog is
     already limited to deployable models. With messages_backend (and providers), the
-    Anthropic Messages endpoints are added too."""
+    Anthropic Messages endpoints are added too.
+
+    caller_keys (a gateway hosted for others): OpenAI-format callers send their provider
+    keys as X-Provider-Key-<provider> headers (X-Provider-Key-OpenAI: sk-...), and only
+    those providers' models (plus keyless ones) are routed to. access_keys: when set,
+    every request but /health must carry one, as X-EcoRoute-Key or, for OpenAI-format
+    endpoints, as the Authorization bearer token (an OpenAI SDK's api_key)."""
     app = FastAPI(title="EcoRoute gateway")
+    providers = providers or {}
+    allowed_keys = [k for k in access_keys if k]
+
+    if allowed_keys:
+
+        @app.middleware("http")
+        async def require_access_key(request: Request, call_next):
+            if request.url.path == "/health":
+                return await call_next(request)
+            given = request.headers.get("x-ecoroute-key", "")
+            auth = request.headers.get("authorization", "")
+            if (
+                not given
+                and auth.lower().startswith("bearer ")
+                and not request.url.path.startswith("/v1/messages")
+            ):
+                given = auth[7:]
+            if not any(hmac.compare_digest(given.encode(), k.encode()) for k in allowed_keys):
+                return JSONResponse({"detail": "missing or wrong X-EcoRoute-Key"}, status_code=401)
+            return await call_next(request)
+
+    def caller_provider_keys(request: Request) -> dict[str, str]:
+        prefix = "x-provider-key-"
+        return {
+            k[len(prefix) :]: v for k, v in request.headers.items() if k.lower().startswith(prefix)
+        }
+
+    def keyed_models(request: Request) -> list[str]:
+        keys = caller_provider_keys(request)
+        return [
+            m["name"]
+            for m in eco.catalog
+            if not (providers.get(m["provider"]) or {}).get("api_key_env")
+            or m["provider"].lower() in keys
+        ]
+
     by_name = {m["name"]: m for m in eco.catalog}
     messages_pool = None
     if messages_backend is not None:
@@ -80,7 +125,7 @@ def create_app(
             app,
             eco,
             messages_backend,
-            providers or {},
+            providers,
             _context,
             redact=redact,
             pii_on_tools=pii_on_tools,
@@ -110,6 +155,11 @@ def create_app(
             extra = {
                 "models": [m["name"] for m in messages_pool],
                 "models_reason": "the models Claude Code's format can reach",
+            }
+        elif caller_keys:
+            extra = {
+                "models": keyed_models(request),
+                "models_reason": "the providers whose keys you sent (X-Provider-Key-...)",
             }
         try:
             return eco.route(
@@ -184,18 +234,19 @@ def create_app(
         # Headers carry only ASCII-safe text.
         headers = {k: v.encode("ascii", "replace").decode() for k, v in headers.items()}
         log.info("route %s level=%s", chosen["name"], d.level)
+        kw = {"keys": caller_provider_keys(request)} if caller_keys else {}
         if body.get("stream"):
             return StreamingResponse(
-                backend.stream(chosen, body), media_type="text/event-stream", headers=headers
+                backend.stream(chosen, body, **kw), media_type="text/event-stream", headers=headers
             )
         try:
-            result = await backend.complete(chosen, body)
+            result = await backend.complete(chosen, body, **kw)
         except Exception as e:  # noqa: BLE001
             fallback = _fallback(eco, d, chosen["name"])
             if fallback is None:
                 raise HTTPException(502, f"{chosen['name']} failed: {e}") from e
             log.warning("%s failed (%s); falling back to %s", chosen["name"], e, fallback["name"])
-            result = await backend.complete(fallback, body)
+            result = await backend.complete(fallback, body, **kw)
             headers["X-EcoRoute-Model"] = fallback["name"]
             headers["X-EcoRoute-Reason"] = (
                 f"{chosen['name']} failed; fell back to {fallback['name']}"

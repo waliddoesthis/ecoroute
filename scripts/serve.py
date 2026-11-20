@@ -11,14 +11,17 @@ no provider is called: every enabled catalog model can be chosen, and each answe
 the model that would have been used (no API keys, no cost).
 
 --caller-keys is for a gateway hosted for other people: every caller sends their own
-provider key (Claude Code does this by itself), the server's keys are never used, and all
-models with a confirmed api_id can be routed to.
+provider key (Claude Code does this by itself; OpenAI-format apps send
+X-Provider-Key-<provider> headers), the server's keys are never used, and all models with a
+confirmed api_id can be routed to. Set ECOROUTE_ACCESS_KEYS=key1,key2 to let in only
+callers holding one of those keys (docs/deploy.md).
 """
 
 from __future__ import annotations
 
 import argparse
 import logging
+import os
 from pathlib import Path
 
 import uvicorn
@@ -44,8 +47,8 @@ def main() -> None:
     parser.add_argument("--no-pii-model", action="store_true", help="rules only, no PII model")
     parser.add_argument("--pii-device", type=int, default=None, help="GPU index for the PII model")
     parser.add_argument("--pii-fp16", action="store_true", help="half-precision PII model (GPU)")
-    parser.add_argument("--host", default="127.0.0.1")
-    parser.add_argument("--port", type=int, default=8080)
+    parser.add_argument("--host", default=os.environ.get("ECOROUTE_HOST", "127.0.0.1"))
+    parser.add_argument("--port", type=int, default=int(os.environ.get("PORT", 8080)))
     parser.add_argument(
         "--dry-run", action="store_true", help="call no provider; answers name the chosen model"
     )
@@ -89,7 +92,7 @@ def main() -> None:
     if args.dry_run:
         backend, messages = EchoBackend(), EchoMessagesBackend()
     else:
-        backend = OpenAICompatibleBackend(providers)
+        backend = OpenAICompatibleBackend(providers, caller_keys_only=args.caller_keys)
         messages = AnthropicBackend(providers, caller_keys_only=args.caller_keys)
     app = create_app(
         eco,
@@ -99,6 +102,8 @@ def main() -> None:
         redact=not args.no_redact,
         pii_on_tools=args.pii_on_tools,
         decision_log=DecisionLog(args.log_dir) if args.log_dir else None,
+        caller_keys=args.caller_keys,
+        access_keys=os.environ.get("ECOROUTE_ACCESS_KEYS", "").split(","),
     )
     uvicorn.run(app, host=args.host, port=args.port)
 

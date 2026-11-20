@@ -126,9 +126,11 @@ def test_secret_in_tool_result_is_redacted_before_it_leaves_and_restored_after()
             self.calls.append((request.url.path, body, dict(request.headers)))
             seen = body["messages"][-1]["content"][0]["content"]
             tag = seen.split("= ")[1]
-            return httpx.Response(200, json={"type": "message", "content": [
+            content = [
                 {"type": "text", "text": f"the key is {tag}"},
-                {"type": "tool_use", "id": "w", "name": "Write", "input": {"content": tag}}]})  # fmt: skip
+                {"type": "tool_use", "id": "w", "name": "Write", "input": {"content": tag}},
+            ]
+            return httpx.Response(200, json={"type": "message", "content": content})
 
     up = Echo()
     body = {"model": "claude-opus-5-5", "max_tokens": 10, "messages": _secret_conversation()}

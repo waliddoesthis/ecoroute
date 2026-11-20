@@ -1,0 +1,19 @@
+# docker compose up -d   (gateway on http://localhost:8080; restarts with the machine)
+# Put provider keys in a .env file next to this one, e.g. ANTHROPIC_API_KEY=...
+services:
+  ecoroute:
+    build: .
+    image: ecoroute:latest
+    ports: ["8080:8080"]
+    env_file: [{path: .env, required: false}]
+    environment:
+      ECOROUTE_ROUTER_URL: ${ECOROUTE_ROUTER_URL:-https://github.com/waliddoesthis/ecoroute/releases/latest/download/router.pt}
+      # Hosted for others: uncomment both lines (docs/deploy.md).
+      # ECOROUTE_ARGS: --caller-keys
+      # ECOROUTE_ACCESS_KEYS: ${ECOROUTE_ACCESS_KEYS}
+    volumes:
+      - router:/app/artifacts   # the router is downloaded once and kept here
+    restart: unless-stopped
+
+volumes:
+  router:

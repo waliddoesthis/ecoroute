@@ -11,9 +11,11 @@ import httpx
 
 
 class Backend(Protocol):
-    async def complete(self, model: Mapping[str, Any], body: dict) -> dict: ...
+    """keys (hosted gateways only): provider name -> the caller's own API key."""
 
-    def stream(self, model: Mapping[str, Any], body: dict) -> AsyncIterator[bytes]: ...
+    async def complete(self, model: Mapping[str, Any], body: dict, **kw) -> dict: ...
+
+    def stream(self, model: Mapping[str, Any], body: dict, **kw) -> AsyncIterator[bytes]: ...
 
 
 def deployable(
@@ -45,27 +47,35 @@ class OpenAICompatibleBackend:
         env: Mapping[str, str] | None = None,
         timeout: float = 120.0,
         transport: httpx.AsyncBaseTransport | None = None,
+        caller_keys_only: bool = False,
     ) -> None:
         self.providers = providers
         self.env = os.environ if env is None else env
+        # Hosted for others: only the caller's keys are used, never the server's.
+        self.caller_keys_only = caller_keys_only
         self.client = httpx.AsyncClient(timeout=timeout, transport=transport)
 
-    def _request(self, model: Mapping[str, Any], body: dict) -> tuple[str, dict, dict]:
+    def _request(
+        self, model: Mapping[str, Any], body: dict, keys: Mapping[str, str] | None = None
+    ) -> tuple[str, dict, dict]:
         p = self.providers[model["provider"]]
         headers = {"content-type": "application/json"}
-        if p.get("api_key_env"):
-            headers["authorization"] = f"Bearer {self.env[p['api_key_env']]}"
+        key = (keys or {}).get(model["provider"].lower())
+        if key is None and p.get("api_key_env") and not self.caller_keys_only:
+            key = self.env.get(p["api_key_env"])
+        if key:
+            headers["authorization"] = f"Bearer {key}"
         url = p["base_url"].rstrip("/") + "/chat/completions"
         return url, headers, {**body, "model": model["api_id"]}
 
-    async def complete(self, model, body):
-        url, headers, payload = self._request(model, body)
+    async def complete(self, model, body, keys=None):
+        url, headers, payload = self._request(model, body, keys)
         r = await self.client.post(url, headers=headers, json=payload)
         r.raise_for_status()
         return r.json()
 
-    async def stream(self, model, body):
-        url, headers, payload = self._request(model, body)
+    async def stream(self, model, body, keys=None):
+        url, headers, payload = self._request(model, body, keys)
         async with self.client.stream("POST", url, headers=headers, json=payload) as r:
             r.raise_for_status()
             async for chunk in r.aiter_bytes():
@@ -79,7 +89,7 @@ class EchoBackend:
     def _text(self, model: Mapping[str, Any]) -> str:
         return f"[dry run] {model['name']} would answer this."
 
-    async def complete(self, model, body):
+    async def complete(self, model, body, **kw):
         return {
             "id": "ecoroute-dry-run",
             "object": "chat.completion",
@@ -93,7 +103,7 @@ class EchoBackend:
             ],
         }
 
-    async def stream(self, model, body):
+    async def stream(self, model, body, **kw):
         chunk = {
             "id": "ecoroute-dry-run",
             "object": "chat.completion.chunk",

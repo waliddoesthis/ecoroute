@@ -1,0 +1,10 @@
+.git
+data
+artifacts
+reports
+logs
+docs
+tests
+**/__pycache__
+*.egg-info
+.env
