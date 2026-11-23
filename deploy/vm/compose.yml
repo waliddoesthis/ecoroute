@@ -1,0 +1,22 @@
+# Used by setup.sh: the gateway in hosted mode, behind Caddy for HTTPS.
+services:
+  ecoroute:
+    build: ../..
+    image: ecoroute:latest
+    environment:
+      ECOROUTE_ROUTER_URL: ${ECOROUTE_ROUTER_URL:-https://github.com/waliddoesthis/ecoroute/releases/latest/download/router.pt}
+      ECOROUTE_ACCESS_KEYS: ${ECOROUTE_ACCESS_KEYS:?set by setup.sh}
+      ECOROUTE_ARGS: --caller-keys
+    ports: ["127.0.0.1:8080:8080"]   # reachable from outside only through Caddy
+    volumes: [router:/app/artifacts]
+    restart: unless-stopped
+  caddy:
+    image: caddy:2
+    command: caddy reverse-proxy --from ${ECOROUTE_DOMAIN:?set by setup.sh} --to ecoroute:8080
+    ports: ["80:80", "443:443"]
+    volumes: [caddy:/data]
+    depends_on: [ecoroute]
+    restart: unless-stopped
+volumes:
+  router:
+  caddy:

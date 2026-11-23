@@ -81,8 +81,10 @@ an LLM's answer time, that is usually small.
   `ECOROUTE_ACCESS_KEYS` as a secret. That folder's README has the steps. The CPU Basic
   hardware is free, but creating a Docker Space needs a paid Hugging Face plan (PRO for
   a personal account). Spaces on free hardware sleep when idle.
-- **A small VM.** Install Docker, run `docker compose up -d`, and put Caddy or nginx in
-  front for HTTPS. `restart: unless-stopped` brings the gateway back after a reboot.
+- **A VM, for example Oracle Cloud's Always Free Ampere VM (the default).** One command,
+  [`deploy/vm/setup.sh`](../deploy/vm/setup.sh), installs Docker, starts the gateway in
+  hosted mode behind Caddy with a free HTTPS certificate, and generates an access key.
+  [`deploy/vm/README.md`](../deploy/vm/README.md) walks through creating the VM.
 - **Your own computer, through a tunnel.** This works for a few users, but the gateway is
   only reachable while the computer is on.
 
