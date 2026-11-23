@@ -1,0 +1,7 @@
+992 lighteval/MATH test prompts with outcomes for both true models
+balanced tau 0.91; held-out 600 prompts; mean of 3 seeds
+     brier_before  brier_after  small_before  small_after  acc_before  acc_after  acc_always_big  acc_always_small
+n                                                                                                                 
+25          0.132        0.090         0.049        0.326       0.768      0.802           0.768             0.903
+100         0.132        0.085         0.049        0.323       0.768      0.795           0.768             0.903
+400         0.132        0.086         0.049        0.343       0.768      0.798           0.768             0.903

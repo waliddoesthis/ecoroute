@@ -9,7 +9,7 @@ The gateway and the Python SDK both sit on top of this.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Collection, Mapping
 from concurrent.futures import ThreadPoolExecutor
 import time
 from pathlib import Path
@@ -18,7 +18,9 @@ import numpy as np
 import torch
 import yaml
 
+from ecoroute.confidentiality import Classification
 from ecoroute.predictors import CatalogPredictor, Predictor
+from ecoroute.predictors.local import LocalOutcomes
 from ecoroute.routing import Decision, Policy, Router, tuned_profiles
 
 
@@ -33,10 +35,19 @@ class EcoRoute:
         taus: Mapping[str, float] | None = None,
         margins: Mapping[str, float] | None = None,
         parallel_privacy: bool = False,
+        local: LocalOutcomes | None = None,
+        shifts: Mapping[str, float] | None = None,
     ) -> None:
         self.encoder_name = encoder
         self.catalog = [m for m in catalog if m.get("enabled", True)]
         self.predictor = CatalogPredictor.from_catalog(predictor, self.catalog)
+        # Adapted to the user's own graded prompts (predictors/local.py, scripts/retrain.py).
+        self.shifts = dict(shifts or {})
+        for name, shift in self.shifts.items():
+            if name in self.predictor.anchors:
+                a = self.predictor.anchors[name]
+                a.shift, a.source = float(shift), "fitted"
+        self.local = local
         # Profile quality floors measured on held-out data when the router was trained.
         self.taus = dict(taus or {})
         self.margins = dict(margins or {})
@@ -59,6 +70,8 @@ class EcoRoute:
             "encoder": self.encoder_name,
             "taus": self.taus,
             "margins": self.margins,
+            "local": self.local,
+            "shifts": self.shifts,
         }
         torch.save(state, path)
 
@@ -69,6 +82,8 @@ class EcoRoute:
         models = yaml.safe_load(Path(catalog).read_text())["models"]
         kw.setdefault("taus", state.get("taus"))
         kw.setdefault("margins", state.get("margins"))
+        kw.setdefault("local", state.get("local"))
+        kw.setdefault("shifts", state.get("shifts"))
         return cls(state["predictor"], state["encoder"], models, **kw)
 
     def _pool(self) -> ThreadPoolExecutor:
@@ -105,10 +120,17 @@ class EcoRoute:
         out_tokens: int = 500,
         policy: str | Policy | None = None,
         scan_text: str | None = None,
+        classification: Classification | None = None,
+        models: Collection[str] | None = None,
+        models_reason: str | None = None,
     ) -> Decision:
+        """classification: a privacy result the caller already computed (the check is
+        skipped). models / models_reason: see Router.decide."""
         text = prompt if scan_text is None else scan_text
         t0 = time.perf_counter()
-        if self.parallel_privacy:
+        if classification is not None:
+            conf = _Done((classification, 0.0))
+        elif self.parallel_privacy:
             conf = self._pool().submit(_timed, self.router.detector.classify, text, context)
         else:
             conf = _Done(_timed(self.router.detector.classify, text, context))
@@ -116,6 +138,8 @@ class EcoRoute:
         x = self.embed([prompt])[0]
         t_embed = time.perf_counter()
         p_success = self.predictor.predict_one(x)
+        if self.local is not None:
+            p_success = self.local.adjust(x, p_success)
         t_predict = time.perf_counter()
         classification, privacy_ms = conf.result()
         t_wait = time.perf_counter()
@@ -127,6 +151,8 @@ class EcoRoute:
             policy=policy,
             scan_text=scan_text,
             classification=classification,
+            models=models,
+            models_reason=models_reason,
         )
         t_decide = time.perf_counter()
         graph = self.graph()
@@ -139,6 +165,8 @@ class EcoRoute:
                     f"to {anchor.model}:", f"to {decision.model} (via {anchor.model}):"
                 )
             decision.steps[1:1] = lines
+        if self.local is not None and (note := self.local.explain(x, decision.model)):
+            decision.steps.insert(len(decision.steps) - 1, note)
         t_end = time.perf_counter()
         ms = lambda a, b: 1000 * (b - a)  # noqa: E731
         decision.timings_ms = {
