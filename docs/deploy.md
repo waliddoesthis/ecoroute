@@ -76,10 +76,11 @@ a short prompt took about 0.2 s, most of it the PII model (against 74 ms on a T4
 first scan of a large file takes longer, and repeated blocks come from the cache. Next to
 an LLM's answer time, that is usually small.
 
-- **Hugging Face Spaces (free CPU), the default.** Upload the two files in
+- **Hugging Face Spaces.** Upload the two files in
   [`deploy/hf-space/`](../deploy/hf-space/) to a new Docker Space and add
-  `ECOROUTE_ACCESS_KEYS` as a secret. That folder's README has the steps. Free Spaces
-  sleep when idle, and the first request after a sleep is slow.
+  `ECOROUTE_ACCESS_KEYS` as a secret. That folder's README has the steps. The CPU Basic
+  hardware is free, but creating a Docker Space needs a paid Hugging Face plan (PRO for
+  a personal account). Spaces on free hardware sleep when idle.
 - **A small VM.** Install Docker, run `docker compose up -d`, and put Caddy or nginx in
   front for HTTPS. `restart: unless-stopped` brings the gateway back after a reboot.
 - **Your own computer, through a tunnel.** This works for a few users, but the gateway is

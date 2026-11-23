@@ -18,7 +18,8 @@ Space never stores them. Source: https://github.com/waliddoesthis/ecoroute
 ## Set it up (once)
 
 1. On Hugging Face, create a **New Space**, choose the **Docker** SDK (blank template)
-   and the free **CPU basic** hardware.
+   and the free **CPU basic** hardware. Creating a Docker Space needs a paid plan (PRO for
+   a personal account), even though the hardware is free.
 2. Upload this folder's `Dockerfile` and `README.md` to the Space.
 3. Under **Settings → Variables and secrets**, add a secret `ECOROUTE_ACCESS_KEYS` with
    one or more access keys, comma separated (one per person you let in).
