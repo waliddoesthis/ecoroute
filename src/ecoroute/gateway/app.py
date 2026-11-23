@@ -78,7 +78,7 @@ def create_app(
 
     caller_keys (a gateway hosted for others): OpenAI-format callers send their provider
     keys as X-Provider-Key-<provider> headers (X-Provider-Key-OpenAI: sk-...), and only
-    those providers' models (plus keyless ones) are routed to. access_keys: when set,
+    those providers' models are routed to. access_keys: when set,
     every request but /health must carry one, as X-EcoRoute-Key or, for OpenAI-format
     endpoints, as the Authorization bearer token (an OpenAI SDK's api_key)."""
     app = FastAPI(title="EcoRoute gateway")
@@ -111,12 +111,9 @@ def create_app(
 
     def keyed_models(request: Request) -> list[str]:
         keys = caller_provider_keys(request)
-        return [
-            m["name"]
-            for m in eco.catalog
-            if not (providers.get(m["provider"]) or {}).get("api_key_env")
-            or m["provider"].lower() in keys
-        ]
+        # Hosted: only providers the caller pays for. Keyless (self-hosted) models are
+        # left out, since they would run on the host's hardware.
+        return [m["name"] for m in eco.catalog if m["provider"].lower() in keys]
 
     by_name = {m["name"]: m for m in eco.catalog}
     messages_pool = None
